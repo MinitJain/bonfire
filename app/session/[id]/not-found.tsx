@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { Timer } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
 
 export default function SessionNotFound() {
   return (
@@ -12,8 +11,11 @@ export default function SessionNotFound() {
       <p className="text-muted mb-8 max-w-sm">
         This session doesn&apos;t exist or has expired. Start a new one!
       </p>
-      <Link href="/">
-        <Button variant="primary">Start a New Session</Button>
+      <Link
+        href="/"
+        className="inline-flex items-center justify-center px-4 py-2 text-sm rounded-xl min-h-[40px] bg-[color:var(--accent)] hover:bg-[color:var(--accent-hover)] text-white font-semibold shadow-md transition-all duration-150 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+      >
+        Start a New Session
       </Link>
     </div>
   )
