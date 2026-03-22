@@ -78,12 +78,40 @@ function StartModal({
   const [joinInput, setJoinInput] = useState('')
   const [joinError, setJoinError] = useState('')
   const [isPending, startTransition] = useTransition()
+  const modalRef = useRef<HTMLDivElement>(null)
 
+  // Escape to close
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [onClose])
+
+  // Focus trap + restore focus on close
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null
+    const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    const first = modalRef.current?.querySelector<HTMLElement>(FOCUSABLE)
+    first?.focus()
+
+    function handleTab(e: KeyboardEvent) {
+      if (e.key !== 'Tab' || !modalRef.current) return
+      const els = Array.from(modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE))
+      if (!els.length) return
+      const firstEl = els[0]
+      const lastEl = els[els.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === firstEl) { e.preventDefault(); lastEl.focus() }
+      } else {
+        if (document.activeElement === lastEl) { e.preventDefault(); firstEl.focus() }
+      }
+    }
+    document.addEventListener('keydown', handleTab)
+    return () => {
+      document.removeEventListener('keydown', handleTab)
+      previous?.focus()
+    }
+  }, [])
 
   const handleJoin = () => {
     setJoinError('')
@@ -105,6 +133,7 @@ function StartModal({
       aria-label="Start or join a session"
     >
       <div
+        ref={modalRef}
         className="w-full max-w-lg rounded-3xl p-6 sm:p-8 animate-scale-in relative"
         style={{
           background: 'var(--bg-elevated)',

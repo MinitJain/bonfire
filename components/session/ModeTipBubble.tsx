@@ -20,6 +20,8 @@ export function ModeTipBubble({ externalDismiss }: ModeTipBubbleProps) {
     if (typeof window === 'undefined') return
     if (localStorage.getItem(STORAGE_KEY)) return
     const t = setTimeout(() => {
+      // If externally dismissed before timeout fired, don't show
+      if (dismissedRef.current) return
       setMounted(true)
       setTimeout(() => setAnimIn(true), 50)
     }, 1200)
@@ -34,11 +36,13 @@ export function ModeTipBubble({ externalDismiss }: ModeTipBubbleProps) {
     setTimeout(() => setMounted(false), 200)
   }
 
-  // External dismiss (Host/Jam button clicked)
+  // External dismiss (Host/Jam button clicked) — works whether bubble is visible or not yet
   useEffect(() => {
-    if (externalDismiss && mounted) dismiss()
+    if (!externalDismiss) return
+    dismissedRef.current = true // block delayed mount if timeout hasn't fired yet
+    if (mounted) dismiss()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [externalDismiss])
+  }, [externalDismiss, mounted])
 
   // Outside click
   useEffect(() => {

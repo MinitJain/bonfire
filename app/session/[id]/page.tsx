@@ -43,7 +43,11 @@ export default async function SessionPage({ params }: SessionPageProps) {
     .eq('id', params.id)
     .single()
 
-  if (error || !session) {
+  if (error && error.code !== 'PGRST116') {
+    // PGRST116 = "no rows returned" — genuine not-found; anything else is a server error
+    throw new Error('Failed to load session')
+  }
+  if (!session) {
     notFound()
   }
 
