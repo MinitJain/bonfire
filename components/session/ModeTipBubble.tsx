@@ -39,7 +39,8 @@ export function ModeTipBubble({ externalDismiss }: ModeTipBubbleProps) {
   // External dismiss (Host/Jam button clicked) — works whether bubble is visible or not yet
   useEffect(() => {
     if (!externalDismiss) return
-    dismissedRef.current = true // block delayed mount if timeout hasn't fired yet
+    dismissedRef.current = true
+    localStorage.setItem(STORAGE_KEY, '1') // persist even if bubble never showed
     if (mounted) dismiss()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalDismiss, mounted])

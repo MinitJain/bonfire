@@ -42,7 +42,7 @@ One person starts a 25-minute focus timer and shares a link. Everyone who joins 
 
 ```bash
 git clone https://github.com/MinitJain/pomodoro-jam.git
-cd pomodorojam
+cd pomodoro-jam
 npm install
 ```
 

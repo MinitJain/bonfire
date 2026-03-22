@@ -78,14 +78,18 @@ function ToastItem({
 }) {
   const [visible, setVisible] = useState(true)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const removeTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
     timerRef.current = setTimeout(() => {
       setVisible(false)
-      setTimeout(() => onRemove(toast.id), 300)
+      removeTimerRef.current = setTimeout(() => onRemove(toast.id), 300)
     }, toast.duration ?? 3000)
 
-    return () => clearTimeout(timerRef.current)
+    return () => {
+      clearTimeout(timerRef.current)
+      clearTimeout(removeTimerRef.current)
+    }
   }, [toast.id, toast.duration, onRemove])
 
   return (

@@ -248,7 +248,7 @@ function SessionContent({
         running: false,
         time_left: newState.timeLeft,
         mode: newState.mode,
-        settings: { focus: newSettings.durations.focus, short: newSettings.durations.short, long: newSettings.durations.long, allowGuestShare: newSettings.allowGuestShare },
+        settings: { focus: newSettings.durations.focus, short: newSettings.durations.short, long: newSettings.durations.long, rounds: session.settings?.rounds ?? 4, allowGuestShare: newSettings.allowGuestShare },
       }).eq('id', session.id)
     }
     broadcastShareLock(!newSettings.allowGuestShare)

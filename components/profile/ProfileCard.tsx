@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Edit3, Calendar } from 'lucide-react'
 import type { Profile } from '@/types'
 import { Avatar } from '@/components/ui/Avatar'
@@ -14,6 +14,8 @@ interface ProfileCardProps {
 export function ProfileCard({ profile, isOwnProfile }: ProfileCardProps) {
   const [showEditModal, setShowEditModal] = useState(false)
   const [currentProfile, setCurrentProfile] = useState(profile)
+
+  useEffect(() => { setCurrentProfile(profile) }, [profile])
 
   const displayName = currentProfile.display_name ?? currentProfile.username
   const joinDate = new Date(currentProfile.created_at).toLocaleDateString('en-US', {

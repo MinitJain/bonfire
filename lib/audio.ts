@@ -18,6 +18,7 @@ export function playTickSound(): void {
 
     oscillator.start(ctx.currentTime)
     oscillator.stop(ctx.currentTime + 0.1)
+    oscillator.onended = () => ctx.close()
   } catch {
     // Audio not available
   }
@@ -47,6 +48,7 @@ export function playCompleteSound(): void {
 
       oscillator.start(ctx.currentTime + i * 0.15)
       oscillator.stop(ctx.currentTime + i * 0.15 + 0.4)
+      if (i === notes.length - 1) oscillator.onended = () => ctx.close()
     })
   } catch {
     // Audio not available

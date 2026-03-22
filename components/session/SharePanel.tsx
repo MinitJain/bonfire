@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link2, Check, Share2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -44,13 +44,17 @@ async function copyToClipboard(text: string): Promise<boolean> {
 
 export function SharePanel({ sessionId, sessionName, appUrl }: SharePanelProps) {
   const [copied, setCopied] = useState(false)
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const url = getSessionUrl(sessionId, appUrl)
+
+  useEffect(() => () => clearTimeout(copyTimerRef.current), [])
 
   const handleCopy = async () => {
     const ok = await copyToClipboard(url)
     if (ok) {
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = setTimeout(() => setCopied(false), 2000)
     }
   }
 

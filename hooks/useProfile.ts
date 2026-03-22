@@ -41,7 +41,7 @@ export function useProfile(userId: string | null): UseProfileReturn {
     } finally {
       setLoading(false)
     }
-  }, [userId])
+  }, [userId, supabase])
 
   useEffect(() => {
     fetchProfile()
@@ -71,7 +71,7 @@ export function useProfile(userId: string | null): UseProfileReturn {
         setLoading(false)
       }
     },
-    [userId]
+    [userId, supabase]
   )
 
   return {
