@@ -12,7 +12,6 @@ import { updateFavicon, resetFavicon } from '@/lib/favicon'
 
 interface UseTimerOptions {
   initialState: TimerState
-  isHost: boolean
   onTick?: (timeLeft: number) => void
   onExpire?: () => void
 }
@@ -31,7 +30,6 @@ interface UseTimerReturn {
 
 export function useTimer({
   initialState,
-  isHost,
   onTick,
   onExpire,
 }: UseTimerOptions): UseTimerReturn {

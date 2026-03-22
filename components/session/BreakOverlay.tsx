@@ -40,6 +40,13 @@ export function BreakOverlay({ visible, onDismiss, mode }: BreakOverlayProps) {
     }
   }, [visible])
 
+  useEffect(() => {
+    if (!visible) return
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onDismiss() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [visible, onDismiss])
+
   if (!visible) return null
 
   const { title, subtitle, cta } = messages[mode]

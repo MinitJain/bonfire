@@ -84,7 +84,6 @@ function SessionContent({
     start, pause, reset, setMode, applyState,
   } = useTimer({
     initialState: sessionToTimerState(session),
-    isHost: canControl,
     onExpire: handleExpire,
   })
 

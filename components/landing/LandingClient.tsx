@@ -138,7 +138,11 @@ function LandingContent({ user, profileUsername }: LandingClientProps) {
   }
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    try {
+      await supabase.auth.signOut()
+    } catch {
+      // sign-out failure is non-critical; session will expire naturally
+    }
     router.refresh()
   }
 
