@@ -1,0 +1,199 @@
+'use client'
+
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { Participant, TimerState } from '@/types'
+import { createClient } from '@/lib/supabase/client'
+import type { RealtimeChannel } from '@supabase/supabase-js'
+
+interface UseSessionOptions {
+  sessionId: string
+  userId: string | null
+  isHost: boolean
+  username?: string | null
+  avatarUrl?: string | null
+}
+
+interface UseSessionReturn {
+  participants: Participant[]
+  isConnected: boolean
+  broadcastTimerState: (state: TimerState) => void
+  onTimerUpdate: (callback: (state: TimerState) => void) => () => void
+  broadcastShareLock: (locked: boolean) => void
+  onShareLock: (callback: (locked: boolean) => void) => () => void
+  onParticipantJoin: (callback: () => void) => () => void
+}
+
+export function useSession({
+  sessionId,
+  userId,
+  isHost,
+  username,
+  avatarUrl,
+}: UseSessionOptions): UseSessionReturn {
+  const [participants, setParticipants] = useState<Participant[]>([])
+  const [isConnected, setIsConnected] = useState(false)
+  const channelRef = useRef<RealtimeChannel | null>(null)
+  const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())
+  const shareLockCallbacksRef = useRef<Set<(locked: boolean) => void>>(new Set())
+  const joinCallbacksRef = useRef<Set<() => void>>(new Set())
+  const supabase = createClient()
+
+  useEffect(() => {
+    const channelName = `session:${sessionId}`
+
+    let effectiveId = userId
+    if (!effectiveId) {
+      const stored = localStorage.getItem('pomodoro_guest_id')
+      if (stored) {
+        effectiveId = stored
+      } else {
+        effectiveId = crypto.randomUUID()
+        localStorage.setItem('pomodoro_guest_id', effectiveId)
+      }
+    }
+
+    const channel = supabase.channel(channelName, {
+      config: {
+        broadcast: { self: false },
+        presence: { key: effectiveId },
+      },
+    })
+
+    channelRef.current = channel
+
+    // Track presence (participants)
+    channel.on('presence', { event: 'sync' }, () => {
+      const state = channel.presenceState<{
+        username: string | null
+        avatar_url: string | null
+        is_host: boolean
+        joined_at: string
+      }>()
+
+      const updated: Participant[] = Object.entries(state).map(([key, presences]) => {
+        const presence = presences[0]
+        return {
+          user_id: key,
+          username: presence.username ?? null,
+          avatar_url: presence.avatar_url ?? null,
+          joined_at: presence.joined_at,
+          is_host: presence.is_host,
+        }
+      })
+
+      setParticipants(updated)
+    })
+
+    channel.on('presence', { event: 'join' }, ({ key, newPresences }) => {
+      // Fire join callbacks so the host can re-broadcast current timer state to the new joiner
+      joinCallbacksRef.current.forEach(cb => cb())
+      const presence = newPresences[0] as unknown as {
+        username: string | null
+        avatar_url: string | null
+        is_host: boolean
+        joined_at: string
+      }
+      setParticipants((prev) => {
+        const existing = prev.find((p) => p.user_id === key)
+        if (existing) return prev
+        return [
+          ...prev,
+          {
+            user_id: key,
+            username: presence.username ?? null,
+            avatar_url: presence.avatar_url ?? null,
+            joined_at: presence.joined_at,
+            is_host: presence.is_host,
+          },
+        ]
+      })
+    })
+
+    channel.on('presence', { event: 'leave' }, ({ key }) => {
+      setParticipants((prev) => prev.filter((p) => p.user_id !== key))
+    })
+
+    // Listen for timer broadcasts
+    channel.on('broadcast', { event: 'timer_update' }, ({ payload }) => {
+      const timerState = payload as TimerState
+      timerCallbacksRef.current.forEach((cb) => cb(timerState))
+    })
+
+    // Listen for share lock broadcasts
+    channel.on('broadcast', { event: 'share_lock' }, ({ payload }) => {
+      const locked = (payload as { locked: boolean }).locked
+      shareLockCallbacksRef.current.forEach((cb) => cb(locked))
+    })
+
+    channel
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsConnected(true)
+
+          await channel.track({
+            username: username ?? null,
+            avatar_url: avatarUrl ?? null,
+            is_host: isHost,
+            joined_at: new Date().toISOString(),
+          })
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          setIsConnected(false)
+        }
+      })
+
+    return () => {
+      channel.unsubscribe()
+      supabase.removeChannel(channel)
+      channelRef.current = null
+      setIsConnected(false)
+    }
+  }, [sessionId, userId, isHost, username, avatarUrl])
+
+  const broadcastTimerState = useCallback((state: TimerState) => {
+    if (!channelRef.current) return
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'timer_update',
+      payload: state,
+    })
+  }, [])
+
+  const onTimerUpdate = useCallback((callback: (state: TimerState) => void) => {
+    timerCallbacksRef.current.add(callback)
+    return () => {
+      timerCallbacksRef.current.delete(callback)
+    }
+  }, [])
+
+  const broadcastShareLock = useCallback((locked: boolean) => {
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'share_lock',
+      payload: { locked },
+    })
+  }, [])
+
+  const onShareLock = useCallback((callback: (locked: boolean) => void) => {
+    shareLockCallbacksRef.current.add(callback)
+    return () => {
+      shareLockCallbacksRef.current.delete(callback)
+    }
+  }, [])
+
+  const onParticipantJoin = useCallback((callback: () => void) => {
+    joinCallbacksRef.current.add(callback)
+    return () => {
+      joinCallbacksRef.current.delete(callback)
+    }
+  }, [])
+
+  return {
+    participants,
+    isConnected,
+    broadcastTimerState,
+    onTimerUpdate,
+    broadcastShareLock,
+    onShareLock,
+    onParticipantJoin,
+  }
+}

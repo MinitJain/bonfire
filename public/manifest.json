@@ -1,0 +1,11 @@
+{
+  "name": "PomodoroJam",
+  "short_name": "PomodoroJam",
+  "description": "Real-time shared Pomodoro timer. Focus together.",
+  "theme_color": "#FF5533",
+  "background_color": "#0F0F0D",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/",
+  "scope": "/"
+}
