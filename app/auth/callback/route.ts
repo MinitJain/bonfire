@@ -4,9 +4,10 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  // Restrict `next` to relative paths only to prevent open redirects
+  // Restrict `next` to safe relative paths only to prevent open redirects.
+  // Block // (protocol-relative) and /\ (backslash bypass used by some browsers).
   const rawNext = searchParams.get('next') ?? '/'
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/'
+  const next = /^\/(?![\\/])/.test(rawNext) ? rawNext : '/'
 
   if (code) {
     const supabase = createClient()
