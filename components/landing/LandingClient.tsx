@@ -363,11 +363,11 @@ function LandingContent({ user, profileUsername }: LandingClientProps) {
                   </div>
                   <div className="py-1">
                     {[
-                      {
+                      ...(profileUsername ? [{
                         icon: UserCircle,
                         label: 'View Profile',
-                        action: () => { setShowUserMenu(false); router.push(`/profile/${profileUsername ?? user.id}`) },
-                      },
+                        action: () => { setShowUserMenu(false); router.push(`/profile/${profileUsername}`) },
+                      }] : []),
                       {
                         icon: LogOut,
                         label: 'Sign out',

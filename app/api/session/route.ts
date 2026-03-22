@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         .from('profiles')
         .select('display_name, username')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
       if (profile) {
         hostName = profile.display_name ?? profile.username ?? 'Guest'
       }
@@ -84,7 +84,7 @@ export async function GET(request: Request) {
       .from('sessions')
       .select('*')
       .eq('id', id)
-      .single()
+      .maybeSingle()
 
     if (error) {
       console.error('Session fetch error:', error)

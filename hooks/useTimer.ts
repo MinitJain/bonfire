@@ -37,6 +37,7 @@ export function useTimer({
   const [timeLeft, setTimeLeft] = useState<number>(computeTimeLeft(initialState))
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const expiredRef = useRef(false)
+  const expireCalledRef = useRef(false)
   const onTickRef = useRef(onTick)
   const onExpireRef = useRef(onExpire)
 
@@ -55,23 +56,15 @@ export function useTimer({
   useEffect(() => {
     if (timerState.status === 'running') {
       expiredRef.current = false
+      expireCalledRef.current = false
       clearTimer()
       intervalRef.current = setInterval(() => {
         setTimerState((current) => {
           const left = computeTimeLeft(current)
-          setTimeLeft(left)
-          onTickRef.current?.(left)
-
           if (left <= 0 && !expiredRef.current) {
             expiredRef.current = true
             clearTimer()
-            const finished: TimerState = {
-              ...current,
-              status: 'finished',
-              timeLeft: 0,
-            }
-            onExpireRef.current?.()
-            return finished
+            return { ...current, status: 'finished', timeLeft: 0 }
           }
           return current
         })
@@ -85,9 +78,17 @@ export function useTimer({
     return clearTimer
   }, [timerState.status, timerState.startedAt, clearTimer])
 
-  // Sync timeLeft when state changes externally
+  // Sync timeLeft when state changes; fire tick and expire callbacks outside updater
   useEffect(() => {
-    setTimeLeft(computeTimeLeft(timerState))
+    const left = computeTimeLeft(timerState)
+    setTimeLeft(left)
+    if (timerState.status === 'running') {
+      onTickRef.current?.(left)
+    }
+    if (timerState.status === 'finished' && !expireCalledRef.current) {
+      expireCalledRef.current = true
+      onExpireRef.current?.()
+    }
   }, [timerState])
 
   const start = useCallback((): TimerState => {
@@ -136,6 +137,7 @@ export function useTimer({
     setTimeLeft(computeTimeLeft(state))
     if (isTimerExpired(state)) {
       expiredRef.current = true
+      expireCalledRef.current = true // remote expiry — do not fire onExpire locally
     }
   }, [])
 

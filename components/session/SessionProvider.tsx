@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Wifi, WifiOff, Zap, Users, Settings } from 'lucide-react'
 import type { Session, TimerMode, TimerState } from '@/types'
@@ -56,7 +56,7 @@ function SessionContent({
   const sharePanelRef = useRef<HTMLDivElement>(null)
   const settingsPanelRef = useRef<HTMLDivElement>(null)
   const hasRequestedNotifRef = useRef(false)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   // Guest host detection via localStorage
   useEffect(() => {
@@ -214,7 +214,7 @@ function SessionContent({
     setShowBreakOverlay(false)
     if (canControl) {
       broadcastTimerState(newState)
-      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, mode: newState.mode }).eq('id', session.id)
+      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
   }, [reset, canControl, broadcastTimerState, sessionSettings.durations, supabase, session.id])
 
@@ -225,7 +225,7 @@ function SessionContent({
     setShowBreakOverlay(false)
     if (canControl) {
       broadcastTimerState(newState)
-      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, mode: newState.mode }).eq('id', session.id)
+      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
   }, [mode, setMode, canControl, broadcastTimerState, sessionSettings.durations, supabase, session.id])
 
@@ -234,7 +234,7 @@ function SessionContent({
     setShowBreakOverlay(false)
     if (canControl) {
       broadcastTimerState(newState)
-      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, mode: newState.mode }).eq('id', session.id)
+      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
   }, [setMode, canControl, broadcastTimerState, sessionSettings.durations, supabase, session.id])
 
@@ -252,7 +252,7 @@ function SessionContent({
       }).eq('id', session.id)
     }
     broadcastShareLock(!newSettings.allowGuestShare)
-  }, [reset, canControl, broadcastTimerState, broadcastShareLock, supabase, session.id])
+  }, [reset, canControl, broadcastTimerState, broadcastShareLock, supabase, session.id, session.settings?.rounds])
 
   const progress = computeProgress(timerState)
 

@@ -106,7 +106,7 @@ function ToastItem({
       <button
         onClick={() => {
           setVisible(false)
-          setTimeout(() => onRemove(toast.id), 300)
+          removeTimerRef.current = setTimeout(() => onRemove(toast.id), 300)
         }}
         className="transition-colors flex-shrink-0 cursor-pointer"
         style={{ color: 'var(--text-muted)' }}

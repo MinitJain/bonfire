@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
     .from('profiles')
     .select('display_name, username, bio')
     .eq('username', params.username)
-    .single()
+    .maybeSingle()
 
   if (!data) {
     return { title: 'Profile Not Found' }
@@ -48,11 +48,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     .from('profiles')
     .select('*')
     .eq('username', params.username)
-    .single()
+    .maybeSingle()
 
-  if (error || !profile) {
-    notFound()
-  }
+  if (error) throw error
+  if (!profile) notFound()
 
   const {
     data: { user },

@@ -84,7 +84,6 @@ reviews:
     enabled: true
     ignore_title_keywords:
       - "WIP"
-      - "wip"
       - "[skip ci]"
       - "Draft"
     drafts: false

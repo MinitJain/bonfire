@@ -16,9 +16,11 @@ export async function GET(request: Request) {
       const redirectTo = `${next}${next.includes('?') ? '&' : '?'}welcome=1`
       const forwardedHost = request.headers.get('x-forwarded-host')
       const isLocalEnv = process.env.NODE_ENV === 'development'
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL
+      const allowedHost = appUrl ? new URL(appUrl).host : null
       if (isLocalEnv) {
         return NextResponse.redirect(`${origin}${redirectTo}`)
-      } else if (forwardedHost) {
+      } else if (forwardedHost && allowedHost && forwardedHost === allowedHost) {
         return NextResponse.redirect(`https://${forwardedHost}${redirectTo}`)
       } else {
         return NextResponse.redirect(`${origin}${redirectTo}`)
