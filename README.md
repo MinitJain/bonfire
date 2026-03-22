@@ -60,7 +60,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 **3. Set up the database**
 
 Run the migrations in your Supabase SQL editor in order:
-```
+```text
 supabase/migrations/001_init.sql
 supabase/migrations/002_jam_mode.sql
 ```

@@ -16,6 +16,7 @@ export interface TimerSettings {
   short: number   // minutes
   long: number    // minutes
   rounds: number
+  allowGuestShare?: boolean
 }
 
 /**
