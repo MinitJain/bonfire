@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect } from 'react'
+import { useState, useTransition, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { Users, Zap, Github, LogOut, UserCircle, Timer, Bell, BarChart2, Link2, X, ChevronDown } from 'lucide-react'
@@ -230,7 +230,7 @@ function LandingContent({ user, profileUsername }: LandingClientProps) {
   const [showSignInMenu, setShowSignInMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const signInRef = useRef<HTMLDivElement>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

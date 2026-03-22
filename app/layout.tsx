@@ -79,10 +79,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${dmSans.variable} ${syne.variable} ${jetbrainsMono.variable}`}
     >
-      <head>
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </head>
-      <body className="bg-background text-foreground font-sans min-h-screen antialiased">
+<body className="bg-background text-foreground font-sans min-h-screen antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
           {children}
         </ThemeProvider>

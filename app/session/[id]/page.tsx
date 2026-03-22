@@ -53,15 +53,15 @@ export default async function SessionPage({ params }: SessionPageProps) {
 
   const typedSession = session as Session
 
-  // Fetch host profile if user is logged in
-  let hostProfile = null
+  // Fetch current user's profile for display name and avatar
+  let userProfile = null
   if (user) {
     const { data } = await supabase
       .from('profiles')
       .select('username, display_name, avatar_url')
       .eq('id', user.id)
       .single()
-    hostProfile = data
+    userProfile = data
   }
 
   const isHost = user?.id === typedSession.host_id
@@ -71,8 +71,8 @@ export default async function SessionPage({ params }: SessionPageProps) {
       session={typedSession}
       userId={user?.id ?? null}
       isHost={isHost}
-      username={hostProfile?.username ?? user?.email?.split('@')[0] ?? null}
-      avatarUrl={hostProfile?.avatar_url ?? null}
+      username={userProfile?.username ?? user?.email?.split('@')[0] ?? null}
+      avatarUrl={userProfile?.avatar_url ?? null}
     />
   )
 }
