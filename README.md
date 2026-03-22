@@ -26,19 +26,20 @@ One person starts a 25-minute focus timer and shares a link. Everyone who joins 
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 14 App Router |
-| Language | TypeScript (strict) |
-| Database | Supabase (PostgreSQL + Realtime) |
-| Auth | Supabase Auth (GitHub + Google OAuth) |
-| Styling | Tailwind CSS + CSS variables |
-| Theme | next-themes (dark/light, persisted) |
-| Fonts | Syne + DM Sans + JetBrains Mono |
+| Layer     | Technology                            |
+| --------- | ------------------------------------- |
+| Framework | Next.js 14 App Router                 |
+| Language  | TypeScript (strict)                   |
+| Database  | Supabase (PostgreSQL + Realtime)      |
+| Auth      | Supabase Auth (GitHub + Google OAuth) |
+| Styling   | Tailwind CSS + CSS variables          |
+| Theme     | next-themes (dark/light, persisted)   |
+| Fonts     | Syne + DM Sans + JetBrains Mono       |
 
 ## Getting Started
 
 **1. Clone and install**
+
 ```bash
 git clone https://github.com/MinitJain/pomodoro-jam.git
 cd pomodorojam
@@ -46,11 +47,13 @@ npm install
 ```
 
 **2. Set up environment variables**
+
 ```bash
 cp .env.local.example .env.local
 ```
 
 Fill in your Supabase credentials:
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
@@ -60,6 +63,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 **3. Set up the database**
 
 Run the migrations in your Supabase SQL editor in order:
+
 ```text
 supabase/migrations/001_init.sql
 supabase/migrations/002_jam_mode.sql
@@ -68,6 +72,7 @@ supabase/migrations/002_jam_mode.sql
 Enable GitHub and/or Google OAuth in Supabase → Authentication → Providers.
 
 **4. Run locally**
+
 ```bash
 npm run dev
 ```
@@ -79,6 +84,7 @@ Open [http://localhost:3000](http://localhost:3000)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/MinitJain/pomodoro-jam)
 
 After deploying:
+
 1. Add your Vercel URL to Supabase → Authentication → URL Configuration → Redirect URLs
 2. Add your Vercel domain to Google Cloud Console → OAuth client → Authorized JavaScript origins
 3. Update `NEXT_PUBLIC_APP_URL` in Vercel environment variables
