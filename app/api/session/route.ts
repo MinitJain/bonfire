@@ -16,7 +16,8 @@ export async function POST(request: Request) {
       data: { user },
     } = await supabase.auth.getUser()
 
-    const body = await request.json() as unknown
+    let body: unknown = {}
+    try { body = await request.json() } catch { /* empty body — treat as {} */ }
     const parsed = CreateSessionSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
         total_time: focusDuration,
         running: false,
         pomos_done: 0,
-        settings: { focus: 25, short: 5, long: 15, rounds: 4 },
+        settings: { focus: 25, short: 5, long: 15, rounds: 4, allowGuestShare: true },
         jam_mode: parsed.data.jam_mode ?? false,
       })
       .select()
@@ -85,7 +86,11 @@ export async function GET(request: Request) {
       .eq('id', id)
       .single()
 
-    if (error || !data) {
+    if (error) {
+      console.error('Session fetch error:', error)
+      return NextResponse.json({ error: 'Failed to fetch session' }, { status: 500 })
+    }
+    if (!data) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
     }
 

@@ -49,7 +49,7 @@ function SessionContent({
       short: session.settings?.short ?? 5,
       long: session.settings?.long ?? 15,
     },
-    allowGuestShare: true,
+    allowGuestShare: session.settings?.allowGuestShare ?? true,
   })
   const [showSettings, setShowSettings] = useState(false)
   const [modeTipDismissed, setModeTipDismissed] = useState(false)
@@ -248,7 +248,7 @@ function SessionContent({
         running: false,
         time_left: newState.timeLeft,
         mode: newState.mode,
-        settings: { focus: newSettings.durations.focus, short: newSettings.durations.short, long: newSettings.durations.long },
+        settings: { focus: newSettings.durations.focus, short: newSettings.durations.short, long: newSettings.durations.long, allowGuestShare: newSettings.allowGuestShare },
       }).eq('id', session.id)
     }
     broadcastShareLock(!newSettings.allowGuestShare)
