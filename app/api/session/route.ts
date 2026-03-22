@@ -6,6 +6,7 @@ import { z } from 'zod'
 
 const CreateSessionSchema = z.object({
   title: z.string().max(100).optional(),
+  jam_mode: z.boolean().optional(),
 })
 
 export async function POST(request: Request) {
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
         running: false,
         pomos_done: 0,
         settings: { focus: 25, short: 5, long: 15, rounds: 4 },
-        jam_mode: false,
+        jam_mode: parsed.data.jam_mode ?? false,
       })
       .select()
       .single()
