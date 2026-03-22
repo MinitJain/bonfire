@@ -71,14 +71,13 @@ function StartModal({
   isCreating,
 }: {
   onClose: () => void
-  onHost: (jamMode: boolean) => void
+  onHost: () => void
   isCreating: boolean
 }) {
   const router = useRouter()
   const [joinInput, setJoinInput] = useState('')
   const [joinError, setJoinError] = useState('')
   const [isPending, startTransition] = useTransition()
-  const [jamMode, setJamMode] = useState(false)
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -147,40 +146,12 @@ function StartModal({
             <h3 className="font-semibold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>
               Host a session
             </h3>
-            <p className="text-xs leading-relaxed mb-4" style={{ color: 'var(--text-secondary)' }}>
-              Create a timer and invite friends. You control it — or turn on Jam Mode so everyone can.
+            <p className="text-xs leading-relaxed mb-5" style={{ color: 'var(--text-secondary)' }}>
+              Create a timer and invite friends. You can switch between Host and Jam mode once inside.
             </p>
 
-            {/* Jam Mode toggle */}
             <button
-              onClick={() => setJamMode(v => !v)}
-              className="flex items-center justify-between w-full px-3 py-2.5 rounded-xl mb-4 transition-all cursor-pointer text-left"
-              style={{
-                background: jamMode ? 'var(--green-soft)' : 'var(--bg-elevated)',
-                border: `1px solid ${jamMode ? 'var(--green)' : 'var(--border)'}`,
-              }}
-            >
-              <div>
-                <p className="text-xs font-semibold" style={{ color: jamMode ? 'var(--green)' : 'var(--text-primary)' }}>
-                  ⚡ Jam Mode
-                </p>
-                <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                  Everyone controls the timer
-                </p>
-              </div>
-              <div
-                className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
-                style={{ background: jamMode ? 'var(--green)' : 'var(--border)' }}
-              >
-                <span
-                  className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all duration-200"
-                  style={{ left: jamMode ? '18px' : '2px' }}
-                />
-              </div>
-            </button>
-
-            <button
-              onClick={() => onHost(jamMode)}
+              onClick={onHost}
               disabled={isCreating}
               className="mt-auto w-full py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer disabled:opacity-70"
               style={{ background: 'var(--accent)', color: '#fff', boxShadow: 'var(--shadow-sm)' }}
@@ -280,13 +251,13 @@ function LandingContent({ user, profileUsername }: LandingClientProps) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  const handleCreateSession = async (jamMode = false) => {
+  const handleCreateSession = async () => {
     setIsCreating(true)
     try {
       const res = await fetch('/api/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jam_mode: jamMode }),
+        body: JSON.stringify({}),
       })
       if (!res.ok) throw new Error('Failed to create session')
       const { id } = await res.json() as { id: string }
