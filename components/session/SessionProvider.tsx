@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Wifi, WifiOff, Zap, Users, Settings, Info } from 'lucide-react'
+import { Wifi, WifiOff, Zap, Users, Settings } from 'lucide-react'
 import type { Session, TimerMode, TimerState } from '@/types'
 import { useTimer } from '@/hooks/useTimer'
 import { useSession } from '@/hooks/useSession'
@@ -17,6 +17,7 @@ import { ParticipantList } from '@/components/session/ParticipantList'
 import { SharePanel } from '@/components/session/SharePanel'
 import { BreakOverlay } from '@/components/session/BreakOverlay'
 import { AmbientPlayer } from '@/components/session/AmbientPlayer'
+import { ModeTipBubble } from '@/components/session/ModeTipBubble'
 import { ToastProvider } from '@/components/ui/Toast'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -51,6 +52,7 @@ function SessionContent({
     allowGuestShare: true,
   })
   const [showSettings, setShowSettings] = useState(false)
+  const [modeTipDismissed, setModeTipDismissed] = useState(false)
   const sharePanelRef = useRef<HTMLDivElement>(null)
   const settingsPanelRef = useRef<HTMLDivElement>(null)
   const hasRequestedNotifRef = useRef(false)
@@ -359,7 +361,7 @@ function SessionContent({
                 {/* Mode selector: Host only | Jam */}
                 <div className="flex items-center rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
                   <button
-                    onClick={() => jamMode && handleToggleJamMode()}
+                    onClick={() => { setModeTipDismissed(true); if (jamMode) handleToggleJamMode() }}
                     title="Only you control the timer. Watchers follow along."
                     className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all duration-150 cursor-pointer whitespace-nowrap"
                     style={
@@ -371,7 +373,7 @@ function SessionContent({
                     Host only
                   </button>
                   <button
-                    onClick={() => !jamMode && handleToggleJamMode()}
+                    onClick={() => { setModeTipDismissed(true); if (!jamMode) handleToggleJamMode() }}
                     title="Everyone in the session can control the timer."
                     className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all duration-150 cursor-pointer whitespace-nowrap"
                     style={
@@ -383,33 +385,6 @@ function SessionContent({
                     <Zap className="w-3 h-3" />
                     Jam
                   </button>
-                </div>
-
-                {/* Info popover */}
-                <div className="relative group">
-                  <button
-                    className="p-2 rounded-xl border transition-all cursor-pointer"
-                    style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-                    aria-label="What's the difference?"
-                  >
-                    <Info className="w-4 h-4" />
-                  </button>
-                  <div
-                    className="absolute right-0 bottom-12 w-64 rounded-2xl z-50 p-4 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150"
-                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
-                  >
-                    <p className="text-xs font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>What&apos;s the difference?</p>
-                    <div className="flex flex-col gap-3">
-                      <div>
-                        <p className="text-xs font-medium mb-0.5" style={{ color: 'var(--text-primary)' }}>Host only</p>
-                        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>Only you can start, pause, or skip the timer. Everyone else watches in sync.</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium mb-0.5" style={{ color: 'var(--green)' }}>⚡ Jam Mode</p>
-                        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>Everyone in the session controls the timer together — like a group decision.</p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Settings gear (host only) */}
@@ -449,11 +424,23 @@ function SessionContent({
             )}
           </div>
 
+          {/* Inline hint text — always visible for host */}
+          {isHost && (
+            <p
+              className="text-center"
+              style={{ color: 'var(--text-muted)', fontSize: '12px', fontFamily: 'var(--font-dm-sans)' }}
+            >
+              Host only — only you control the timer · Jam — everyone controls together
+            </p>
+          )}
+
           <ParticipantList participants={participants} />
 
           <AmbientPlayer />
         </div>
       </main>
+
+      {isHost && <ModeTipBubble externalDismiss={modeTipDismissed} />}
 
       <BreakOverlay
         visible={showBreakOverlay}
