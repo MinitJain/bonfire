@@ -81,11 +81,10 @@ export function sessionToTimerState(session: Session): TimerState {
     status,
     timeLeft: session.time_left,
     totalTime: session.total_time > 0 ? session.total_time : TIMER_DURATIONS[session.mode],
-    // When running we synthesise a startedAt so computeTimeLeft works correctly.
-    // We do NOT store a real wall-clock startedAt in the DB (it only stores
-    // time_left), so treat time_left as accurate at the moment we loaded the row
-    // and set startedAt = now - 0 (i.e. count down from time_left right now).
-    startedAt: status === 'running' ? Date.now() : null,
+    // Anchor to updated_at so elapsed time since the last DB write is accounted
+    // for on cold join. computeTimeLeft computes: time_left - (now - startedAt)/1000
+    // which correctly deducts seconds elapsed since the session row was last written.
+    startedAt: status === 'running' ? new Date(session.updated_at).getTime() : null,
     pausedAt: null,
   }
 }
