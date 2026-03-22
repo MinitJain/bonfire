@@ -104,23 +104,25 @@ function SessionContent({
   const timerStateRef = useRef(timerState)
   useEffect(() => { timerStateRef.current = timerState }, [timerState])
 
-  // Receive timer updates (only when we can't control)
+  // Always receive timer updates from other controllers.
+  // broadcast: { self: false } ensures you never apply your own broadcasts.
+  // In Jam mode this is essential — every participant must sync with whoever just acted.
   useEffect(() => {
-    if (canControl) return
     const unsubscribe = onTimerUpdate((state: TimerState) => {
       applyState(state)
     })
     return unsubscribe
-  }, [canControl, onTimerUpdate, applyState])
+  }, [onTimerUpdate, applyState])
 
-  // Re-broadcast current timer state when a new participant joins (host only)
+  // Only the host re-broadcasts state to newly joined participants.
+  // In Jam mode we still want a single source of truth for cold joins.
   useEffect(() => {
-    if (!canControl) return
+    if (!isHost) return
     const unsubscribe = onParticipantJoin(() => {
       broadcastTimerState(timerStateRef.current)
     })
     return unsubscribe
-  }, [canControl, onParticipantJoin, broadcastTimerState])
+  }, [isHost, onParticipantJoin, broadcastTimerState])
 
   // Receive share lock updates (non-hosts)
   useEffect(() => {
