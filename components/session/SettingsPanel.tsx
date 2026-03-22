@@ -26,10 +26,12 @@ function ClampInput({ label, value, onChange, min, max }: {
   min: number
   max: number
 }) {
+  const id = `setting-${label.toLowerCase().replace(/\s+/g, '-')}`
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</label>
+      <label htmlFor={id} className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</label>
       <input
+        id={id}
         type="number"
         min={min}
         max={max}
@@ -77,6 +79,7 @@ export function SettingsPanel({ settings, onApply, disabled }: SettingsPanelProp
         <button
           role="switch"
           aria-checked={local.allowGuestShare}
+          aria-label="Allow guests to invite"
           onClick={() => setLocal(prev => ({ ...prev, allowGuestShare: !prev.allowGuestShare }))}
           className="relative w-11 h-6 rounded-full transition-colors cursor-pointer focus:outline-none flex-shrink-0"
           style={{

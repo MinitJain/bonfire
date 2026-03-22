@@ -94,6 +94,7 @@ export function sessionToTimerState(session: Session): TimerState {
  */
 export function computeProgress(state: TimerState): number {
   const total = state.totalTime
+  if (total <= 0) return 1
   const left = computeTimeLeft(state)
   return Math.max(0, Math.min(1, left / total))
 }

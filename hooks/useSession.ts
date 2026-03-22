@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Participant, TimerState } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
@@ -20,6 +20,8 @@ interface UseSessionReturn {
   onTimerUpdate: (callback: (state: TimerState) => void) => () => void
   broadcastShareLock: (locked: boolean) => void
   onShareLock: (callback: (locked: boolean) => void) => () => void
+  broadcastJamMode: (jamMode: boolean) => void
+  onJamMode: (callback: (jamMode: boolean) => void) => () => void
   onParticipantJoin: (callback: () => void) => () => void
 }
 
@@ -35,8 +37,9 @@ export function useSession({
   const channelRef = useRef<RealtimeChannel | null>(null)
   const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())
   const shareLockCallbacksRef = useRef<Set<(locked: boolean) => void>>(new Set())
+  const jamModeCallbacksRef = useRef<Set<(jamMode: boolean) => void>>(new Set())
   const joinCallbacksRef = useRef<Set<() => void>>(new Set())
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const channelName = `session:${sessionId}`
@@ -125,6 +128,12 @@ export function useSession({
       shareLockCallbacksRef.current.forEach((cb) => cb(locked))
     })
 
+    // Listen for jam mode broadcasts
+    channel.on('broadcast', { event: 'jam_mode_update' }, ({ payload }) => {
+      const jamMode = (payload as { jamMode: boolean }).jamMode
+      jamModeCallbacksRef.current.forEach((cb) => cb(jamMode))
+    })
+
     channel
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -180,6 +189,21 @@ export function useSession({
     }
   }, [])
 
+  const broadcastJamMode = useCallback((jamMode: boolean) => {
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'jam_mode_update',
+      payload: { jamMode },
+    })
+  }, [])
+
+  const onJamMode = useCallback((callback: (jamMode: boolean) => void) => {
+    jamModeCallbacksRef.current.add(callback)
+    return () => {
+      jamModeCallbacksRef.current.delete(callback)
+    }
+  }, [])
+
   const onParticipantJoin = useCallback((callback: () => void) => {
     joinCallbacksRef.current.add(callback)
     return () => {
@@ -194,6 +218,8 @@ export function useSession({
     onTimerUpdate,
     broadcastShareLock,
     onShareLock,
+    broadcastJamMode,
+    onJamMode,
     onParticipantJoin,
   }
 }
