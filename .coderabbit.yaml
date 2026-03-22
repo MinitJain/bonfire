@@ -5,11 +5,7 @@
 language: "en-US"
 early_access: false
 
-tone_instructions: |
-  Be a helpful and constructive senior engineer. Focus on correctness, security,
-  and performance. Keep feedback concise and actionable. You're reviewing a
-  Next.js 14 + TypeScript + Supabase realtime app — be strict about type safety,
-  RLS policies, and realtime subscription cleanup.
+tone_instructions: "Senior engineer review. Focus on correctness, security, performance. Strict on type safety, RLS, and realtime cleanup."
 
 reviews:
   profile: "assertive"
