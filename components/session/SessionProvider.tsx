@@ -385,11 +385,11 @@ function SessionContent({
 
             {isHost && (
               <>
-                {/* Mode selector: Host only | Jam */}
+                {/* Mode selector: Host | Jam */}
                 <div className="flex items-center rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
                   <button
                     onClick={() => { setModeTipDismissed(true); if (jamMode) handleToggleJamMode() }}
-                    title="Only you control the timer. Watchers follow along."
+                    title="You control the timer. Everyone else follows along in sync."
                     className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all duration-150 cursor-pointer whitespace-nowrap"
                     style={
                       !jamMode
@@ -397,7 +397,7 @@ function SessionContent({
                         : { background: 'var(--bg-secondary)', color: 'var(--text-muted)' }
                     }
                   >
-                    Host only
+                    Host
                   </button>
                   <button
                     onClick={() => { setModeTipDismissed(true); if (!jamMode) handleToggleJamMode() }}
@@ -457,7 +457,7 @@ function SessionContent({
               className="text-center"
               style={{ color: 'var(--text-muted)', fontSize: '12px', fontFamily: 'var(--font-dm-sans)' }}
             >
-              Host only — only you control the timer · Jam — everyone controls together
+              Host — only you control the timer · Jam — everyone controls together
             </p>
           )}
 

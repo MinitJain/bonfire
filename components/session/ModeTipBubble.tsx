@@ -109,10 +109,10 @@ export function ModeTipBubble({ externalDismiss }: ModeTipBubbleProps) {
         <div className="flex flex-col gap-3 mb-4">
           <div>
             <p className="text-xs font-semibold mb-0.5" style={{ color: 'var(--text-primary)' }}>
-              Host only
+              Host
             </p>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-              Only you can start, pause, or skip. Everyone else follows in sync.
+              Only you can start, pause, or skip. Everyone else follows along in sync.
             </p>
           </div>
           <div>
