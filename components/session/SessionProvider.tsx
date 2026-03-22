@@ -89,10 +89,10 @@ function SessionContent({
     onExpire: handleExpire,
   })
 
-  const { participants, isConnected, broadcastTimerState, onTimerUpdate, broadcastShareLock, onShareLock, onParticipantJoin } = useSession({
+  const { participants, isConnected, broadcastTimerState, onTimerUpdate, broadcastShareLock, onShareLock, broadcastJamMode, onJamMode, onParticipantJoin } = useSession({
     sessionId: session.id,
     userId,
-    isHost: canControl,
+    isHost,
     username,
     avatarUrl,
   })
@@ -165,15 +165,25 @@ function SessionContent({
     }
   }, [])
 
-  // Toggle jam mode (host only) — persisted to DB
+  // Toggle jam mode (host only) — persisted to DB and broadcast to existing participants
   const handleToggleJamMode = useCallback(async () => {
     const next = !jamMode
     setJamMode(next)
+    broadcastJamMode(next)
     await supabase
       .from('sessions')
       .update({ jam_mode: next })
       .eq('id', session.id)
-  }, [jamMode, session.id, supabase])
+  }, [jamMode, session.id, supabase, broadcastJamMode])
+
+  // Non-hosts receive jam mode changes from the host
+  useEffect(() => {
+    if (isHost) return
+    const unsubscribe = onJamMode((next) => {
+      setJamMode(next)
+    })
+    return unsubscribe
+  }, [isHost, onJamMode])
 
   const handleStart = useCallback(() => {
     const newState = start()
@@ -200,32 +210,47 @@ function SessionContent({
   const handleReset = useCallback(() => {
     const newState = reset(toSecs(sessionSettings.durations))
     setShowBreakOverlay(false)
-    if (canControl) broadcastTimerState(newState)
-  }, [reset, canControl, broadcastTimerState, sessionSettings.durations])
+    if (canControl) {
+      broadcastTimerState(newState)
+      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, mode: newState.mode }).eq('id', session.id)
+    }
+  }, [reset, canControl, broadcastTimerState, sessionSettings.durations, supabase, session.id])
 
   const handleSkip = useCallback(() => {
     const nextMode: TimerMode =
       mode === 'focus' ? 'short' : mode === 'short' ? 'long' : 'focus'
     const newState = setMode(nextMode, toSecs(sessionSettings.durations))
     setShowBreakOverlay(false)
-    if (canControl) broadcastTimerState(newState)
-  }, [mode, setMode, canControl, broadcastTimerState, sessionSettings.durations])
+    if (canControl) {
+      broadcastTimerState(newState)
+      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, mode: newState.mode }).eq('id', session.id)
+    }
+  }, [mode, setMode, canControl, broadcastTimerState, sessionSettings.durations, supabase, session.id])
 
   const handleModeChange = useCallback((newMode: TimerMode) => {
     const newState = setMode(newMode, toSecs(sessionSettings.durations))
     setShowBreakOverlay(false)
-    if (canControl) broadcastTimerState(newState)
-  }, [setMode, canControl, broadcastTimerState, sessionSettings.durations])
+    if (canControl) {
+      broadcastTimerState(newState)
+      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, mode: newState.mode }).eq('id', session.id)
+    }
+  }, [setMode, canControl, broadcastTimerState, sessionSettings.durations, supabase, session.id])
 
   const handleApplySettings = useCallback((newSettings: SessionSettings) => {
     setSessionSettings(newSettings)
     setShowSettings(false)
-    // Reset timer with new durations
     const newState = reset(toSecs(newSettings.durations))
-    if (canControl) broadcastTimerState(newState)
-    // Broadcast share lock change
+    if (canControl) {
+      broadcastTimerState(newState)
+      supabase.from('sessions').update({
+        running: false,
+        time_left: newState.timeLeft,
+        mode: newState.mode,
+        settings: { focus: newSettings.durations.focus, short: newSettings.durations.short, long: newSettings.durations.long },
+      }).eq('id', session.id)
+    }
     broadcastShareLock(!newSettings.allowGuestShare)
-  }, [reset, canControl, broadcastTimerState, broadcastShareLock])
+  }, [reset, canControl, broadcastTimerState, broadcastShareLock, supabase, session.id])
 
   const progress = computeProgress(timerState)
 
