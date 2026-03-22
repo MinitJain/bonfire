@@ -1,0 +1,95 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# PomodoroJam — CodeRabbit AI review config
+# Docs: https://docs.coderabbit.ai/getting-started/configure-coderabbit
+
+language: "en-US"
+early_access: false
+
+tone_instructions: "Senior engineer review. Focus on correctness, security, performance. Strict on type safety, RLS, and realtime cleanup."
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  collapse_walkthrough: false
+  auto_title_instructions: |
+    Format: "<type>: <short description>". Type must be one of:
+    feat, fix, perf, refactor, style, test, docs, chore, ci.
+    Example: "feat: add ambient sound player to session page"
+
+  path_filters:
+    - "!**/*.lock"
+    - "!**/.next/**"
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/*.min.js"
+
+  path_instructions:
+    - path: "app/**"
+      instructions: |
+        This is a Next.js 14 App Router project.
+        - Server components should NOT use useState/useEffect — flag any violations.
+        - Client components must have 'use client' at the top.
+        - Check that dynamic routes have proper generateMetadata() for SEO.
+        - All pages that fetch data should have loading.tsx and error.tsx siblings.
+
+    - path: "app/api/**"
+      instructions: |
+        These are Next.js API routes.
+        - All inputs must be validated with Zod before use.
+        - Supabase service role key must NEVER be exposed to the client.
+        - Ensure proper HTTP status codes and error handling.
+        - Check for rate limiting on any public endpoints.
+
+    - path: "components/**"
+      instructions: |
+        React components review:
+        - Named exports only (no default exports except pages).
+        - Props must be fully typed — no implicit any.
+        - useEffect cleanup: all Supabase realtime subscriptions and setInterval
+          calls must be cleaned up in the return function.
+        - Accessibility: interactive elements need aria-labels where text is absent.
+
+    - path: "hooks/**"
+      instructions: |
+        Custom hooks:
+        - All hooks must clean up subscriptions and intervals on unmount.
+        - Supabase channel.subscribe() must be paired with channel.unsubscribe() in cleanup.
+        - Timer intervals (setInterval) must be cleared on unmount.
+        - Flag any memory leaks or stale closure issues.
+
+    - path: "lib/supabase/**"
+      instructions: |
+        Supabase client files are security-critical:
+        - service role key must ONLY be in the server client, never the browser client.
+        - Verify the correct @supabase/ssr pattern is used (not the old auth-helpers).
+        - Server client must use cookies() from next/headers.
+
+    - path: "supabase/migrations/**"
+      instructions: |
+        Database migrations — review very carefully:
+        - Every new table MUST have RLS enabled (alter table ... enable row level security).
+        - Every table MUST have at least one RLS policy.
+        - Check for SQL injection vectors in any dynamic SQL.
+        - Verify foreign key constraints and ON DELETE behavior.
+        - Indexes should be added for columns used in WHERE clauses.
+
+    - path: "**/*.test.ts"
+      instructions: |
+        Tests: verify they actually test meaningful behavior, not just implementation
+        details. Mock Supabase clients properly using jest.mock.
+
+  auto_review:
+    enabled: true
+    ignore_title_keywords:
+      - "WIP"
+      - "[skip ci]"
+      - "Draft"
+    drafts: false
+    base_branches:
+      - "main"
+      - "develop"
+
+chat:
+  auto_reply: true

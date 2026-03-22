@@ -1,0 +1,57 @@
+version: 2
+
+updates:
+  # npm — Next.js, Supabase, all JS/TS deps
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 10
+    target-branch: "develop"
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      next-react:
+        patterns:
+          - "next"
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+          - "eslint-config-next"
+      supabase:
+        patterns:
+          - "@supabase/*"
+      dev-tooling:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "eslint"
+          - "eslint-*"
+          - "prettier"
+          - "tailwindcss"
+          - "postcss"
+          - "autoprefixer"
+    ignore:
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"

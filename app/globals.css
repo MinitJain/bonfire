@@ -1,0 +1,201 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────
+   LIGHT MODE (default)
+───────────────────────────────────────────── */
+:root {
+  --bg-primary: #FAFAF7;
+  --bg-secondary: #F2F1EB;
+  --bg-elevated: #FFFFFF;
+  --text-primary: #1A1A18;
+  --text-secondary: #6B6B5E;
+  --text-muted: #A8A89A;
+  --accent: #E8472A;
+  --accent-soft: #FDF1EE;
+  --accent-hover: #D43D22;
+  --green: #1A7A5E;
+  --green-soft: #EAF5F1;
+  --amber: #B8610A;
+  --amber-soft: #FDF4E7;
+  --border: rgba(26, 26, 24, 0.08);
+  --border-strong: rgba(26, 26, 24, 0.16);
+  --shadow-sm: 0 1px 3px rgba(26, 26, 24, 0.06), 0 1px 2px rgba(26, 26, 24, 0.04);
+  --shadow-md: 0 4px 16px rgba(26, 26, 24, 0.08), 0 2px 6px rgba(26, 26, 24, 0.06);
+  --shadow-lg: 0 16px 48px rgba(26, 26, 24, 0.12), 0 4px 16px rgba(26, 26, 24, 0.08);
+
+  /* Legacy aliases — keep Tailwind config working */
+  --bg: var(--bg-primary);
+  --surface: var(--bg-secondary);
+  --surface2: var(--bg-elevated);
+  --tomato: var(--accent);
+  --tomato-dim: var(--accent-hover);
+  --tomato-glow: var(--accent-soft);
+  --text: var(--text-primary);
+  --muted: var(--text-secondary);
+  --soft: var(--text-muted);
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
+  --foreground-muted: var(--text-muted);
+  --brand: var(--accent);
+  --brand-hover: var(--accent-hover);
+  --brand-muted: var(--accent-soft);
+  --border-2: var(--border-strong);
+  --muted-2: var(--text-muted);
+
+  /* Fonts */
+  --font-dm-sans: 'DM Sans', system-ui, sans-serif;
+  --font-syne: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-space-mono: var(--font-mono); /* backward compat */
+}
+
+/* ─────────────────────────────────────────────
+   DARK MODE (.dark class added by next-themes)
+───────────────────────────────────────────── */
+.dark {
+  --bg-primary: #0F0F0D;
+  --bg-secondary: #1A1A17;
+  --bg-elevated: #222220;
+  --text-primary: #F5F5F0;
+  --text-secondary: #9B9B8E;
+  --text-muted: #5A5A50;
+  --accent: #FF5533;
+  --accent-soft: rgba(255, 85, 51, 0.1);
+  --accent-hover: #FF6644;
+  --green: #2DBF8A;
+  --green-soft: rgba(45, 191, 138, 0.1);
+  --amber: #F0A050;
+  --amber-soft: rgba(240, 160, 80, 0.1);
+  --border: rgba(245, 245, 240, 0.06);
+  --border-strong: rgba(245, 245, 240, 0.12);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-dm-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─────────────────────────────────────────────
+   CUSTOM SCROLLBAR
+───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ─────────────────────────────────────────────
+   TIMER RING
+───────────────────────────────────────────── */
+.timer-ring-progress {
+  transition: stroke-dashoffset 1s linear, stroke 0.6s ease;
+}
+
+/* ─────────────────────────────────────────────
+   ANIMATIONS
+───────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes blobDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(30px, -20px) scale(1.05); }
+  66%       { transform: translate(-20px, 15px) scale(0.97); }
+}
+
+/* Utility classes */
+.animate-fade-up {
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-up:nth-child(1) { animation-delay: 0ms; }
+.animate-fade-up:nth-child(2) { animation-delay: 80ms; }
+.animate-fade-up:nth-child(3) { animation-delay: 160ms; }
+.animate-fade-up:nth-child(4) { animation-delay: 240ms; }
+.animate-fade-up:nth-child(5) { animation-delay: 320ms; }
+
+.animate-scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out forwards;
+}
+
+.animate-pulse-soft {
+  animation: pulseSoft 2s ease-in-out infinite;
+}
+
+.blob-animate {
+  animation: blobDrift 60s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Overlay */
+.overlay-enter { animation: fadeIn 0.3s ease-in-out forwards; }
+.overlay-exit  { animation: fadeOut 0.3s ease-in-out forwards; }
+
+/* ─────────────────────────────────────────────
+   ACCESSIBILITY — REDUCED MOTION
+───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
