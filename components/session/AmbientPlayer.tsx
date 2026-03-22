@@ -50,7 +50,7 @@ export function AmbientPlayer() {
         className="text-xs uppercase tracking-widest mb-3 font-medium"
         style={{ color: 'var(--text-muted)' }}
       >
-        Ambient Sound
+        Focus Noise
       </p>
 
       <div className="grid grid-cols-4 gap-2 mb-3">

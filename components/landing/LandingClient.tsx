@@ -20,12 +20,12 @@ interface LandingClientProps {
 const features = [
   {
     icon: Zap,
-    title: 'Spotify Jam for focus',
-    desc: 'One host controls the timer — or enable Jam Mode and let everyone drive.',
+    title: 'Like a listening party, but for work',
+    desc: 'One host controls the timer. Or enable Jam Mode and let everyone drive.',
   },
   {
     icon: Users,
-    title: 'Host controls, watchers sync',
+    title: 'Host controls. Watchers sync.',
     desc: 'Clock-based sync keeps every participant on the same second, always.',
   },
   {
@@ -51,8 +51,8 @@ const features = [
 ]
 
 const steps = [
-  { n: '01', title: 'Start a session', desc: 'Hit the button — a unique session link is generated instantly.' },
-  { n: '02', title: 'Share the link', desc: 'Send it to your team via any platform. They join in seconds.' },
+  { n: '01', title: 'Start a session', desc: 'Hit the button. A unique session link is generated instantly.' },
+  { n: '02', title: 'Share the link', desc: 'Send it to your friends via any platform. They join in seconds.' },
   { n: '03', title: 'Focus together', desc: 'One timer, everyone in sync. When the host starts, everyone starts.' },
 ]
 
@@ -297,7 +297,7 @@ function LandingContent({ user, profileUsername }: LandingClientProps) {
             className="text-lg sm:text-xl mb-10 sm:mb-12 max-w-lg mx-auto leading-relaxed animate-fade-up"
             style={{ color: 'var(--text-secondary)', animationDelay: '160ms' }}
           >
-            Start a 25-minute focus timer. Share the link. Your whole team works in sync — then breaks together.
+            Start a 25-minute focus timer. Share the link. Your friends focus in sync and break together.
           </p>
 
           {/* CTAs */}
@@ -429,7 +429,7 @@ function LandingContent({ user, profileUsername }: LandingClientProps) {
           className="font-display font-bold text-2xl sm:text-3xl mb-12 text-center"
           style={{ color: 'var(--text-primary)' }}
         >
-          Everything your team needs to focus
+          Everything you and your friends need to focus
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {features.map(({ icon: Icon, title, desc }) => (

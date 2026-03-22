@@ -26,11 +26,11 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pomodoro-jam.vercel.a
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: 'PomodoroJam — Focus Together',
+    default: 'PomodoroJam: Focus Together',
     template: '%s | PomodoroJam',
   },
   description:
-    'Real-time shared Pomodoro timer. One host, many watchers, perfect sync. Focus together.',
+    'A shared Pomodoro timer for friends. Start a session, share the link, focus in sync.',
   keywords: ['pomodoro', 'focus', 'productivity', 'timer', 'shared', 'real-time'],
   authors: [{ name: 'PomodoroJam' }],
   creator: 'PomodoroJam',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: appUrl,
     siteName: 'PomodoroJam',
-    title: 'PomodoroJam — Focus Together',
+    title: 'PomodoroJam: Focus Together',
     description: 'Real-time shared Pomodoro timer. Focus with friends.',
     images: [
       {
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PomodoroJam — Focus Together',
+    title: 'PomodoroJam: Focus Together',
     description: 'Real-time shared Pomodoro timer. Focus with friends.',
     images: ['/api/og'],
   },

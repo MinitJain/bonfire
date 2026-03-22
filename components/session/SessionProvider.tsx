@@ -281,7 +281,7 @@ function SessionContent({
           }}
         >
           <Zap className="w-3 h-3 inline mr-1" />
-          Jam Mode — everyone controls the timer
+          Jam Mode: everyone controls the timer
         </div>
       )}
 

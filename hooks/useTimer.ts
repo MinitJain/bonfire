@@ -153,13 +153,13 @@ export function useTimer({
     }
 
     if (timeLeft > 0 && timerState.status !== 'idle') {
-      document.title = `${mins}:${secs} ${modeLabel[timerState.mode]} — PomodoroJam`
+      document.title = `${mins}:${secs} ${modeLabel[timerState.mode]} | PomodoroJam`
     } else {
-      document.title = 'PomodoroJam 🍅 — Focus Together'
+      document.title = 'PomodoroJam 🍅'
     }
 
     return () => {
-      document.title = 'PomodoroJam 🍅 — Focus Together'
+      document.title = 'PomodoroJam 🍅'
     }
   }, [timeLeft, timerState.mode, timerState.status])
 
@@ -176,7 +176,7 @@ export function useTimer({
   useEffect(() => {
     return () => {
       resetFavicon()
-      document.title = 'PomodoroJam 🍅 — Focus Together'
+      document.title = 'PomodoroJam 🍅'
     }
   }, [])
 

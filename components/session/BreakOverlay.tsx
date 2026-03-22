@@ -18,7 +18,7 @@ const messages = {
   },
   short: {
     title: "Break's over!",
-    subtitle: "Quick breather — back in a moment.",
+    subtitle: "Quick breather. Back in a moment.",
     cta: "Start Focusing",
   },
   long: {
