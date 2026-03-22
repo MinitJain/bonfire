@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { X, Link2, Twitter, Share2 } from 'lucide-react'
+import { X, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { SharePanel } from '@/components/session/SharePanel'
 import { nativeShare } from '@/lib/share'

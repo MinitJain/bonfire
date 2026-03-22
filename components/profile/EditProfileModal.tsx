@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import type { Profile } from '@/types'
 import { Button } from '@/components/ui/Button'
@@ -20,6 +20,12 @@ export function EditProfileModal({ profile, onClose, onSave }: EditProfileModalP
   const [error, setError] = useState('')
 
   const { updateProfile } = useProfile(profile.id)
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onClose])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,6 +52,7 @@ export function EditProfileModal({ profile, onClose, onSave }: EditProfileModalP
       role="dialog"
       aria-modal="true"
       aria-label="Edit Profile"
+      onClick={onClose}
     >
       <div
         className="w-full max-w-md bg-surface border border-border rounded-2xl shadow-2xl animate-slide-up"

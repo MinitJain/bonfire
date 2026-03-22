@@ -4,13 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Volume2, VolumeX } from 'lucide-react'
 import { AmbientPlayer as Player, AMBIENT_SOUNDS, type AmbientType } from '@/lib/ambient'
 
-const AMBIENT_DESCRIPTIONS: Record<AmbientType, string> = {
-  brown: 'Warm deep hum',
-  white: 'Crisp static',
-  pink: 'Balanced focus',
-  rain: 'Gentle rainfall',
-}
-
 export function AmbientPlayer() {
   const playerRef = useRef<Player | null>(null)
   const [active, setActive] = useState<AmbientType | null>(null)

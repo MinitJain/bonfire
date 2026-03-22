@@ -30,7 +30,7 @@ export function extractSessionId(input: string): string | null {
     const parts = url.pathname.split('/')
     const sessionIndex = parts.indexOf('session')
     if (sessionIndex !== -1 && parts[sessionIndex + 1]) {
-      return parts[sessionIndex + 1]
+      return parts[sessionIndex + 1].toLowerCase()
     }
   } catch {
     // Not a URL - check if it looks like a session ID (alphanumeric, 4-20 chars)
