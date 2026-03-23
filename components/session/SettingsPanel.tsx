@@ -133,8 +133,7 @@ export function SettingsPanel({
       <button
         onClick={() => onApply(local)}
         disabled={disabled}
-        className="w-full py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer disabled:opacity-50"
-        style={{ background: 'var(--accent)', color: '#fff' }}
+        className="w-full py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer disabled:opacity-50 bg-accent text-white"
       >
         Apply
       </button>

@@ -19,7 +19,7 @@ import { BreakOverlay } from '@/components/session/BreakOverlay'
 import { AmbientPlayer } from '@/components/session/AmbientPlayer'
 import { ModeTipBubble } from '@/components/session/ModeTipBubble'
 import { GuestNicknamePrompt } from '@/components/session/GuestNicknamePrompt'
-import { ToastProvider } from '@/components/ui/Toast'
+import { ToastProvider, useToast } from '@/components/ui/Toast'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { createClient } from '@/lib/supabase/client'
@@ -40,6 +40,7 @@ function SessionContent({
   username,
   avatarUrl,
 }: SessionProviderProps) {
+  const { toast } = useToast()
   const [isHost, setIsHost] = useState(isHostProp)
   const [jamMode, setJamMode] = useState(session.jam_mode ?? false)
   const [showBreakOverlay, setShowBreakOverlay] = useState(false)
@@ -302,24 +303,36 @@ function SessionContent({
     }
   }, [sessionSettings, session.settings?.rounds])
 
-  const handleGuestShareChange = useCallback((allowed: boolean) => {
+  const handleGuestShareChange = useCallback(async (allowed: boolean) => {
     const next = buildSettings({ allowGuestShare: allowed })
     setSessionSettings(prev => ({ ...prev, allowGuestShare: allowed }))
     broadcastShareLock(!allowed)
-    supabase.from('sessions').update({ settings: next }).eq('id', session.id)
-  }, [broadcastShareLock, supabase, session.id, buildSettings])
+    const { error } = await supabase.from('sessions').update({ settings: next }).eq('id', session.id)
+    if (error) {
+      setSessionSettings(prev => ({ ...prev, allowGuestShare: !allowed }))
+      toast('Failed to save setting. Please try again.', 'error')
+    }
+  }, [broadcastShareLock, supabase, session.id, buildSettings, toast])
 
-  const handleAutoStartBreaksChange = useCallback((v: boolean) => {
+  const handleAutoStartBreaksChange = useCallback(async (v: boolean) => {
     const next = buildSettings({ autoStartBreaks: v })
     setSessionSettings(prev => ({ ...prev, autoStartBreaks: v }))
-    supabase.from('sessions').update({ settings: next }).eq('id', session.id)
-  }, [supabase, session.id, buildSettings])
+    const { error } = await supabase.from('sessions').update({ settings: next }).eq('id', session.id)
+    if (error) {
+      setSessionSettings(prev => ({ ...prev, autoStartBreaks: !v }))
+      toast('Failed to save setting. Please try again.', 'error')
+    }
+  }, [supabase, session.id, buildSettings, toast])
 
-  const handleAutoStartPomodorosChange = useCallback((v: boolean) => {
+  const handleAutoStartPomodorosChange = useCallback(async (v: boolean) => {
     const next = buildSettings({ autoStartPomodoros: v })
     setSessionSettings(prev => ({ ...prev, autoStartPomodoros: v }))
-    supabase.from('sessions').update({ settings: next }).eq('id', session.id)
-  }, [supabase, session.id, buildSettings])
+    const { error } = await supabase.from('sessions').update({ settings: next }).eq('id', session.id)
+    if (error) {
+      setSessionSettings(prev => ({ ...prev, autoStartPomodoros: !v }))
+      toast('Failed to save setting. Please try again.', 'error')
+    }
+  }, [supabase, session.id, buildSettings, toast])
 
   const handleApplySettings = useCallback((newSettings: SessionSettings) => {
     setSessionSettings(newSettings)
