@@ -251,6 +251,7 @@ function SessionContent({
   }, [updatePresence])
 
   const handleNicknameSkip = useCallback(() => {
+    localStorage.setItem('pomodoro_nickname', '')
     setGuestNickname('')
   }, [])
 
@@ -258,9 +259,15 @@ function SessionContent({
     setSessionSettings(prev => ({ ...prev, allowGuestShare: allowed }))
     broadcastShareLock(!allowed)
     supabase.from('sessions').update({
-      settings: { ...session.settings, allowGuestShare: allowed },
+      settings: {
+        focus: sessionSettings.durations.focus,
+        short: sessionSettings.durations.short,
+        long: sessionSettings.durations.long,
+        rounds: session.settings?.rounds ?? 4,
+        allowGuestShare: allowed,
+      },
     }).eq('id', session.id)
-  }, [broadcastShareLock, supabase, session.id, session.settings])
+  }, [broadcastShareLock, supabase, session.id, session.settings?.rounds, sessionSettings])
 
   const handleApplySettings = useCallback((newSettings: SessionSettings) => {
     setSessionSettings(newSettings)
