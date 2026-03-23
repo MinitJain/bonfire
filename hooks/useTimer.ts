@@ -26,6 +26,7 @@ interface UseTimerReturn {
   reset: (durations?: Record<TimerMode, number>) => TimerState
   setMode: (mode: TimerMode, durations?: Record<TimerMode, number>) => TimerState
   applyState: (state: TimerState) => void
+  skipAndStart: (nextMode: TimerMode, durations?: Record<TimerMode, number>) => TimerState
 }
 
 export function useTimer({
@@ -135,6 +136,21 @@ export function useTimer({
     return newState
   }, [])
 
+  const skipAndStart = useCallback((nextMode: TimerMode, durations?: Record<TimerMode, number>): TimerState => {
+    const totalTime = durations?.[nextMode] ?? TIMER_DURATIONS[nextMode]
+    const newState: TimerState = {
+      mode: nextMode,
+      status: 'running',
+      timeLeft: totalTime,
+      totalTime,
+      startedAt: Date.now(),
+      pausedAt: null,
+    }
+    setTimerState(newState)
+    expiredRef.current = false
+    return newState
+  }, [])
+
   const applyState = useCallback((state: TimerState) => {
     // Skip redundant re-apply — avoids restarting the interval when timer is
     // already running with the same anchor (e.g., host re-broadcasts on join)
@@ -202,5 +218,6 @@ export function useTimer({
     reset,
     setMode,
     applyState,
+    skipAndStart,
   }
 }

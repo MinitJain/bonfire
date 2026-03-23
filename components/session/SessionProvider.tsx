@@ -51,6 +51,8 @@ function SessionContent({
       long: session.settings?.long ?? 15,
     },
     allowGuestShare: session.settings?.allowGuestShare ?? true,
+    autoStartBreaks: session.settings?.autoStartBreaks ?? false,
+    autoStartPomodoros: session.settings?.autoStartPomodoros ?? false,
   })
   const [showSettings, setShowSettings] = useState(false)
   const [modeTipDismissed, setModeTipDismissed] = useState(false)
@@ -75,9 +77,17 @@ function SessionContent({
   const canControl = isHost || jamMode
 
   const modeRef = useRef<TimerMode>('focus')
+  // These are resolved after useTimer/useSession initialise; stored in refs to avoid circular deps
+  const skipAndStartRef = useRef<((nextMode: TimerMode, durations?: Record<TimerMode, number>) => TimerState) | null>(null)
+  const broadcastTimerStateRef = useRef<((state: TimerState) => void) | null>(null)
+
+  const toSecs = (d: TimerDurations) => ({
+    focus: d.focus * 60,
+    short: d.short * 60,
+    long: d.long * 60,
+  })
 
   const handleExpire = useCallback(() => {
-    setShowBreakOverlay(true)
     playCompleteSound()
     showNotification('PomodoroJam', 'Your session has ended! Time for a break.')
     // Log completed pomodoro for authenticated users (focus mode only)
@@ -85,15 +95,38 @@ function SessionContent({
       const minutes = Math.round(sessionSettings.durations.focus)
       supabase.rpc('increment_profile_stats', { p_user_id: userId, p_minutes: minutes })
     }
-  }, [userId, sessionSettings.durations.focus, supabase])
+
+    const currentMode = modeRef.current
+    const isBreakMode = currentMode === 'short' || currentMode === 'long'
+    const shouldAutoStart =
+      (currentMode === 'focus' && sessionSettings.autoStartBreaks) ||
+      (isBreakMode && sessionSettings.autoStartPomodoros)
+
+    if (shouldAutoStart && canControl && skipAndStartRef.current) {
+      const nextMode: TimerMode = currentMode === 'focus' ? 'short' : currentMode === 'short' ? 'long' : 'focus'
+      const newState = skipAndStartRef.current(nextMode, toSecs(sessionSettings.durations))
+      broadcastTimerStateRef.current?.(newState)
+      supabase.from('sessions').update({
+        running: true,
+        time_left: newState.timeLeft,
+        total_time: newState.totalTime,
+        mode: newState.mode,
+      }).eq('id', session.id)
+    } else if (!shouldAutoStart) {
+      setShowBreakOverlay(true)
+    }
+    // if shouldAutoStart && !canControl: watcher skips overlay, receives running state via broadcast
+  }, [userId, sessionSettings, canControl, supabase, session.id])
 
   const {
     timeLeft, status, mode, timerState,
-    start, pause, reset, setMode, applyState,
+    start, pause, reset, setMode, applyState, skipAndStart,
   } = useTimer({
     initialState: sessionToTimerState(session),
     onExpire: handleExpire,
   })
+  // Keep ref in sync so handleExpire (defined before useTimer) can access skipAndStart
+  skipAndStartRef.current = skipAndStart
 
   const { participants, isConnected, broadcastTimerState, onTimerUpdate, broadcastShareLock, onShareLock, broadcastJamMode, onJamMode, onParticipantJoin, updatePresence } = useSession({
     sessionId: session.id,
@@ -102,6 +135,7 @@ function SessionContent({
     username: userId ? username : (guestNickname || null),
     avatarUrl,
   })
+  broadcastTimerStateRef.current = broadcastTimerState
 
   // Keep refs up to date
   useEffect(() => { modeRef.current = mode }, [mode])
@@ -113,9 +147,11 @@ function SessionContent({
   // Always receive timer updates from other controllers.
   // broadcast: { self: false } ensures you never apply your own broadcasts.
   // In Jam mode this is essential — every participant must sync with whoever just acted.
+  // Also dismiss break overlay if host auto-started the next segment.
   useEffect(() => {
     const unsubscribe = onTimerUpdate((state: TimerState) => {
       applyState(state)
+      if (state.status === 'running') setShowBreakOverlay(false)
     })
     return unsubscribe
   }, [onTimerUpdate, applyState])
@@ -209,12 +245,6 @@ function SessionContent({
     }
   }, [pause, canControl, broadcastTimerState, supabase, session.id])
 
-  const toSecs = (d: TimerDurations) => ({
-    focus: d.focus * 60,
-    short: d.short * 60,
-    long: d.long * 60,
-  })
-
   const handleReset = useCallback(() => {
     const newState = reset(toSecs(sessionSettings.durations))
     setShowBreakOverlay(false)
@@ -255,19 +285,34 @@ function SessionContent({
     setGuestNickname('')
   }, [])
 
+  const buildSettings = useCallback((overrides: Partial<SessionSettings>) => {
+    const s = { ...sessionSettings, ...overrides }
+    return {
+      focus: s.durations.focus,
+      short: s.durations.short,
+      long: s.durations.long,
+      rounds: session.settings?.rounds ?? 4,
+      allowGuestShare: s.allowGuestShare,
+      autoStartBreaks: s.autoStartBreaks,
+      autoStartPomodoros: s.autoStartPomodoros,
+    }
+  }, [sessionSettings, session.settings?.rounds])
+
   const handleGuestShareChange = useCallback((allowed: boolean) => {
     setSessionSettings(prev => ({ ...prev, allowGuestShare: allowed }))
     broadcastShareLock(!allowed)
-    supabase.from('sessions').update({
-      settings: {
-        focus: sessionSettings.durations.focus,
-        short: sessionSettings.durations.short,
-        long: sessionSettings.durations.long,
-        rounds: session.settings?.rounds ?? 4,
-        allowGuestShare: allowed,
-      },
-    }).eq('id', session.id)
-  }, [broadcastShareLock, supabase, session.id, session.settings?.rounds, sessionSettings])
+    supabase.from('sessions').update({ settings: buildSettings({ allowGuestShare: allowed }) }).eq('id', session.id)
+  }, [broadcastShareLock, supabase, session.id, buildSettings])
+
+  const handleAutoStartBreaksChange = useCallback((v: boolean) => {
+    setSessionSettings(prev => ({ ...prev, autoStartBreaks: v }))
+    supabase.from('sessions').update({ settings: buildSettings({ autoStartBreaks: v }) }).eq('id', session.id)
+  }, [supabase, session.id, buildSettings])
+
+  const handleAutoStartPomodorosChange = useCallback((v: boolean) => {
+    setSessionSettings(prev => ({ ...prev, autoStartPomodoros: v }))
+    supabase.from('sessions').update({ settings: buildSettings({ autoStartPomodoros: v }) }).eq('id', session.id)
+  }, [supabase, session.id, buildSettings])
 
   const handleApplySettings = useCallback((newSettings: SessionSettings) => {
     setSessionSettings(newSettings)
@@ -279,7 +324,15 @@ function SessionContent({
         running: false,
         time_left: newState.timeLeft,
         mode: newState.mode,
-        settings: { focus: newSettings.durations.focus, short: newSettings.durations.short, long: newSettings.durations.long, rounds: session.settings?.rounds ?? 4, allowGuestShare: newSettings.allowGuestShare },
+        settings: {
+          focus: newSettings.durations.focus,
+          short: newSettings.durations.short,
+          long: newSettings.durations.long,
+          rounds: session.settings?.rounds ?? 4,
+          allowGuestShare: newSettings.allowGuestShare,
+          autoStartBreaks: newSettings.autoStartBreaks,
+          autoStartPomodoros: newSettings.autoStartPomodoros,
+        },
       }).eq('id', session.id)
     }
     broadcastShareLock(!newSettings.allowGuestShare)
@@ -474,6 +527,8 @@ function SessionContent({
                         settings={sessionSettings}
                         onApply={handleApplySettings}
                         onGuestShareChange={handleGuestShareChange}
+                        onAutoStartBreaksChange={handleAutoStartBreaksChange}
+                        onAutoStartPomodorosChange={handleAutoStartPomodorosChange}
                         disabled={status === 'running'}
                       />
                     </div>
@@ -499,7 +554,7 @@ function SessionContent({
         </div>
       </main>
 
-      {isHost && <ModeTipBubble externalDismiss={modeTipDismissed} />}
+      {isHost && (userId !== null || guestNickname !== null) && <ModeTipBubble externalDismiss={modeTipDismissed} />}
 
       {!userId && guestNickname === null && (
         <GuestNicknamePrompt onSave={handleNicknameSave} onSkip={handleNicknameSkip} />

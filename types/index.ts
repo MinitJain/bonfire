@@ -17,6 +17,8 @@ export interface TimerSettings {
   long: number    // minutes
   rounds: number
   allowGuestShare?: boolean
+  autoStartBreaks?: boolean
+  autoStartPomodoros?: boolean
 }
 
 /**

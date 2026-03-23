@@ -11,12 +11,16 @@ export interface TimerDurations {
 export interface SessionSettings {
   durations: TimerDurations
   allowGuestShare: boolean
+  autoStartBreaks: boolean
+  autoStartPomodoros: boolean
 }
 
 interface SettingsPanelProps {
   settings: SessionSettings
   onApply: (settings: SessionSettings) => void
   onGuestShareChange?: (v: boolean) => void
+  onAutoStartBreaksChange?: (v: boolean) => void
+  onAutoStartPomodorosChange?: (v: boolean) => void
   disabled?: boolean
 }
 
@@ -52,7 +56,44 @@ function ClampInput({ label, value, onChange, min, max }: {
   )
 }
 
-export function SettingsPanel({ settings, onApply, onGuestShareChange, disabled }: SettingsPanelProps) {
+function ToggleRow({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) {
+  return (
+    <div
+      className="flex items-center justify-between py-2.5 px-3 rounded-xl"
+      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
+    >
+      <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{label}</span>
+      <button
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        onClick={onToggle}
+        className="relative w-11 h-6 rounded-full transition-colors cursor-pointer focus:outline-none flex-shrink-0"
+        style={{
+          background: checked ? 'var(--accent)' : 'var(--bg-secondary)',
+          border: '1px solid var(--border)',
+        }}
+      >
+        <span
+          className="absolute top-1 left-1 w-4 h-4 rounded-full transition-transform"
+          style={{
+            background: '#fff',
+            transform: checked ? 'translateX(20px)' : 'translateX(0px)',
+          }}
+        />
+      </button>
+    </div>
+  )
+}
+
+export function SettingsPanel({
+  settings,
+  onApply,
+  onGuestShareChange,
+  onAutoStartBreaksChange,
+  onAutoStartPomodorosChange,
+  disabled,
+}: SettingsPanelProps) {
   const [local, setLocal] = useState(settings)
 
   const setDuration = (key: keyof TimerDurations) => (v: number) =>
@@ -70,37 +111,35 @@ export function SettingsPanel({ settings, onApply, onGuestShareChange, disabled 
         <ClampInput label="Long break" value={local.durations.long} onChange={setDuration('long')} min={1} max={60} />
       </div>
 
-      <div
-        className="flex items-center justify-between py-2.5 px-3 rounded-xl"
-        style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
-      >
-        <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
-          Allow guests to invite
-        </span>
-        <button
-          role="switch"
-          aria-checked={local.allowGuestShare}
-          aria-label="Allow guests to invite"
-          onClick={() => {
-            const next = !local.allowGuestShare
-            setLocal(prev => ({ ...prev, allowGuestShare: next }))
-            onGuestShareChange?.(next)
-          }}
-          className="relative w-11 h-6 rounded-full transition-colors cursor-pointer focus:outline-none flex-shrink-0"
-          style={{
-            background: local.allowGuestShare ? 'var(--accent)' : 'var(--bg-secondary)',
-            border: '1px solid var(--border)',
-          }}
-        >
-          <span
-            className="absolute top-1 left-1 w-4 h-4 rounded-full transition-transform"
-            style={{
-              background: '#fff',
-              transform: local.allowGuestShare ? 'translateX(20px)' : 'translateX(0px)',
-            }}
-          />
-        </button>
-      </div>
+      <ToggleRow
+        label="Auto start breaks"
+        checked={local.autoStartBreaks}
+        onToggle={() => {
+          const next = !local.autoStartBreaks
+          setLocal(prev => ({ ...prev, autoStartBreaks: next }))
+          onAutoStartBreaksChange?.(next)
+        }}
+      />
+
+      <ToggleRow
+        label="Auto start pomodoros"
+        checked={local.autoStartPomodoros}
+        onToggle={() => {
+          const next = !local.autoStartPomodoros
+          setLocal(prev => ({ ...prev, autoStartPomodoros: next }))
+          onAutoStartPomodorosChange?.(next)
+        }}
+      />
+
+      <ToggleRow
+        label="Allow guests to invite"
+        checked={local.allowGuestShare}
+        onToggle={() => {
+          const next = !local.allowGuestShare
+          setLocal(prev => ({ ...prev, allowGuestShare: next }))
+          onGuestShareChange?.(next)
+        }}
+      />
 
       <button
         onClick={() => onApply(local)}
