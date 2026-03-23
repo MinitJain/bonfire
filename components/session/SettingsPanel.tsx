@@ -58,28 +58,17 @@ function ClampInput({ label, value, onChange, min, max }: {
 
 function ToggleRow({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) {
   return (
-    <div
-      className="flex items-center justify-between py-2.5 px-3 rounded-xl"
-      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
-    >
-      <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{label}</span>
+    <div className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-surface border border-border">
+      <span className="text-sm text-foreground">{label}</span>
       <button
         role="switch"
         aria-checked={checked}
         aria-label={label}
         onClick={onToggle}
-        className="relative w-11 h-6 rounded-full transition-colors cursor-pointer focus:outline-none flex-shrink-0"
-        style={{
-          background: checked ? 'var(--accent)' : 'var(--bg-secondary)',
-          border: '1px solid var(--border)',
-        }}
+        className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer focus:outline-none flex-shrink-0 border border-border ${checked ? 'bg-accent' : 'bg-surface'}`}
       >
         <span
-          className="absolute top-1 left-1 w-4 h-4 rounded-full transition-transform"
-          style={{
-            background: '#fff',
-            transform: checked ? 'translateX(20px)' : 'translateX(0px)',
-          }}
+          className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`}
         />
       </button>
     </div>

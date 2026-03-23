@@ -39,7 +39,11 @@ export function useSession({
   const isHostRef = useRef(isHost)
   const avatarUrlRef = useRef(avatarUrl)
   const usernameRef = useRef(username)
-  useEffect(() => { isHostRef.current = isHost }, [isHost])
+  // Assign during render so refs are always current within the same render cycle
+  isHostRef.current = isHost
+  avatarUrlRef.current = avatarUrl ?? null
+  usernameRef.current = username ?? null
+  // Re-track presence whenever isHost changes so the is_host field stays accurate
   useEffect(() => {
     if (!channelRef.current) return
     channelRef.current.track({
@@ -49,8 +53,6 @@ export function useSession({
       joined_at: new Date().toISOString(),
     })
   }, [isHost])
-  useEffect(() => { avatarUrlRef.current = avatarUrl }, [avatarUrl])
-  useEffect(() => { usernameRef.current = username }, [username])
   const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())
   const shareLockCallbacksRef = useRef<Set<(locked: boolean) => void>>(new Set())
   const jamModeCallbacksRef = useRef<Set<(jamMode: boolean) => void>>(new Set())
