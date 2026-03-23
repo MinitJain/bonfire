@@ -18,6 +18,7 @@ import { SharePanel } from '@/components/session/SharePanel'
 import { BreakOverlay } from '@/components/session/BreakOverlay'
 import { AmbientPlayer } from '@/components/session/AmbientPlayer'
 import { ModeTipBubble } from '@/components/session/ModeTipBubble'
+import { GuestNicknamePrompt } from '@/components/session/GuestNicknamePrompt'
 import { ToastProvider } from '@/components/ui/Toast'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -53,6 +54,11 @@ function SessionContent({
   })
   const [showSettings, setShowSettings] = useState(false)
   const [modeTipDismissed, setModeTipDismissed] = useState(false)
+  // null = prompt not yet answered; '' = skipped; non-empty = set name
+  const [guestNickname, setGuestNickname] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem('pomodoro_nickname')
+  })
   const sharePanelRef = useRef<HTMLDivElement>(null)
   const settingsPanelRef = useRef<HTMLDivElement>(null)
   const hasRequestedNotifRef = useRef(false)
@@ -89,11 +95,11 @@ function SessionContent({
     onExpire: handleExpire,
   })
 
-  const { participants, isConnected, broadcastTimerState, onTimerUpdate, broadcastShareLock, onShareLock, broadcastJamMode, onJamMode, onParticipantJoin } = useSession({
+  const { participants, isConnected, broadcastTimerState, onTimerUpdate, broadcastShareLock, onShareLock, broadcastJamMode, onJamMode, onParticipantJoin, updatePresence } = useSession({
     sessionId: session.id,
     userId,
     isHost,
-    username,
+    username: userId ? username : (guestNickname || null),
     avatarUrl,
   })
 
@@ -237,6 +243,24 @@ function SessionContent({
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
   }, [setMode, canControl, broadcastTimerState, sessionSettings.durations, supabase, session.id])
+
+  const handleNicknameSave = useCallback((name: string) => {
+    localStorage.setItem('pomodoro_nickname', name)
+    setGuestNickname(name)
+    updatePresence(name)
+  }, [updatePresence])
+
+  const handleNicknameSkip = useCallback(() => {
+    setGuestNickname('')
+  }, [])
+
+  const handleGuestShareChange = useCallback((allowed: boolean) => {
+    setSessionSettings(prev => ({ ...prev, allowGuestShare: allowed }))
+    broadcastShareLock(!allowed)
+    supabase.from('sessions').update({
+      settings: { ...session.settings, allowGuestShare: allowed },
+    }).eq('id', session.id)
+  }, [broadcastShareLock, supabase, session.id, session.settings])
 
   const handleApplySettings = useCallback((newSettings: SessionSettings) => {
     setSessionSettings(newSettings)
@@ -442,6 +466,7 @@ function SessionContent({
                       <SettingsPanel
                         settings={sessionSettings}
                         onApply={handleApplySettings}
+                        onGuestShareChange={handleGuestShareChange}
                         disabled={status === 'running'}
                       />
                     </div>
@@ -468,6 +493,10 @@ function SessionContent({
       </main>
 
       {isHost && <ModeTipBubble externalDismiss={modeTipDismissed} />}
+
+      {!userId && guestNickname === null && (
+        <GuestNicknamePrompt onSave={handleNicknameSave} onSkip={handleNicknameSkip} />
+      )}
 
       <BreakOverlay
         visible={showBreakOverlay}

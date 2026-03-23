@@ -23,6 +23,7 @@ interface UseSessionReturn {
   broadcastJamMode: (jamMode: boolean) => void
   onJamMode: (callback: (jamMode: boolean) => void) => () => void
   onParticipantJoin: (callback: () => void) => () => void
+  updatePresence: (newUsername: string | null) => void
 }
 
 export function useSession({
@@ -35,6 +36,10 @@ export function useSession({
   const [participants, setParticipants] = useState<Participant[]>([])
   const [isConnected, setIsConnected] = useState(false)
   const channelRef = useRef<RealtimeChannel | null>(null)
+  const isHostRef = useRef(isHost)
+  const avatarUrlRef = useRef(avatarUrl)
+  useEffect(() => { isHostRef.current = isHost }, [isHost])
+  useEffect(() => { avatarUrlRef.current = avatarUrl }, [avatarUrl])
   const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())
   const shareLockCallbacksRef = useRef<Set<(locked: boolean) => void>>(new Set())
   const jamModeCallbacksRef = useRef<Set<(jamMode: boolean) => void>>(new Set())
@@ -211,6 +216,16 @@ export function useSession({
     }
   }, [])
 
+  const updatePresence = useCallback((newUsername: string | null) => {
+    if (!channelRef.current) return
+    channelRef.current.track({
+      username: newUsername,
+      avatar_url: avatarUrlRef.current ?? null,
+      is_host: isHostRef.current,
+      joined_at: new Date().toISOString(),
+    })
+  }, [])
+
   return {
     participants,
     isConnected,
@@ -221,5 +236,6 @@ export function useSession({
     broadcastJamMode,
     onJamMode,
     onParticipantJoin,
+    updatePresence,
   }
 }

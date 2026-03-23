@@ -16,6 +16,7 @@ export interface SessionSettings {
 interface SettingsPanelProps {
   settings: SessionSettings
   onApply: (settings: SessionSettings) => void
+  onGuestShareChange?: (v: boolean) => void
   disabled?: boolean
 }
 
@@ -51,7 +52,7 @@ function ClampInput({ label, value, onChange, min, max }: {
   )
 }
 
-export function SettingsPanel({ settings, onApply, disabled }: SettingsPanelProps) {
+export function SettingsPanel({ settings, onApply, onGuestShareChange, disabled }: SettingsPanelProps) {
   const [local, setLocal] = useState(settings)
 
   const setDuration = (key: keyof TimerDurations) => (v: number) =>
@@ -80,7 +81,11 @@ export function SettingsPanel({ settings, onApply, disabled }: SettingsPanelProp
           role="switch"
           aria-checked={local.allowGuestShare}
           aria-label="Allow guests to invite"
-          onClick={() => setLocal(prev => ({ ...prev, allowGuestShare: !prev.allowGuestShare }))}
+          onClick={() => {
+            const next = !local.allowGuestShare
+            setLocal(prev => ({ ...prev, allowGuestShare: next }))
+            onGuestShareChange?.(next)
+          }}
           className="relative w-11 h-6 rounded-full transition-colors cursor-pointer focus:outline-none flex-shrink-0"
           style={{
             background: local.allowGuestShare ? 'var(--accent)' : 'var(--bg-secondary)',

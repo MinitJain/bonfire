@@ -136,6 +136,15 @@ export function useTimer({
   }, [])
 
   const applyState = useCallback((state: TimerState) => {
+    // Skip redundant re-apply — avoids restarting the interval when timer is
+    // already running with the same anchor (e.g., host re-broadcasts on join)
+    if (
+      state.status === 'running' &&
+      timerStateRef.current.status === 'running' &&
+      state.startedAt === timerStateRef.current.startedAt
+    ) {
+      return
+    }
     setTimerState(state)
     setTimeLeft(computeTimeLeft(state))
     if (isTimerExpired(state)) {
