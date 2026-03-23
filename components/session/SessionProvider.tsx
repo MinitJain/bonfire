@@ -59,8 +59,10 @@ function SessionContent({
   // null = prompt not yet answered; '' = skipped; non-empty = set name
   // Initialised in useEffect to avoid server/client hydration mismatch
   const [guestNickname, setGuestNickname] = useState<string | null>(null)
+  const [guestNicknameHydrated, setGuestNicknameHydrated] = useState(false)
   useEffect(() => {
     setGuestNickname(localStorage.getItem('pomodoro_nickname'))
+    setGuestNicknameHydrated(true)
   }, [])
   const sharePanelRef = useRef<HTMLDivElement>(null)
   const settingsPanelRef = useRef<HTMLDivElement>(null)
@@ -103,7 +105,8 @@ function SessionContent({
       (currentMode === 'focus' && sessionSettings.autoStartBreaks) ||
       (isBreakMode && sessionSettings.autoStartPomodoros)
 
-    if (shouldAutoStart && canControl && skipAndStartRef.current) {
+    if (shouldAutoStart && isHost && skipAndStartRef.current) {
+      // Gate to host only — prevents Jam participants from all minting conflicting startedAt timestamps
       const nextMode: TimerMode = currentMode === 'focus' ? 'short' : currentMode === 'short' ? 'long' : 'focus'
       const newState = skipAndStartRef.current(nextMode, toSecs(sessionSettings.durations))
       broadcastTimerStateRef.current?.(newState)
@@ -116,8 +119,8 @@ function SessionContent({
     } else if (!shouldAutoStart) {
       setShowBreakOverlay(true)
     }
-    // if shouldAutoStart && !canControl: watcher skips overlay, receives running state via broadcast
-  }, [userId, sessionSettings, canControl, supabase, session.id])
+    // if shouldAutoStart && !isHost: watcher skips overlay, receives running state via broadcast
+  }, [userId, sessionSettings, isHost, supabase, session.id])
 
   const {
     timeLeft, status, mode, timerState,
@@ -327,6 +330,7 @@ function SessionContent({
       supabase.from('sessions').update({
         running: false,
         time_left: newState.timeLeft,
+        total_time: newState.totalTime,
         mode: newState.mode,
         settings: {
           focus: newSettings.durations.focus,
@@ -560,7 +564,7 @@ function SessionContent({
 
       {isHost && (userId !== null || guestNickname !== null) && <ModeTipBubble externalDismiss={modeTipDismissed} />}
 
-      {!userId && guestNickname === null && (
+      {!userId && guestNicknameHydrated && guestNickname === null && (
         <GuestNicknamePrompt onSave={handleNicknameSave} onSkip={handleNicknameSkip} />
       )}
 

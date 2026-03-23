@@ -40,6 +40,15 @@ export function useSession({
   const avatarUrlRef = useRef(avatarUrl)
   const usernameRef = useRef(username)
   useEffect(() => { isHostRef.current = isHost }, [isHost])
+  useEffect(() => {
+    if (!channelRef.current) return
+    channelRef.current.track({
+      username: usernameRef.current ?? null,
+      avatar_url: avatarUrlRef.current ?? null,
+      is_host: isHost,
+      joined_at: new Date().toISOString(),
+    })
+  }, [isHost])
   useEffect(() => { avatarUrlRef.current = avatarUrl }, [avatarUrl])
   useEffect(() => { usernameRef.current = username }, [username])
   const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())

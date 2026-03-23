@@ -17,9 +17,9 @@ export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps
     onSave(trimmed)
   }
 
-  // Escape to skip
+  // Escape to skip — skip during IME composition to avoid breaking CJK input
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onSkip() }
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !e.isComposing) onSkip() }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [onSkip])
@@ -78,7 +78,7 @@ export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps
           placeholder="Your name"
           value={name}
           onChange={e => setName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') handleSave() }}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleSave() }}
           maxLength={32}
           className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2"
           style={{
