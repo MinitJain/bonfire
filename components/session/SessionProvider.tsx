@@ -57,10 +57,11 @@ function SessionContent({
   const [showSettings, setShowSettings] = useState(false)
   const [modeTipDismissed, setModeTipDismissed] = useState(false)
   // null = prompt not yet answered; '' = skipped; non-empty = set name
-  const [guestNickname, setGuestNickname] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return ''
-    return localStorage.getItem('pomodoro_nickname')
-  })
+  // Initialised in useEffect to avoid server/client hydration mismatch
+  const [guestNickname, setGuestNickname] = useState<string | null>(null)
+  useEffect(() => {
+    setGuestNickname(localStorage.getItem('pomodoro_nickname'))
+  }, [])
   const sharePanelRef = useRef<HTMLDivElement>(null)
   const settingsPanelRef = useRef<HTMLDivElement>(null)
   const hasRequestedNotifRef = useRef(false)
@@ -299,19 +300,22 @@ function SessionContent({
   }, [sessionSettings, session.settings?.rounds])
 
   const handleGuestShareChange = useCallback((allowed: boolean) => {
+    const next = buildSettings({ allowGuestShare: allowed })
     setSessionSettings(prev => ({ ...prev, allowGuestShare: allowed }))
     broadcastShareLock(!allowed)
-    supabase.from('sessions').update({ settings: buildSettings({ allowGuestShare: allowed }) }).eq('id', session.id)
+    supabase.from('sessions').update({ settings: next }).eq('id', session.id)
   }, [broadcastShareLock, supabase, session.id, buildSettings])
 
   const handleAutoStartBreaksChange = useCallback((v: boolean) => {
+    const next = buildSettings({ autoStartBreaks: v })
     setSessionSettings(prev => ({ ...prev, autoStartBreaks: v }))
-    supabase.from('sessions').update({ settings: buildSettings({ autoStartBreaks: v }) }).eq('id', session.id)
+    supabase.from('sessions').update({ settings: next }).eq('id', session.id)
   }, [supabase, session.id, buildSettings])
 
   const handleAutoStartPomodorosChange = useCallback((v: boolean) => {
+    const next = buildSettings({ autoStartPomodoros: v })
     setSessionSettings(prev => ({ ...prev, autoStartPomodoros: v }))
-    supabase.from('sessions').update({ settings: buildSettings({ autoStartPomodoros: v }) }).eq('id', session.id)
+    supabase.from('sessions').update({ settings: next }).eq('id', session.id)
   }, [supabase, session.id, buildSettings])
 
   const handleApplySettings = useCallback((newSettings: SessionSettings) => {

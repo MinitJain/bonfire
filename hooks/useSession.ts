@@ -220,6 +220,7 @@ export function useSession({
 
   const updatePresence = useCallback((newUsername: string | null) => {
     if (!channelRef.current) return
+    usernameRef.current = newUsername
     channelRef.current.track({
       username: newUsername,
       avatar_url: avatarUrlRef.current ?? null,

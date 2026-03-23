@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface GuestNicknamePromptProps {
   onSave: (name: string) => void
@@ -9,7 +9,7 @@ interface GuestNicknamePromptProps {
 
 export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps) {
   const [name, setName] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   const handleSave = () => {
     const trimmed = name.trim()
@@ -17,12 +17,41 @@ export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps
     onSave(trimmed)
   }
 
+  // Escape to skip
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onSkip() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onSkip])
+
+  // Focus trap — keep Tab/Shift+Tab within the dialog
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'input, button:not([disabled])'
+    )
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    document.addEventListener('keydown', trap)
+    return () => document.removeEventListener('keydown', trap)
+  }, [])
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.5)' }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="guest-nickname-title"
@@ -43,7 +72,6 @@ export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps
         </div>
 
         <input
-          ref={inputRef}
           type="text"
           autoFocus
           aria-label="Your name"
