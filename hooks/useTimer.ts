@@ -36,6 +36,7 @@ export function useTimer({
   const [timerState, setTimerState] = useState<TimerState>(initialState)
   const [timeLeft, setTimeLeft] = useState<number>(computeTimeLeft(initialState))
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timerStateRef = useRef<TimerState>(initialState)
   const expiredRef = useRef(false)
   const expireCalledRef = useRef(false)
   const onTickRef = useRef(onTick)
@@ -59,15 +60,14 @@ export function useTimer({
       expireCalledRef.current = false
       clearTimer()
       intervalRef.current = setInterval(() => {
-        setTimerState((current) => {
-          const left = computeTimeLeft(current)
-          if (left <= 0 && !expiredRef.current) {
-            expiredRef.current = true
-            clearTimer()
-            return { ...current, status: 'finished', timeLeft: 0 }
-          }
-          return current
-        })
+        const left = computeTimeLeft(timerStateRef.current)
+        setTimeLeft(left)
+        onTickRef.current?.(left)
+        if (left <= 0 && !expiredRef.current) {
+          expiredRef.current = true
+          clearTimer()
+          setTimerState(current => ({ ...current, status: 'finished', timeLeft: 0 }))
+        }
       }, 500)
     } else {
       clearTimer()
@@ -78,13 +78,16 @@ export function useTimer({
     return clearTimer
   }, [timerState.status, timerState.startedAt, clearTimer])
 
-  // Sync timeLeft when state changes; fire tick and expire callbacks outside updater
+  // Keep ref in sync so interval can read current state without stale closure
+  useEffect(() => {
+    timerStateRef.current = timerState
+  }, [timerState])
+
+  // Sync timeLeft for external state changes (applyState, pause, reset, etc.)
+  // and fire onExpire when state transitions to finished
   useEffect(() => {
     const left = computeTimeLeft(timerState)
     setTimeLeft(left)
-    if (timerState.status === 'running') {
-      onTickRef.current?.(left)
-    }
     if (timerState.status === 'finished' && !expireCalledRef.current) {
       expireCalledRef.current = true
       onExpireRef.current?.()
