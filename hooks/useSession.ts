@@ -38,8 +38,10 @@ export function useSession({
   const channelRef = useRef<RealtimeChannel | null>(null)
   const isHostRef = useRef(isHost)
   const avatarUrlRef = useRef(avatarUrl)
+  const usernameRef = useRef(username)
   useEffect(() => { isHostRef.current = isHost }, [isHost])
   useEffect(() => { avatarUrlRef.current = avatarUrl }, [avatarUrl])
+  useEffect(() => { usernameRef.current = username }, [username])
   const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())
   const shareLockCallbacksRef = useRef<Set<(locked: boolean) => void>>(new Set())
   const jamModeCallbacksRef = useRef<Set<(jamMode: boolean) => void>>(new Set())
@@ -145,9 +147,9 @@ export function useSession({
           setIsConnected(true)
 
           await channel.track({
-            username: username ?? null,
-            avatar_url: avatarUrl ?? null,
-            is_host: isHost,
+            username: usernameRef.current ?? null,
+            avatar_url: avatarUrlRef.current ?? null,
+            is_host: isHostRef.current,
             joined_at: new Date().toISOString(),
           })
         } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
@@ -161,7 +163,7 @@ export function useSession({
       channelRef.current = null
       setIsConnected(false)
     }
-  }, [sessionId, userId, isHost, username, avatarUrl])
+  }, [sessionId, userId])
 
   const broadcastTimerState = useCallback((state: TimerState) => {
     if (!channelRef.current) return

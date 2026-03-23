@@ -23,6 +23,9 @@ export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps
       style={{ background: 'rgba(0,0,0,0.5)' }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="guest-nickname-title"
         className="w-full max-w-sm rounded-2xl p-6 flex flex-col gap-4 animate-scale-in"
         style={{
           background: 'var(--bg-elevated)',
@@ -31,7 +34,7 @@ export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps
         }}
       >
         <div className="flex flex-col gap-1">
-          <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <h2 id="guest-nickname-title" className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
             What should we call you?
           </h2>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -43,6 +46,7 @@ export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps
           ref={inputRef}
           type="text"
           autoFocus
+          aria-label="Your name"
           placeholder="Your name"
           value={name}
           onChange={e => setName(e.target.value)}
