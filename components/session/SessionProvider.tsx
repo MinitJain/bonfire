@@ -457,7 +457,7 @@ function SessionContent({
               className="text-center"
               style={{ color: 'var(--text-muted)', fontSize: '12px', fontFamily: 'var(--font-dm-sans)' }}
             >
-              Host — only you control the timer · Jam — everyone controls together
+              <strong>Host</strong> — only you control the timer · <strong>Jam</strong> — everyone controls together
             </p>
           )}
 
