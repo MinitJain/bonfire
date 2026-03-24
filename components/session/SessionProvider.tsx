@@ -78,6 +78,8 @@ function SessionContent({
   const [showAmbient, setShowAmbient] = useState(false)
   const [ambientActive, setAmbientActive] = useState(false)
   const [pendingRequest, setPendingRequest] = useState<SettingsChangeRequest | null>(null)
+  const pendingRequestRef = useRef<SettingsChangeRequest | null>(null)
+  useEffect(() => { pendingRequestRef.current = pendingRequest }, [pendingRequest])
   const [modeTipDismissed, setModeTipDismissed] = useState(false)
   const sharePanelRef = useRef<HTMLDivElement>(null)
   const settingsPanelRef = useRef<HTMLDivElement>(null)
@@ -180,9 +182,14 @@ function SessionContent({
     avatarUrl,
   })
 
+  // Enrich every timer broadcast with the current focusCount so watchers stay in sync
+  const broadcastWithCount = useCallback((state: TimerState) => {
+    broadcastTimerState({ ...state, focusCount: focusCountRef.current })
+  }, [broadcastTimerState])
+
   // Keep late-bound refs up to date
   useEffect(() => { skipAndStartRef.current = skipAndStart }, [skipAndStart])
-  useEffect(() => { broadcastTimerStateRef.current = broadcastTimerState }, [broadcastTimerState])
+  useEffect(() => { broadcastTimerStateRef.current = broadcastWithCount }, [broadcastWithCount])
 
   // Keep refs up to date
   useEffect(() => { modeRef.current = mode }, [mode])
@@ -208,9 +215,9 @@ function SessionContent({
       const name = joinedUsername ?? 'Someone'
       pushActivity(`${name} joined the session 👋`)
       // Host re-broadcasts current timer state to the new joiner
-      if (isHost) broadcastTimerState(timerStateRef.current)
+      if (isHost) broadcastWithCount(timerStateRef.current)
     })
-  }, [onParticipantJoin, pushActivity, isHost, broadcastTimerState])
+  }, [onParticipantJoin, pushActivity, isHost, broadcastWithCount])
 
   useEffect(() => {
     return onParticipantLeave((leftUsername) => {
@@ -229,6 +236,11 @@ function SessionContent({
   useEffect(() => {
     const unsubscribe = onTimerUpdate((state: TimerState) => {
       applyState(state)
+      // Sync focusCount from host broadcasts so round label stays accurate for watchers
+      if (state.focusCount !== undefined) {
+        focusCountRef.current = state.focusCount
+        setFocusCount(state.focusCount)
+      }
     })
     return unsubscribe
   }, [onTimerUpdate, applyState])
@@ -334,10 +346,15 @@ function SessionContent({
   useEffect(() => {
     if (!isHost) return
     const unsubscribe = onSettingsRequest((request) => {
+      // Auto-reject any existing pending request before accepting the new one,
+      // so the first requester isn't left waiting indefinitely
+      if (pendingRequestRef.current) {
+        broadcastSettingsResponse({ requester_id: pendingRequestRef.current.requester_id, accepted: false })
+      }
       setPendingRequest(request)
     })
     return unsubscribe
-  }, [isHost, onSettingsRequest])
+  }, [isHost, onSettingsRequest, broadcastSettingsResponse])
 
   // Watchers receive response from host (accepted/rejected)
   useEffect(() => {
@@ -346,10 +363,18 @@ function SessionContent({
       const guestId = typeof window !== 'undefined' ? localStorage.getItem('pomodoro_guest_id') : null
       const myId = userId ?? guestId
       if (response.requester_id !== myId) return
-      if (response.accepted) {
+      if (response.accepted && response.settings) {
+        // Apply the accepted settings locally so round labels and UI stay in sync
+        setSessionSettings(prev => ({
+          durations: { focus: response.settings!.focus, short: response.settings!.short, long: response.settings!.long },
+          rounds: response.settings!.rounds,
+          allowGuestShare: prev.allowGuestShare, // host-only setting, preserve watcher's current value
+          autoStartBreaks: response.settings!.autoStartBreaks,
+          autoStartPomodoros: response.settings!.autoStartPomodoros,
+        }))
         toast('Host accepted your settings request ✓', 'success')
         setShowWatcherSettings(false)
-      } else {
+      } else if (!response.accepted) {
         toast('Host declined your settings request', 'error')
       }
     })
@@ -379,10 +404,10 @@ function SessionContent({
     pushActivity(msg)
     broadcastActivity(msg)
     if (canControl) {
-      broadcastTimerState(newState)
+      broadcastWithCount(newState)
       supabase.from('sessions').update({ running: true, time_left: newState.timeLeft, mode: newState.mode }).eq('id', session.id)
     }
-  }, [start, actorName, canControl, broadcastTimerState, broadcastActivity, pushActivity, supabase, session.id])
+  }, [start, actorName, canControl, broadcastWithCount, broadcastActivity, pushActivity, supabase, session.id])
 
   const handlePause = useCallback(() => {
     const newState = pause()
@@ -392,10 +417,10 @@ function SessionContent({
     pushActivity(msg)
     broadcastActivity(msg)
     if (canControl) {
-      broadcastTimerState(newState)
+      broadcastWithCount(newState)
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft }).eq('id', session.id)
     }
-  }, [pause, actorName, canControl, broadcastTimerState, broadcastActivity, pushActivity, supabase, session.id])
+  }, [pause, actorName, canControl, broadcastWithCount, broadcastActivity, pushActivity, supabase, session.id])
 
   const handleReset = useCallback(() => {
     const newState = reset(toSecs(sessionSettings.durations))
@@ -404,10 +429,10 @@ function SessionContent({
     pushActivity(msg)
     broadcastActivity(msg)
     if (canControl) {
-      broadcastTimerState(newState)
+      broadcastWithCount(newState)
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
-  }, [reset, actorName, canControl, broadcastTimerState, broadcastActivity, pushActivity, sessionSettings.durations, supabase, session.id])
+  }, [reset, actorName, canControl, broadcastWithCount, broadcastActivity, pushActivity, sessionSettings.durations, supabase, session.id])
 
   const handleSkip = useCallback(() => {
     let nextMode: TimerMode
@@ -429,10 +454,10 @@ function SessionContent({
     const newState = setMode(nextMode, toSecs(sessionSettings.durations))
     setShowBreakOverlay(false)
     if (canControl) {
-      broadcastTimerState(newState)
+      broadcastWithCount(newState)
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
-  }, [mode, actorName, setMode, canControl, broadcastTimerState, broadcastActivity, pushActivity, sessionSettings.durations, sessionSettings.rounds, supabase, session.id])
+  }, [mode, actorName, setMode, canControl, broadcastWithCount, broadcastActivity, pushActivity, sessionSettings.durations, sessionSettings.rounds, supabase, session.id])
 
   const handleModeChange = useCallback((newMode: TimerMode) => {
     const modeMessages: Record<TimerMode, string> = {
@@ -446,10 +471,10 @@ function SessionContent({
     const newState = setMode(newMode, toSecs(sessionSettings.durations))
     setShowBreakOverlay(false)
     if (canControl) {
-      broadcastTimerState(newState)
+      broadcastWithCount(newState)
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
-  }, [setMode, actorName, canControl, broadcastTimerState, broadcastActivity, pushActivity, sessionSettings.durations, supabase, session.id])
+  }, [setMode, actorName, canControl, broadcastWithCount, broadcastActivity, pushActivity, sessionSettings.durations, supabase, session.id])
 
   const handleApplySettings = useCallback(async (newSettings: SessionSettings) => {
     setSessionSettings(newSettings)
@@ -476,12 +501,12 @@ function SessionContent({
         console.error('[handleApplySettings] DB update failed:', error)
         return false
       } else {
-        broadcastTimerState(newState)
+        broadcastWithCount(newState)
         broadcastShareLock(!newSettings.allowGuestShare)
       }
     }
     return true
-  }, [reset, canControl, broadcastTimerState, broadcastShareLock, supabase, session.id])
+  }, [reset, canControl, broadcastWithCount, broadcastShareLock, supabase, session.id])
 
   const handleAcceptRequest = useCallback(async () => {
     if (!pendingRequest) return
@@ -493,7 +518,19 @@ function SessionContent({
       autoStartPomodoros: pendingRequest.autoStartPomodoros,
     }
     const ok = await handleApplySettings(newSettings)
-    broadcastSettingsResponse({ requester_id: pendingRequest.requester_id, accepted: ok !== false })
+    broadcastSettingsResponse({
+      requester_id: pendingRequest.requester_id,
+      accepted: ok !== false,
+      // Include settings so the watcher can apply them locally without a separate broadcast
+      settings: ok !== false ? {
+        focus: newSettings.durations.focus,
+        short: newSettings.durations.short,
+        long: newSettings.durations.long,
+        rounds: newSettings.rounds,
+        autoStartBreaks: newSettings.autoStartBreaks,
+        autoStartPomodoros: newSettings.autoStartPomodoros,
+      } : undefined,
+    })
     setPendingRequest(null)
   }, [pendingRequest, sessionSettings.allowGuestShare, handleApplySettings, broadcastSettingsResponse])
 
@@ -505,8 +542,9 @@ function SessionContent({
 
   const progress = computeProgress(timerState)
   const isFirstRoundIdle = focusCount === 0 && mode === 'focus'
+  const focusRoundsLeft = sessionSettings.rounds - ((focusCount % sessionSettings.rounds) + 1)
   const roundLabel = mode === 'focus'
-    ? `Round ${focusCount + 1} · long break after ${sessionSettings.rounds - (focusCount % sessionSettings.rounds)} more`
+    ? `Round ${focusCount + 1} · ${focusRoundsLeft === 0 ? 'long break next' : `long break after ${focusRoundsLeft} more`}`
     : `Session ${focusCount} of ${sessionSettings.rounds} · ${mode === 'long' ? 'long break' : 'short break'}`
 
   return (
