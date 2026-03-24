@@ -27,7 +27,7 @@ export function WeeklyChart({ days }: WeeklyChartProps) {
         </span>
       </div>
 
-      <div className="flex items-end gap-2" style={{ height: '88px' }}>
+      <div className="flex items-end gap-2 h-[88px]">
         {days.map(day => {
           const barH = day.minutes > 0
             ? Math.max(4, Math.round((day.minutes / maxMinutes) * 68))
@@ -60,10 +60,7 @@ export function WeeklyChart({ days }: WeeklyChartProps) {
 
               {/* Day label */}
               <span
-                className="text-[10px] leading-none font-medium"
-                style={{
-                  color: day.isToday ? 'var(--accent)' : 'var(--text-muted)',
-                }}
+                className={`text-[10px] leading-none font-medium ${day.isToday ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'}`}
               >
                 {day.label}
               </span>

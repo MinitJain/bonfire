@@ -132,13 +132,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const calendarCells = buildCalendarCells(dayMap)
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+    <div className="min-h-screen bg-[var(--bg-primary)]">
       {/* Nav */}
-      <nav
-        className="flex items-center justify-between px-5 sm:px-8 py-4"
-        style={{ borderBottom: '1px solid var(--border)' }}
-      >
-        <Link href="/"><Logo size="sm" /></Link>
+      <nav className="flex items-center justify-between px-5 sm:px-8 py-4 border-b border-[var(--border)]">
+        <Link href="/" aria-label="Home"><Logo size="sm" /></Link>
         <ThemeToggle />
       </nav>
 
@@ -161,21 +158,17 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
         {/* CTA for own profile with no sessions yet */}
         {isOwnProfile && typedProfile.total_pomodoros === 0 && (
-          <div
-            className="flex flex-col items-center justify-center text-center py-8 rounded-2xl gap-3"
-            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-          >
+          <div className="flex flex-col items-center justify-center text-center py-8 rounded-2xl gap-3 bg-[var(--bg-elevated)] border border-[var(--border)]">
             <span className="text-3xl">🍅</span>
-            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+            <p className="text-sm font-medium text-[var(--text-primary)]">
               No focus sessions yet
             </p>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            <p className="text-xs text-[var(--text-muted)]">
               Complete a session to start tracking your streaks and focus time.
             </p>
             <Link
               href="/"
-              className="mt-1 px-4 py-2 rounded-xl text-sm font-medium"
-              style={{ background: 'var(--accent)', color: '#fff' }}
+              className="mt-1 px-4 py-2 rounded-xl text-sm font-medium bg-[var(--accent)] text-white"
             >
               Start a session →
             </Link>
