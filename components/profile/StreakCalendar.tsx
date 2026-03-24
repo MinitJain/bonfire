@@ -44,20 +44,13 @@ export function StreakCalendar({ cells, totalMinutesYear, totalPomodorosYear }: 
   const activeDays = cells.filter(c => c.minutes > 0).length
 
   return (
-    <div
-      className="p-5 rounded-2xl flex flex-col gap-4"
-      style={{
-        background: 'var(--bg-elevated)',
-        border: '1px solid var(--border)',
-        boxShadow: 'var(--shadow-sm)',
-      }}
-    >
+    <div className="p-5 rounded-2xl flex flex-col gap-4 bg-[var(--bg-elevated)] border border-[var(--border)] shadow-[var(--shadow-sm)]">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">
           Focus activity
         </h3>
-        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+        <span className="text-xs text-[var(--text-muted)]">
           {totalPomodorosYear} sessions · {totalHours}h in the last year
         </span>
       </div>
@@ -80,8 +73,7 @@ export function StreakCalendar({ cells, totalMinutesYear, totalPomodorosYear }: 
               return (
                 <div
                   key={col}
-                  className="text-[9px] leading-none"
-                  style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}
+                  className="text-[9px] leading-none text-[var(--text-muted)] whitespace-nowrap"
                 >
                   {match ? match.label : ''}
                 </div>
@@ -103,8 +95,8 @@ export function StreakCalendar({ cells, totalMinutesYear, totalPomodorosYear }: 
             {DAY_LABELS.map((label, row) => (
               <div
                 key={`label-${row}`}
-                className="text-[9px] leading-none flex items-center"
-                style={{ color: 'var(--text-muted)', gridColumn: 1, gridRow: row + 1 }}
+                className="text-[9px] leading-none flex items-center text-[var(--text-muted)]"
+                style={{ gridColumn: 1, gridRow: row + 1 }}
               >
                 {label}
               </div>
@@ -138,7 +130,7 @@ export function StreakCalendar({ cells, totalMinutesYear, totalPomodorosYear }: 
 
       {/* Legend */}
       <div className="flex items-center gap-2">
-        <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Less</span>
+        <span className="text-[10px] text-[var(--text-muted)]">Less</span>
         {[0, 25, 60, 120, 180].map(m => (
           <div
             key={m}
@@ -151,8 +143,8 @@ export function StreakCalendar({ cells, totalMinutesYear, totalPomodorosYear }: 
             }}
           />
         ))}
-        <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>More</span>
-        <span className="text-[10px] ml-auto" style={{ color: 'var(--text-muted)' }}>
+        <span className="text-[10px] text-[var(--text-muted)]">More</span>
+        <span className="text-[10px] ml-auto text-[var(--text-muted)]">
           {activeDays} active days
         </span>
       </div>
