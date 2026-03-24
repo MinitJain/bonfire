@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Wifi, WifiOff, Zap, Users, Settings } from 'lucide-react'
-import type { Session, TimerMode, TimerState } from '@/types'
+import type { ActivityItem, Session, TimerMode, TimerState } from '@/types'
 import { useTimer } from '@/hooks/useTimer'
 import { useSession } from '@/hooks/useSession'
 import { computeProgress, sessionToTimerState } from '@/lib/timer'
@@ -15,15 +15,25 @@ import { TimerControls } from '@/components/timer/TimerControls'
 import { ModeSelector } from '@/components/timer/ModeSelector'
 import { ParticipantList } from '@/components/session/ParticipantList'
 import { SharePanel } from '@/components/session/SharePanel'
+import { ActivityFeed } from '@/components/session/ActivityFeed'
 import { BreakOverlay } from '@/components/session/BreakOverlay'
+import { GuestNicknamePrompt } from '@/components/session/GuestNicknamePrompt'
 import { AmbientPlayer } from '@/components/session/AmbientPlayer'
 import { ModeTipBubble } from '@/components/session/ModeTipBubble'
-import { GuestNicknamePrompt } from '@/components/session/GuestNicknamePrompt'
-import { ToastProvider, useToast } from '@/components/ui/Toast'
+import { ToastProvider } from '@/components/ui/Toast'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+
+// Module-level pure function — no closure deps
+function toSecs(d: TimerDurations) {
+  return {
+    focus: d.focus * 60,
+    short: d.short * 60,
+    long: d.long * 60,
+  }
+}
 
 interface SessionProviderProps {
   session: Session
@@ -40,7 +50,6 @@ function SessionContent({
   username,
   avatarUrl,
 }: SessionProviderProps) {
-  const { toast } = useToast()
   const [isHost, setIsHost] = useState(isHostProp)
   const [jamMode, setJamMode] = useState(session.jam_mode ?? false)
   const [showBreakOverlay, setShowBreakOverlay] = useState(false)
@@ -51,20 +60,19 @@ function SessionContent({
       short: session.settings?.short ?? 5,
       long: session.settings?.long ?? 15,
     },
+    rounds: session.settings?.rounds ?? 4,
     allowGuestShare: session.settings?.allowGuestShare ?? true,
     autoStartBreaks: session.settings?.autoStartBreaks ?? false,
     autoStartPomodoros: session.settings?.autoStartPomodoros ?? false,
   })
+  const focusCountRef = useRef(0)
+  const [focusCount, setFocusCount] = useState(0)
+  const [activities, setActivities] = useState<ActivityItem[]>([])
+  // localUsername: for guests this starts null and is set when they save a nickname
+  const [localUsername, setLocalUsername] = useState<string | null>(username ?? null)
+  const [showNicknamePrompt, setShowNicknamePrompt] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [modeTipDismissed, setModeTipDismissed] = useState(false)
-  // null = prompt not yet answered; '' = skipped; non-empty = set name
-  // Initialised in useEffect to avoid server/client hydration mismatch
-  const [guestNickname, setGuestNickname] = useState<string | null>(null)
-  const [guestNicknameHydrated, setGuestNicknameHydrated] = useState(false)
-  useEffect(() => {
-    setGuestNickname(localStorage.getItem('pomodoro_nickname'))
-    setGuestNicknameHydrated(true)
-  }, [])
   const sharePanelRef = useRef<HTMLDivElement>(null)
   const settingsPanelRef = useRef<HTMLDivElement>(null)
   const hasRequestedNotifRef = useRef(false)
@@ -78,50 +86,74 @@ function SessionContent({
     }
   }, [session.id, isHostProp])
 
+  // Restore or prompt for nickname (guests only)
+  useEffect(() => {
+    if (userId) return // auth users have a username already
+    const stored = localStorage.getItem(`pomodoro_nick_${session.id}`)
+    if (stored) {
+      setLocalUsername(stored)
+    } else {
+      // Brief delay so the page settles before the prompt appears
+      const t = setTimeout(() => setShowNicknamePrompt(true), 800)
+      return () => clearTimeout(t)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally run once on mount
+
   const canControl = isHost || jamMode
 
   const modeRef = useRef<TimerMode>('focus')
-  // These are resolved after useTimer/useSession initialise; stored in refs to avoid circular deps
-  const skipAndStartRef = useRef<((nextMode: TimerMode, durations?: Record<TimerMode, number>) => TimerState) | null>(null)
-  const broadcastTimerStateRef = useRef<((state: TimerState) => void) | null>(null)
 
-  const toSecs = (d: TimerDurations) => ({
-    focus: d.focus * 60,
-    short: d.short * 60,
-    long: d.long * 60,
-  })
+  const sessionSettingsRef = useRef(sessionSettings)
+  useEffect(() => { sessionSettingsRef.current = sessionSettings }, [sessionSettings])
+
+  const canControlRef = useRef(canControl)
+  useEffect(() => { canControlRef.current = canControl }, [canControl])
+
+  // Refs for functions defined later — avoids temporal dead zone in handleExpire
+  const broadcastTimerStateRef = useRef<((state: TimerState) => void) | null>(null)
+  const skipAndStartRef = useRef<((nextMode: TimerMode, durations?: Record<TimerMode, number>) => TimerState) | null>(null)
 
   const handleExpire = useCallback(() => {
     playCompleteSound()
     showNotification('PomodoroJam', 'Your session has ended! Time for a break.')
+    const currentMode = modeRef.current
+    const settings = sessionSettingsRef.current
+    const durations = toSecs(settings.durations)
+
     // Log completed pomodoro for authenticated users (focus mode only)
-    if (userId && modeRef.current === 'focus') {
-      const minutes = Math.round(sessionSettings.durations.focus)
-      supabase.rpc('increment_profile_stats', { p_user_id: userId, p_minutes: minutes })
+    if (userId && currentMode === 'focus') {
+      const minutes = Math.round(settings.durations.focus)
+      supabase.rpc('increment_profile_stats', {
+        p_user_id: userId,
+        p_minutes: minutes,
+        p_session_id: session.id,
+      }).then(({ error }) => {
+        if (error) console.error('[handleExpire] Failed to log pomodoro:', error)
+      })
     }
 
-    const currentMode = modeRef.current
-    const isBreakMode = currentMode === 'short' || currentMode === 'long'
-    const shouldAutoStart =
-      (currentMode === 'focus' && sessionSettings.autoStartBreaks) ||
-      (isBreakMode && sessionSettings.autoStartPomodoros)
-
-    if (shouldAutoStart && isHost && skipAndStartRef.current) {
-      // Gate to host only — prevents Jam participants from all minting conflicting startedAt timestamps
-      const nextMode: TimerMode = currentMode === 'focus' ? 'short' : currentMode === 'short' ? 'long' : 'focus'
-      const newState = skipAndStartRef.current(nextMode, toSecs(sessionSettings.durations))
-      broadcastTimerStateRef.current?.(newState)
-      supabase.from('sessions').update({
-        running: true,
-        time_left: newState.timeLeft,
-        total_time: newState.totalTime,
-        mode: newState.mode,
-      }).eq('id', session.id)
-    } else if (!shouldAutoStart) {
+    if (currentMode === 'focus' && settings.autoStartBreaks) {
+      focusCountRef.current += 1
+      setFocusCount(focusCountRef.current)
+      const nextMode = focusCountRef.current % settings.rounds === 0 ? 'long' : 'short'
+      const newState = skipAndStartRef.current?.(nextMode, durations)
+      if (!newState) return
+      if (canControlRef.current) {
+        broadcastTimerStateRef.current?.(newState)
+        supabase.from('sessions').update({ running: true, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
+      }
+    } else if ((currentMode === 'short' || currentMode === 'long') && settings.autoStartPomodoros) {
+      const newState = skipAndStartRef.current?.('focus', durations)
+      if (!newState) return
+      if (canControlRef.current) {
+        broadcastTimerStateRef.current?.(newState)
+        supabase.from('sessions').update({ running: true, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
+      }
+    } else {
       setShowBreakOverlay(true)
     }
-    // if shouldAutoStart && !isHost: watcher skips overlay, receives running state via broadcast
-  }, [userId, sessionSettings, isHost, supabase, session.id])
+  }, [userId, supabase, session.id])
 
   const {
     timeLeft, status, mode, timerState,
@@ -130,20 +162,53 @@ function SessionContent({
     initialState: sessionToTimerState(session),
     onExpire: handleExpire,
   })
-  // Keep ref in sync so handleExpire (defined before useTimer) can access skipAndStart
-  skipAndStartRef.current = skipAndStart
 
-  const { participants, isConnected, broadcastTimerState, onTimerUpdate, broadcastShareLock, onShareLock, broadcastJamMode, onJamMode, onParticipantJoin, updatePresence } = useSession({
+  const { participants, isConnected, broadcastTimerState, onTimerUpdate, broadcastShareLock, onShareLock, broadcastJamMode, onJamMode, onParticipantJoin, onParticipantLeave, broadcastActivity, onActivity, updatePresence } = useSession({
     sessionId: session.id,
     userId,
     isHost,
-    username: userId ? username : (guestNickname || null),
+    username,
     avatarUrl,
   })
-  broadcastTimerStateRef.current = broadcastTimerState
+
+  // Keep late-bound refs up to date
+  useEffect(() => { skipAndStartRef.current = skipAndStart }, [skipAndStart])
+  useEffect(() => { broadcastTimerStateRef.current = broadcastTimerState }, [broadcastTimerState])
 
   // Keep refs up to date
   useEffect(() => { modeRef.current = mode }, [mode])
+
+  // Short display name for activity messages — prefers live localUsername (guest nick)
+  const actorName = localUsername ?? 'Guest'
+
+  // Push an ephemeral activity item — auto-removes after animation completes
+  const pushActivity = useCallback((text: string) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    setActivities(prev => [...prev.slice(-3), { id, text }])
+    setTimeout(() => setActivities(prev => prev.filter(a => a.id !== id)), 2900)
+  }, [])
+
+  // Receive activity broadcasts from other participants
+  useEffect(() => {
+    return onActivity(pushActivity)
+  }, [onActivity, pushActivity])
+
+  // Join / leave presence events → local activity messages
+  useEffect(() => {
+    return onParticipantJoin((joinedUsername) => {
+      const name = joinedUsername ?? 'Someone'
+      pushActivity(`${name} joined the session 👋`)
+      // Host re-broadcasts current timer state to the new joiner
+      if (isHost) broadcastTimerState(timerStateRef.current)
+    })
+  }, [onParticipantJoin, pushActivity, isHost, broadcastTimerState])
+
+  useEffect(() => {
+    return onParticipantLeave((leftUsername) => {
+      const name = leftUsername ?? 'Someone'
+      pushActivity(`${name} left`)
+    })
+  }, [onParticipantLeave, pushActivity])
 
   // Keep a ref to timerState so join handler always has the latest without re-subscribing
   const timerStateRef = useRef(timerState)
@@ -152,24 +217,14 @@ function SessionContent({
   // Always receive timer updates from other controllers.
   // broadcast: { self: false } ensures you never apply your own broadcasts.
   // In Jam mode this is essential — every participant must sync with whoever just acted.
-  // Also dismiss break overlay if host auto-started the next segment.
   useEffect(() => {
     const unsubscribe = onTimerUpdate((state: TimerState) => {
       applyState(state)
-      if (state.status === 'running') setShowBreakOverlay(false)
     })
     return unsubscribe
   }, [onTimerUpdate, applyState])
 
-  // Only the host re-broadcasts state to newly joined participants.
-  // In Jam mode we still want a single source of truth for cold joins.
-  useEffect(() => {
-    if (!isHost) return
-    const unsubscribe = onParticipantJoin(() => {
-      broadcastTimerState(timerStateRef.current)
-    })
-    return unsubscribe
-  }, [isHost, onParticipantJoin, broadcastTimerState])
+  // (join re-broadcast + activity handled in the pushActivity/onParticipantJoin block above)
 
   // Receive share lock updates (non-hosts)
   useEffect(() => {
@@ -214,16 +269,31 @@ function SessionContent({
     }
   }, [])
 
+  // Warn host before closing tab while timer is running
+  useEffect(() => {
+    if (!isHost) return
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (status === 'running') {
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [isHost, status])
+
   // Toggle jam mode (host only) — persisted to DB and broadcast to existing participants
   const handleToggleJamMode = useCallback(async () => {
     const next = !jamMode
     setJamMode(next)
     broadcastJamMode(next)
+    const msg = next ? 'Jam Mode on — everyone can control ⚡' : 'Back to host control 👑'
+    pushActivity(msg)
+    broadcastActivity(msg)
     await supabase
       .from('sessions')
       .update({ jam_mode: next })
       .eq('id', session.id)
-  }, [jamMode, session.id, supabase, broadcastJamMode])
+  }, [jamMode, session.id, supabase, broadcastJamMode, broadcastActivity, pushActivity])
 
   // Non-hosts receive jam mode changes from the host
   useEffect(() => {
@@ -236,120 +306,99 @@ function SessionContent({
 
   const handleStart = useCallback(() => {
     const newState = start()
+    const msg = `${actorName} started the timer ▶`
+    pushActivity(msg)
+    broadcastActivity(msg)
     if (canControl) {
       broadcastTimerState(newState)
       supabase.from('sessions').update({ running: true, time_left: newState.timeLeft, mode: newState.mode }).eq('id', session.id)
     }
-  }, [start, canControl, broadcastTimerState, supabase, session.id])
+  }, [start, actorName, canControl, broadcastTimerState, broadcastActivity, pushActivity, supabase, session.id])
 
   const handlePause = useCallback(() => {
     const newState = pause()
+    const mins = String(Math.floor(newState.timeLeft / 60)).padStart(2, '0')
+    const secs = String(newState.timeLeft % 60).padStart(2, '0')
+    const msg = `${actorName} paused · ${mins}:${secs} left ⏸`
+    pushActivity(msg)
+    broadcastActivity(msg)
     if (canControl) {
       broadcastTimerState(newState)
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft }).eq('id', session.id)
     }
-  }, [pause, canControl, broadcastTimerState, supabase, session.id])
+  }, [pause, actorName, canControl, broadcastTimerState, broadcastActivity, pushActivity, supabase, session.id])
 
   const handleReset = useCallback(() => {
     const newState = reset(toSecs(sessionSettings.durations))
     setShowBreakOverlay(false)
+    const msg = `${actorName} reset the timer ↺`
+    pushActivity(msg)
+    broadcastActivity(msg)
     if (canControl) {
       broadcastTimerState(newState)
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
-  }, [reset, canControl, broadcastTimerState, sessionSettings.durations, supabase, session.id])
+  }, [reset, actorName, canControl, broadcastTimerState, broadcastActivity, pushActivity, sessionSettings.durations, supabase, session.id])
 
   const handleSkip = useCallback(() => {
-    const nextMode: TimerMode =
-      mode === 'focus' ? 'short' : mode === 'short' ? 'long' : 'focus'
+    let nextMode: TimerMode
+    if (mode === 'focus') {
+      focusCountRef.current += 1
+      setFocusCount(focusCountRef.current)
+      nextMode = focusCountRef.current % sessionSettings.rounds === 0 ? 'long' : 'short'
+    } else {
+      nextMode = 'focus'
+    }
+    const modeMessages: Record<TimerMode, string> = {
+      short: `${actorName} switched to short break ☕`,
+      long: `${actorName} switched to long break 🎉`,
+      focus: `${actorName} started a new focus session 🍅`,
+    }
+    const msg = modeMessages[nextMode]
+    pushActivity(msg)
+    broadcastActivity(msg)
     const newState = setMode(nextMode, toSecs(sessionSettings.durations))
     setShowBreakOverlay(false)
     if (canControl) {
       broadcastTimerState(newState)
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
-  }, [mode, setMode, canControl, broadcastTimerState, sessionSettings.durations, supabase, session.id])
+  }, [mode, actorName, setMode, canControl, broadcastTimerState, broadcastActivity, pushActivity, sessionSettings.durations, sessionSettings.rounds, supabase, session.id])
 
   const handleModeChange = useCallback((newMode: TimerMode) => {
+    const modeMessages: Record<TimerMode, string> = {
+      short: `${actorName} switched to short break ☕`,
+      long: `${actorName} switched to long break 🎉`,
+      focus: `${actorName} started a new focus session 🍅`,
+    }
+    const msg = modeMessages[newMode]
+    pushActivity(msg)
+    broadcastActivity(msg)
     const newState = setMode(newMode, toSecs(sessionSettings.durations))
     setShowBreakOverlay(false)
     if (canControl) {
       broadcastTimerState(newState)
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
-  }, [setMode, canControl, broadcastTimerState, sessionSettings.durations, supabase, session.id])
-
-  const handleNicknameSave = useCallback((name: string) => {
-    localStorage.setItem('pomodoro_nickname', name)
-    setGuestNickname(name)
-    updatePresence(name)
-  }, [updatePresence])
-
-  const handleNicknameSkip = useCallback(() => {
-    localStorage.setItem('pomodoro_nickname', '')
-    setGuestNickname('')
-  }, [])
-
-  const buildSettings = useCallback((overrides: Partial<SessionSettings>) => {
-    const s = { ...sessionSettings, ...overrides }
-    return {
-      focus: s.durations.focus,
-      short: s.durations.short,
-      long: s.durations.long,
-      rounds: session.settings?.rounds ?? 4,
-      allowGuestShare: s.allowGuestShare,
-      autoStartBreaks: s.autoStartBreaks,
-      autoStartPomodoros: s.autoStartPomodoros,
-    }
-  }, [sessionSettings, session.settings?.rounds])
-
-  const handleGuestShareChange = useCallback(async (allowed: boolean) => {
-    const next = buildSettings({ allowGuestShare: allowed })
-    setSessionSettings(prev => ({ ...prev, allowGuestShare: allowed }))
-    broadcastShareLock(!allowed)
-    const { error } = await supabase.from('sessions').update({ settings: next }).eq('id', session.id)
-    if (error) {
-      setSessionSettings(prev => ({ ...prev, allowGuestShare: !allowed }))
-      toast('Failed to save setting. Please try again.', 'error')
-    }
-  }, [broadcastShareLock, supabase, session.id, buildSettings, toast])
-
-  const handleAutoStartBreaksChange = useCallback(async (v: boolean) => {
-    const next = buildSettings({ autoStartBreaks: v })
-    setSessionSettings(prev => ({ ...prev, autoStartBreaks: v }))
-    const { error } = await supabase.from('sessions').update({ settings: next }).eq('id', session.id)
-    if (error) {
-      setSessionSettings(prev => ({ ...prev, autoStartBreaks: !v }))
-      toast('Failed to save setting. Please try again.', 'error')
-    }
-  }, [supabase, session.id, buildSettings, toast])
-
-  const handleAutoStartPomodorosChange = useCallback(async (v: boolean) => {
-    const next = buildSettings({ autoStartPomodoros: v })
-    setSessionSettings(prev => ({ ...prev, autoStartPomodoros: v }))
-    const { error } = await supabase.from('sessions').update({ settings: next }).eq('id', session.id)
-    if (error) {
-      setSessionSettings(prev => ({ ...prev, autoStartPomodoros: !v }))
-      toast('Failed to save setting. Please try again.', 'error')
-    }
-  }, [supabase, session.id, buildSettings, toast])
+  }, [setMode, actorName, canControl, broadcastTimerState, broadcastActivity, pushActivity, sessionSettings.durations, supabase, session.id])
 
   const handleApplySettings = useCallback((newSettings: SessionSettings) => {
     setSessionSettings(newSettings)
     setShowSettings(false)
+    focusCountRef.current = 0
+    setFocusCount(0)
     const newState = reset(toSecs(newSettings.durations))
     if (canControl) {
       broadcastTimerState(newState)
       supabase.from('sessions').update({
         running: false,
         time_left: newState.timeLeft,
-        total_time: newState.totalTime,
         mode: newState.mode,
         settings: {
           focus: newSettings.durations.focus,
           short: newSettings.durations.short,
           long: newSettings.durations.long,
-          rounds: session.settings?.rounds ?? 4,
+          rounds: newSettings.rounds,
           allowGuestShare: newSettings.allowGuestShare,
           autoStartBreaks: newSettings.autoStartBreaks,
           autoStartPomodoros: newSettings.autoStartPomodoros,
@@ -357,7 +406,7 @@ function SessionContent({
       }).eq('id', session.id)
     }
     broadcastShareLock(!newSettings.allowGuestShare)
-  }, [reset, canControl, broadcastTimerState, broadcastShareLock, supabase, session.id, session.settings?.rounds])
+  }, [reset, canControl, broadcastTimerState, broadcastShareLock, supabase, session.id])
 
   const progress = computeProgress(timerState)
 
@@ -430,6 +479,16 @@ function SessionContent({
           }}
         >
           <ModeSelector mode={mode} isHost={canControl} onChange={handleModeChange} />
+
+          {/* Round indicator */}
+          {(focusCount > 0 || mode !== 'focus') && (
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              {mode === 'focus'
+                ? `Round ${focusCount + 1} · long break after ${sessionSettings.rounds - (focusCount % sessionSettings.rounds)} more`
+                : `Session ${focusCount} of ${sessionSettings.rounds} · ${mode === 'long' ? 'long break' : 'short break'}`
+              }
+            </p>
+          )}
 
           {/* Timer ring */}
           <div className="block sm:hidden">
@@ -537,7 +596,7 @@ function SessionContent({
 
                   {showSettings && (
                     <div
-                      className="absolute right-0 bottom-12 w-64 rounded-2xl z-50 p-4 animate-scale-in"
+                      className="absolute right-0 bottom-12 w-72 rounded-2xl z-50 p-4 animate-scale-in"
                       style={{
                         background: 'var(--bg-elevated)',
                         border: '1px solid var(--border)',
@@ -547,9 +606,6 @@ function SessionContent({
                       <SettingsPanel
                         settings={sessionSettings}
                         onApply={handleApplySettings}
-                        onGuestShareChange={handleGuestShareChange}
-                        onAutoStartBreaksChange={handleAutoStartBreaksChange}
-                        onAutoStartPomodorosChange={handleAutoStartPomodorosChange}
                         disabled={status === 'running'}
                       />
                     </div>
@@ -565,7 +621,7 @@ function SessionContent({
               className="text-center"
               style={{ color: 'var(--text-muted)', fontSize: '12px', fontFamily: 'var(--font-dm-sans)' }}
             >
-              <strong>Host</strong> — only you control the timer · <strong>Jam</strong> — everyone controls together
+              Host - only you control the timer · Jam - everyone controls together
             </p>
           )}
 
@@ -575,11 +631,7 @@ function SessionContent({
         </div>
       </main>
 
-      {isHost && (userId !== null || guestNickname !== null) && <ModeTipBubble externalDismiss={modeTipDismissed} />}
-
-      {!userId && guestNicknameHydrated && guestNickname === null && (
-        <GuestNicknamePrompt onSave={handleNicknameSave} onSkip={handleNicknameSkip} />
-      )}
+      {isHost && <ModeTipBubble externalDismiss={modeTipDismissed} />}
 
       <BreakOverlay
         visible={showBreakOverlay}
@@ -588,7 +640,22 @@ function SessionContent({
           if (canControl) handleSkip()
         }}
         mode={mode}
+        canControl={canControl}
       />
+
+      <ActivityFeed items={activities} />
+
+      {showNicknamePrompt && (
+        <GuestNicknamePrompt
+          onSave={(name) => {
+            setLocalUsername(name)
+            localStorage.setItem(`pomodoro_nick_${session.id}`, name)
+            updatePresence(name)
+            setShowNicknamePrompt(false)
+          }}
+          onSkip={() => setShowNicknamePrompt(false)}
+        />
+      )}
     </div>
   )
 }

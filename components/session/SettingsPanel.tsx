@@ -10,6 +10,7 @@ export interface TimerDurations {
 
 export interface SessionSettings {
   durations: TimerDurations
+  rounds: number
   allowGuestShare: boolean
   autoStartBreaks: boolean
   autoStartPomodoros: boolean
@@ -100,6 +101,26 @@ export function SettingsPanel({
         <ClampInput label="Long break" value={local.durations.long} onChange={setDuration('long')} min={1} max={60} />
       </div>
 
+      <div className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-surface border border-border">
+        <span className="text-sm text-foreground">Long break interval</span>
+        <input
+          type="number"
+          min={1}
+          max={10}
+          value={local.rounds}
+          onChange={e => {
+            const v = parseInt(e.target.value, 10)
+            if (!isNaN(v)) setLocal(prev => ({ ...prev, rounds: Math.min(10, Math.max(1, v)) }))
+          }}
+          className="w-14 px-2 py-1 rounded-lg text-sm text-center font-mono tabular-nums focus:outline-none focus:ring-2"
+          style={{
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-primary)',
+          }}
+        />
+      </div>
+
       <ToggleRow
         label="Auto start breaks"
         checked={local.autoStartBreaks}
@@ -133,9 +154,10 @@ export function SettingsPanel({
       <button
         onClick={() => onApply(local)}
         disabled={disabled}
+        title={disabled ? 'Pause the timer to change settings' : undefined}
         className="w-full py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer disabled:opacity-50 bg-accent text-white"
       >
-        Apply
+        {disabled ? 'Pause timer to apply' : 'Apply'}
       </button>
     </div>
   )

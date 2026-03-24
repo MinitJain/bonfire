@@ -8,6 +8,7 @@ interface BreakOverlayProps {
   visible: boolean
   onDismiss: () => void
   mode: 'focus' | 'short' | 'long'
+  canControl?: boolean
 }
 
 const messages = {
@@ -28,7 +29,7 @@ const messages = {
   },
 }
 
-export function BreakOverlay({ visible, onDismiss, mode }: BreakOverlayProps) {
+export function BreakOverlay({ visible, onDismiss, mode, canControl = true }: BreakOverlayProps) {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
@@ -99,26 +100,32 @@ export function BreakOverlay({ visible, onDismiss, mode }: BreakOverlayProps) {
           {subtitle}
         </p>
 
-        <div className="flex gap-3">
-          <button
-            onClick={onDismiss}
-            className="px-6 py-3 rounded-xl font-medium text-sm transition-all duration-150 cursor-pointer"
-            style={{ background: 'var(--accent)', color: '#fff', boxShadow: 'var(--shadow-md)' }}
-          >
-            {cta}
-          </button>
-          <button
-            onClick={onDismiss}
-            className="px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer"
-            style={{
-              background: 'var(--bg-secondary)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-secondary)',
-            }}
-          >
-            Dismiss
-          </button>
-        </div>
+        {canControl ? (
+          <div className="flex gap-3">
+            <button
+              onClick={onDismiss}
+              className="px-6 py-3 rounded-xl font-medium text-sm transition-all duration-150 cursor-pointer"
+              style={{ background: 'var(--accent)', color: '#fff', boxShadow: 'var(--shadow-md)' }}
+            >
+              {cta}
+            </button>
+            <button
+              onClick={onDismiss}
+              className="px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer"
+              style={{
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
+        ) : (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Waiting for the host to start the next session...
+          </p>
+        )}
       </div>
     </div>
   )

@@ -8,18 +8,42 @@ const MODE_COLORS: Record<string, { bg: string; text: string; ring: string }> = 
   long:  { bg: '#f5a623', text: '#ffffff', ring: '#d4891e' },
 }
 
+// Singleton canvas and link element — reused on every update
+let _canvas: HTMLCanvasElement | null = null
+let _link: HTMLLinkElement | null = null
+
+function getCanvas(): HTMLCanvasElement {
+  if (!_canvas) {
+    _canvas = document.createElement('canvas')
+    _canvas.width = FAVICON_SIZE
+    _canvas.height = FAVICON_SIZE
+  }
+  return _canvas
+}
+
+function getLink(): HTMLLinkElement {
+  if (!_link) {
+    _link = document.createElement('link')
+    _link.rel = 'icon'
+    _link.type = 'image/png'
+    _link.setAttribute('data-dynamic', 'true')
+    document.head.appendChild(_link)
+  }
+  return _link
+}
+
 export function updateFavicon(timeLeft: number, mode: string): void {
   if (typeof window === 'undefined') return
 
-  const canvas = document.createElement('canvas')
-  canvas.width = FAVICON_SIZE
-  canvas.height = FAVICON_SIZE
+  const canvas = getCanvas()
   const ctx = canvas.getContext('2d')
   if (!ctx) return
 
   const colors = MODE_COLORS[mode] ?? MODE_COLORS.focus
   const mins = Math.floor(timeLeft / 60)
   const secs = timeLeft % 60
+
+  ctx.clearRect(0, 0, FAVICON_SIZE, FAVICON_SIZE)
 
   // Background circle
   ctx.beginPath()
@@ -50,19 +74,14 @@ export function updateFavicon(timeLeft: number, mode: string): void {
     ctx.fillText(`:${String(secs).padStart(2, '0')}`, 16, 16)
   }
 
-  const dataUrl = canvas.toDataURL('image/png')
-  let link = document.querySelector<HTMLLinkElement>('link[rel="icon"][data-dynamic]')
-  if (!link) {
-    link = document.createElement('link')
-    link.rel = 'icon'
-    link.type = 'image/png'
-    link.setAttribute('data-dynamic', 'true')
-    document.head.appendChild(link)
-  }
-  link.href = dataUrl
+  const link = getLink()
+  link.href = canvas.toDataURL('image/png')
 }
 
 export function resetFavicon(): void {
   if (typeof window === 'undefined') return
-  document.querySelector('link[rel="icon"][data-dynamic]')?.remove()
+  if (_link) {
+    _link.remove()
+    _link = null
+  }
 }

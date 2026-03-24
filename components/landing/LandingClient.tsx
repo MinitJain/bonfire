@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
 import { Users, Zap, Github, LogOut, UserCircle, Timer, Bell, BarChart2, Link2, X, ChevronDown } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
@@ -332,6 +333,13 @@ function LandingContent({ user, profileUsername }: LandingClientProps) {
         <Logo size="md" />
 
         <div className="flex items-center gap-3">
+          <Link
+            href="/explore"
+            className="text-sm font-medium transition-colors hidden sm:block"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Explore
+          </Link>
           {user ? (
             <div className="relative flex items-center gap-2" ref={menuRef}>
               <button
@@ -551,7 +559,11 @@ function LandingContent({ user, profileUsername }: LandingClientProps) {
         style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)', color: 'var(--text-muted)' }}
       >
         <Logo size="sm" />
-        <p>Built by Minit Jain</p>
+        <div className="flex items-center gap-4 text-xs">
+          <Link href="/privacy" style={{ color: 'var(--text-muted)' }}>Privacy</Link>
+          <Link href="/terms" style={{ color: 'var(--text-muted)' }}>Terms</Link>
+          <span>© {new Date().getFullYear()} PomodoroJam</span>
+        </div>
         <a
           href="https://github.com/MinitJain/pomodoro-jam"
           target="_blank"
