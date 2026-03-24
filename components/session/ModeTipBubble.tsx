@@ -6,17 +6,19 @@ const STORAGE_KEY = 'pj_seen_mode_tip'
 
 interface ModeTipBubbleProps {
   externalDismiss: boolean
+  ready?: boolean
 }
 
-export function ModeTipBubble({ externalDismiss }: ModeTipBubbleProps) {
+export function ModeTipBubble({ externalDismiss, ready = true }: ModeTipBubbleProps) {
   const [mounted, setMounted] = useState(false)
   const [animIn, setAnimIn] = useState(false)
   const [fadingOut, setFadingOut] = useState(false)
   const bubbleRef = useRef<HTMLDivElement>(null)
   const dismissedRef = useRef(false)
 
-  // Show after 1200ms if not seen before
+  // Show after 1200ms once ready, if not seen before
   useEffect(() => {
+    if (!ready) return
     if (typeof window === 'undefined') return
     if (localStorage.getItem(STORAGE_KEY)) return
     const t = setTimeout(() => {
@@ -26,7 +28,7 @@ export function ModeTipBubble({ externalDismiss }: ModeTipBubbleProps) {
       setTimeout(() => setAnimIn(true), 50)
     }, 1200)
     return () => clearTimeout(t)
-  }, [])
+  }, [ready])
 
   const dismiss = () => {
     if (dismissedRef.current) return
@@ -43,6 +45,8 @@ export function ModeTipBubble({ externalDismiss }: ModeTipBubbleProps) {
     localStorage.setItem(STORAGE_KEY, '1') // persist even if bubble never showed
     if (mounted) dismiss()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `dismiss` is intentionally excluded: it closes over `mounted` state and adding it
+    // would cause the effect to re-run on every render; dismissedRef guards against double-calls.
   }, [externalDismiss, mounted])
 
   // Outside click
@@ -55,7 +59,9 @@ export function ModeTipBubble({ externalDismiss }: ModeTipBubbleProps) {
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [mounted]) // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `dismiss` uses only refs internally; re-subscribing on every render is unnecessary.
+  }, [mounted])
 
   // Escape key
   useEffect(() => {
@@ -65,7 +71,9 @@ export function ModeTipBubble({ externalDismiss }: ModeTipBubbleProps) {
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [mounted]) // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `dismiss` uses only refs internally; re-subscribing on every render is unnecessary.
+  }, [mounted])
 
   if (!mounted) return null
 
@@ -106,18 +114,32 @@ export function ModeTipBubble({ externalDismiss }: ModeTipBubbleProps) {
           What&apos;s the difference?
         </p>
 
-        <div className="flex flex-col gap-3 mb-4">
-          <div>
-            <p className="text-xs font-semibold mb-0.5" style={{ color: 'var(--text-primary)' }}>
+        <div className="flex flex-col gap-2 mb-4">
+          <div
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border)',
+              borderRadius: '10px',
+              padding: '10px 12px',
+            }}
+          >
+            <p className="text-xs font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
               Host
             </p>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
               Only you can start, pause, or skip. Everyone else follows along in sync.
             </p>
           </div>
-          <div>
-            <p className="text-xs font-semibold mb-0.5" style={{ color: 'var(--green)' }}>
-              ⚡ Jam Mode
+          <div
+            style={{
+              background: 'var(--green-soft)',
+              border: '1px solid var(--green)',
+              borderRadius: '10px',
+              padding: '10px 12px',
+            }}
+          >
+            <p className="text-xs font-semibold mb-1" style={{ color: 'var(--green)' }}>
+              Jam Mode
             </p>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
               Everyone in the session controls the timer together — like a group decision.

@@ -93,3 +93,19 @@ export interface BroadcastActivityPayload {
   type: 'activity'
   text: string
 }
+
+export interface SettingsChangeRequest {
+  requester_id: string
+  requester_name: string | null
+  focus: number
+  short: number
+  long: number
+  rounds: number
+  autoStartBreaks: boolean
+  autoStartPomodoros: boolean
+}
+
+export interface SettingsChangeResponse {
+  requester_id: string
+  accepted: boolean
+}

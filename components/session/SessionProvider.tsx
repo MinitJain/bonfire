@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Wifi, WifiOff, Zap, Users, Settings } from 'lucide-react'
-import type { ActivityItem, Session, TimerMode, TimerState } from '@/types'
+import { Wifi, WifiOff, Zap, Users, Settings, ChevronDown, Music2 } from 'lucide-react'
+import type { ActivityItem, Session, SettingsChangeRequest, TimerMode, TimerState } from '@/types'
 import { useTimer } from '@/hooks/useTimer'
 import { useSession } from '@/hooks/useSession'
 import { computeProgress, sessionToTimerState } from '@/lib/timer'
@@ -18,9 +18,10 @@ import { SharePanel } from '@/components/session/SharePanel'
 import { ActivityFeed } from '@/components/session/ActivityFeed'
 import { BreakOverlay } from '@/components/session/BreakOverlay'
 import { GuestNicknamePrompt } from '@/components/session/GuestNicknamePrompt'
+import { SettingsRequestCard } from '@/components/session/SettingsRequestCard'
 import { AmbientPlayer } from '@/components/session/AmbientPlayer'
 import { ModeTipBubble } from '@/components/session/ModeTipBubble'
-import { ToastProvider } from '@/components/ui/Toast'
+import { ToastProvider, useToast } from '@/components/ui/Toast'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { createClient } from '@/lib/supabase/client'
@@ -71,12 +72,19 @@ function SessionContent({
   // localUsername: for guests this starts null and is set when they save a nickname
   const [localUsername, setLocalUsername] = useState<string | null>(username ?? null)
   const [showNicknamePrompt, setShowNicknamePrompt] = useState(false)
+  const [nicknameReady, setNicknameReady] = useState(!!userId)
   const [showSettings, setShowSettings] = useState(false)
+  const [showWatcherSettings, setShowWatcherSettings] = useState(false)
+  const [showAmbient, setShowAmbient] = useState(false)
+  const [ambientActive, setAmbientActive] = useState(false)
+  const [pendingRequest, setPendingRequest] = useState<SettingsChangeRequest | null>(null)
   const [modeTipDismissed, setModeTipDismissed] = useState(false)
   const sharePanelRef = useRef<HTMLDivElement>(null)
   const settingsPanelRef = useRef<HTMLDivElement>(null)
+  const watcherSettingsPanelRef = useRef<HTMLDivElement>(null)
   const hasRequestedNotifRef = useRef(false)
   const supabase = useMemo(() => createClient(), [])
+  const { toast } = useToast()
 
   // Guest host detection via localStorage
   useEffect(() => {
@@ -92,6 +100,7 @@ function SessionContent({
     const stored = localStorage.getItem(`pomodoro_nick_${session.id}`)
     if (stored) {
       setLocalUsername(stored)
+      setNicknameReady(true)
     } else {
       // Brief delay so the page settles before the prompt appears
       const t = setTimeout(() => setShowNicknamePrompt(true), 800)
@@ -163,7 +172,7 @@ function SessionContent({
     onExpire: handleExpire,
   })
 
-  const { participants, isConnected, broadcastTimerState, onTimerUpdate, broadcastShareLock, onShareLock, broadcastJamMode, onJamMode, onParticipantJoin, onParticipantLeave, broadcastActivity, onActivity, updatePresence } = useSession({
+  const { participants, isConnected, broadcastTimerState, onTimerUpdate, broadcastShareLock, onShareLock, broadcastJamMode, onJamMode, onParticipantJoin, onParticipantLeave, broadcastActivity, onActivity, updatePresence, broadcastSettingsRequest, onSettingsRequest, broadcastSettingsResponse, onSettingsResponse } = useSession({
     sessionId: session.id,
     userId,
     isHost,
@@ -261,6 +270,19 @@ function SessionContent({
     }
   }, [showSettings])
 
+  // Close watcher settings panel on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (watcherSettingsPanelRef.current && !watcherSettingsPanelRef.current.contains(e.target as Node)) {
+        setShowWatcherSettings(false)
+      }
+    }
+    if (showWatcherSettings) {
+      document.addEventListener('mousedown', handleClick)
+      return () => document.removeEventListener('mousedown', handleClick)
+    }
+  }, [showWatcherSettings])
+
   // Request notification permission
   useEffect(() => {
     if (!hasRequestedNotifRef.current) {
@@ -307,6 +329,49 @@ function SessionContent({
     })
     return unsubscribe
   }, [isHost, onJamMode])
+
+  // Host receives settings change requests from watchers
+  useEffect(() => {
+    if (!isHost) return
+    const unsubscribe = onSettingsRequest((request) => {
+      setPendingRequest(request)
+    })
+    return unsubscribe
+  }, [isHost, onSettingsRequest])
+
+  // Watchers receive response from host (accepted/rejected)
+  useEffect(() => {
+    if (isHost) return
+    const unsubscribe = onSettingsResponse((response) => {
+      const guestId = typeof window !== 'undefined' ? localStorage.getItem('pomodoro_guest_id') : null
+      const myId = userId ?? guestId
+      if (response.requester_id !== myId) return
+      if (response.accepted) {
+        toast('Host accepted your settings request ✓', 'success')
+        setShowWatcherSettings(false)
+      } else {
+        toast('Host declined your settings request', 'error')
+      }
+    })
+    return unsubscribe
+  }, [isHost, onSettingsResponse, userId, toast])
+
+  const handleSendSettingsRequest = useCallback((newSettings: SessionSettings) => {
+    const guestId = typeof window !== 'undefined' ? localStorage.getItem('pomodoro_guest_id') : null
+    const myId = userId ?? guestId ?? 'unknown'
+    broadcastSettingsRequest({
+      requester_id: myId,
+      requester_name: localUsername,
+      focus: newSettings.durations.focus,
+      short: newSettings.durations.short,
+      long: newSettings.durations.long,
+      rounds: newSettings.rounds,
+      autoStartBreaks: newSettings.autoStartBreaks,
+      autoStartPomodoros: newSettings.autoStartPomodoros,
+    })
+    setShowWatcherSettings(false)
+    toast('Settings request sent to host', 'info')
+  }, [userId, localUsername, broadcastSettingsRequest, toast])
 
   const handleStart = useCallback(() => {
     const newState = start()
@@ -416,7 +481,31 @@ function SessionContent({
     }
   }, [reset, canControl, broadcastTimerState, broadcastShareLock, supabase, session.id])
 
+  const handleAcceptRequest = useCallback(async () => {
+    if (!pendingRequest) return
+    const newSettings: SessionSettings = {
+      durations: { focus: pendingRequest.focus, short: pendingRequest.short, long: pendingRequest.long },
+      rounds: pendingRequest.rounds,
+      allowGuestShare: sessionSettings.allowGuestShare,
+      autoStartBreaks: pendingRequest.autoStartBreaks,
+      autoStartPomodoros: pendingRequest.autoStartPomodoros,
+    }
+    await handleApplySettings(newSettings)
+    broadcastSettingsResponse({ requester_id: pendingRequest.requester_id, accepted: true })
+    setPendingRequest(null)
+  }, [pendingRequest, sessionSettings.allowGuestShare, handleApplySettings, broadcastSettingsResponse])
+
+  const handleRejectRequest = useCallback(() => {
+    if (!pendingRequest) return
+    broadcastSettingsResponse({ requester_id: pendingRequest.requester_id, accepted: false })
+    setPendingRequest(null)
+  }, [pendingRequest, broadcastSettingsResponse])
+
   const progress = computeProgress(timerState)
+  const isFirstRoundIdle = focusCount === 0 && mode === 'focus'
+  const roundLabel = mode === 'focus'
+    ? `Round ${focusCount + 1} · long break after ${sessionSettings.rounds - (focusCount % sessionSettings.rounds)} more`
+    : `Session ${focusCount} of ${sessionSettings.rounds} · ${mode === 'long' ? 'long break' : 'short break'}`
 
   return (
     <div
@@ -488,15 +577,16 @@ function SessionContent({
         >
           <ModeSelector mode={mode} isHost={canControl} onChange={handleModeChange} />
 
-          {/* Round indicator */}
-          {(focusCount > 0 || mode !== 'focus') && (
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {mode === 'focus'
-                ? `Round ${focusCount + 1} · long break after ${sessionSettings.rounds - (focusCount % sessionSettings.rounds)} more`
-                : `Session ${focusCount} of ${sessionSettings.rounds} · ${mode === 'long' ? 'long break' : 'short break'}`
-              }
-            </p>
-          )}
+          {/* Round indicator — always visible; dimmed on round 1 idle */}
+          <p
+            className="text-xs transition-opacity duration-300 mt-1"
+            style={{
+              color: isFirstRoundIdle ? 'var(--text-secondary)' : 'var(--text-primary)',
+              fontSize: isFirstRoundIdle ? '11px' : undefined,
+            }}
+          >
+            {roundLabel}
+          </p>
 
           {/* Timer ring */}
           <div className="block sm:hidden">
@@ -522,14 +612,14 @@ function SessionContent({
 
           {/* Share + Jam row */}
           <div className="flex items-center gap-2 w-full">
-            {/* Share button — hidden for viewers when host has locked sharing */}
+            {/* Invite button — hidden for viewers when host has locked sharing */}
             {(isHost || sessionSettings.allowGuestShare) && (
             <div className="relative flex-1" ref={sharePanelRef}>
               <button
                 onClick={() => setShowSharePanel(v => !v)}
                 aria-label="Share session"
                 aria-expanded={showSharePanel}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 cursor-pointer"
+                className="h-10 w-full flex items-center justify-center gap-1.5 px-4 rounded-xl border text-sm font-medium transition-all duration-200 cursor-pointer"
                 style={{
                   background: showSharePanel ? 'var(--accent)' : 'var(--bg-secondary)',
                   borderColor: showSharePanel ? 'var(--accent)' : 'var(--border)',
@@ -555,56 +645,97 @@ function SessionContent({
             </div>
             )}
 
+            {!isHost && (
+              <>
+                {/* Watcher settings request button — centred in remaining space */}
+                <div className="flex-1 flex justify-center">
+                  <div ref={watcherSettingsPanelRef} className="relative">
+                    <button
+                      onClick={() => setShowWatcherSettings(v => !v)}
+                      title="Request settings change"
+                      aria-label="Request settings change"
+                      className="h-10 w-10 flex items-center justify-center rounded-xl border transition-all cursor-pointer"
+                      style={{
+                        background: showWatcherSettings ? 'var(--accent-soft)' : 'var(--bg-secondary)',
+                        borderColor: showWatcherSettings ? 'var(--accent)' : 'var(--border)',
+                        color: showWatcherSettings ? 'var(--accent)' : 'var(--text-secondary)',
+                      }}
+                    >
+                      <Settings className="w-5 h-5" />
+                    </button>
+
+                    {showWatcherSettings && (
+                      <div
+                        className="absolute right-0 bottom-full mb-2 w-72 rounded-2xl z-50 p-4 animate-scale-in"
+                        style={{
+                          background: 'var(--bg-elevated)',
+                          border: '1px solid var(--border)',
+                          boxShadow: 'var(--shadow-lg)',
+                        }}
+                      >
+                        <SettingsPanel
+                          settings={sessionSettings}
+                          onApply={handleSendSettingsRequest}
+                          isWatcher
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
             {isHost && (
               <>
                 {/* Mode selector: Host | Jam */}
-                <div className="flex items-center rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
-                  <button
-                    onClick={() => { setModeTipDismissed(true); if (jamMode) handleToggleJamMode() }}
-                    title="You control the timer. Everyone else follows along in sync."
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all duration-150 cursor-pointer whitespace-nowrap"
-                    style={
-                      !jamMode
-                        ? { background: 'var(--accent)', color: '#fff' }
-                        : { background: 'var(--bg-secondary)', color: 'var(--text-muted)' }
-                    }
-                  >
-                    Host
-                  </button>
-                  <button
-                    onClick={() => { setModeTipDismissed(true); if (!jamMode) handleToggleJamMode() }}
-                    title="Everyone in the session can control the timer."
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all duration-150 cursor-pointer whitespace-nowrap"
-                    style={
-                      jamMode
-                        ? { background: 'var(--green)', color: '#fff' }
-                        : { background: 'var(--bg-secondary)', color: 'var(--text-muted)' }
-                    }
-                  >
-                    <Zap className="w-3 h-3" />
-                    Jam
-                  </button>
+                <div className="flex-1 flex">
+                  <div className="flex items-center rounded-xl overflow-hidden border h-10 w-full" style={{ borderColor: 'var(--border)' }}>
+                    <button
+                      onClick={() => { setModeTipDismissed(true); if (jamMode) handleToggleJamMode() }}
+                      title="You control the timer. Everyone else follows along in sync."
+                      className="h-full flex-1 flex items-center justify-center text-sm font-medium transition-all duration-150 cursor-pointer"
+                      style={
+                        !jamMode
+                          ? { background: 'var(--accent)', color: '#fff' }
+                          : { background: 'var(--bg-secondary)', color: 'var(--text-muted)' }
+                      }
+                    >
+                      Host
+                    </button>
+                    <button
+                      onClick={() => { setModeTipDismissed(true); if (!jamMode) handleToggleJamMode() }}
+                      title="Everyone in the session can control the timer."
+                      className="h-full flex-1 flex items-center justify-center text-sm font-medium transition-all duration-150 cursor-pointer"
+                      style={
+                        jamMode
+                          ? { background: 'var(--green)', color: '#fff' }
+                          : { background: 'var(--bg-secondary)', color: 'var(--text-muted)' }
+                      }
+                    >
+                      Jam
+                    </button>
+                  </div>
                 </div>
 
-                {/* Settings gear (host only) */}
-                <div ref={settingsPanelRef} className="relative">
+                {/* Settings gear */}
+                <div ref={settingsPanelRef} className="relative shrink-0">
                   <button
                     onClick={() => setShowSettings(v => !v)}
                     title="Timer settings"
                     aria-label="Timer settings"
-                    className="p-2.5 rounded-xl border transition-all cursor-pointer"
+                    className="h-10 w-10 flex items-center justify-center rounded-xl border transition-all cursor-pointer"
                     style={{
                       background: showSettings ? 'var(--accent-soft)' : 'var(--bg-secondary)',
                       borderColor: showSettings ? 'var(--accent)' : 'var(--border)',
-                      color: showSettings ? 'var(--accent)' : 'var(--text-muted)',
+                      color: showSettings ? 'var(--accent)' : 'var(--text-secondary)',
                     }}
                   >
-                    <Settings className="w-4 h-4" />
+                    <Settings className="w-5 h-5" />
                   </button>
 
                   {showSettings && (
                     <div
-                      className="absolute right-0 bottom-12 w-72 rounded-2xl z-50 p-4 animate-scale-in"
+                      className="absolute right-0 bottom-full mb-2 w-72 rounded-2xl z-50 p-4 animate-scale-in"
                       style={{
                         background: 'var(--bg-elevated)',
                         border: '1px solid var(--border)',
@@ -623,23 +754,36 @@ function SessionContent({
             )}
           </div>
 
-          {/* Inline hint text — always visible for host */}
-          {isHost && (
-            <p
-              className="text-center"
-              style={{ color: 'var(--text-muted)', fontSize: '12px', fontFamily: 'var(--font-dm-sans)' }}
-            >
-              Host - only you control the timer · Jam - everyone controls together
-            </p>
-          )}
-
           <ParticipantList participants={participants} />
 
-          <AmbientPlayer />
+          {/* Ambient sound — collapsible */}
+          <div className="w-full" style={{ borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
+            <button
+              onClick={() => setShowAmbient(v => !v)}
+              className="w-full flex items-center justify-between cursor-pointer"
+              aria-expanded={showAmbient}
+              aria-label="Toggle focus noise"
+            >
+              <span className="flex items-center gap-2 text-xs font-medium" style={{ color: ambientActive ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                <Music2 className="w-3.5 h-3.5" />
+                Focus Noise
+                {ambientActive && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--green)' }} />}
+              </span>
+              <ChevronDown
+                className={cn('w-3.5 h-3.5 transition-transform duration-200', showAmbient && 'rotate-180')}
+                style={{ color: 'var(--text-muted)' }}
+              />
+            </button>
+            {showAmbient && (
+              <div className="mt-3">
+                <AmbientPlayer onActiveChange={setAmbientActive} />
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
-      {isHost && <ModeTipBubble externalDismiss={modeTipDismissed} />}
+      {isHost && <ModeTipBubble externalDismiss={modeTipDismissed} ready={nicknameReady} />}
 
       <BreakOverlay
         visible={showBreakOverlay}
@@ -653,6 +797,16 @@ function SessionContent({
 
       <ActivityFeed items={activities} />
 
+      {isHost && pendingRequest && (
+        <SettingsRequestCard
+          request={pendingRequest}
+          currentSettings={sessionSettings}
+          timerRunning={status === 'running'}
+          onAccept={handleAcceptRequest}
+          onReject={handleRejectRequest}
+        />
+      )}
+
       {showNicknamePrompt && (
         <GuestNicknamePrompt
           onSave={(name) => {
@@ -660,8 +814,9 @@ function SessionContent({
             localStorage.setItem(`pomodoro_nick_${session.id}`, name)
             updatePresence(name)
             setShowNicknamePrompt(false)
+            setNicknameReady(true)
           }}
-          onSkip={() => setShowNicknamePrompt(false)}
+          onSkip={() => { setShowNicknamePrompt(false); setNicknameReady(true) }}
         />
       )}
     </div>

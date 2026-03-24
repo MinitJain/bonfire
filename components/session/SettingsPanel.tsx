@@ -20,6 +20,7 @@ interface SettingsPanelProps {
   settings: SessionSettings
   onApply: (settings: SessionSettings) => void
   disabled?: boolean
+  isWatcher?: boolean
 }
 
 function ClampInput({ label, value, onChange, min, max }: {
@@ -73,7 +74,7 @@ function ToggleRow({ label, checked, onToggle }: { label: string; checked: boole
   )
 }
 
-export function SettingsPanel({ settings, onApply, disabled }: SettingsPanelProps) {
+export function SettingsPanel({ settings, onApply, disabled, isWatcher }: SettingsPanelProps) {
   const [local, setLocal] = useState(settings)
 
   const setDuration = (key: keyof TimerDurations) => (v: number) =>
@@ -123,11 +124,13 @@ export function SettingsPanel({ settings, onApply, disabled }: SettingsPanelProp
         onToggle={() => setLocal(prev => ({ ...prev, autoStartPomodoros: !prev.autoStartPomodoros }))}
       />
 
-      <ToggleRow
-        label="Allow guests to invite"
-        checked={local.allowGuestShare}
-        onToggle={() => setLocal(prev => ({ ...prev, allowGuestShare: !prev.allowGuestShare }))}
-      />
+      {!isWatcher && (
+        <ToggleRow
+          label="Allow guests to invite"
+          checked={local.allowGuestShare}
+          onToggle={() => setLocal(prev => ({ ...prev, allowGuestShare: !prev.allowGuestShare }))}
+        />
+      )}
 
       <button
         onClick={() => onApply(local)}
@@ -135,7 +138,7 @@ export function SettingsPanel({ settings, onApply, disabled }: SettingsPanelProp
         title={disabled ? 'Pause the timer to change settings' : undefined}
         className="w-full py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer disabled:opacity-50 bg-accent text-white"
       >
-        {disabled ? 'Pause timer to apply' : 'Apply'}
+        {isWatcher ? 'Send Request' : (disabled ? 'Pause timer to apply' : 'Apply')}
       </button>
     </div>
   )

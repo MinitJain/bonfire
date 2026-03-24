@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
-const VALID_TYPES = new Set(['', 'stats'])
+const VALID_TYPES = new Set(['', 'stats', 'invite'])
 
 function clampInt(value: string | null, max = 999999): number {
   const n = parseInt(value ?? '0', 10)
@@ -46,6 +46,40 @@ export async function GET(request: NextRequest) {
                 <span style={{ fontSize: '16px', color: '#666' }}>{label}</span>
               </div>
             ))}
+          </div>
+        </div>
+      ),
+      { width: 1200, height: 630 }
+    )
+  }
+
+  if (type === 'invite') {
+    const host = (searchParams.get('host') ?? 'Someone').slice(0, 30)
+    const focus = clampInt(searchParams.get('focus'), 120) || 25
+
+    return new ImageResponse(
+      (
+        <div style={{ background: '#0F0F0D', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', width: '700px', height: '700px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,85,51,0.12) 0%, transparent 65%)', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+          {/* Tomato icon */}
+          <svg width="72" height="72" viewBox="0 0 100 100" style={{ marginBottom: '28px' }}>
+            <rect x="47" y="8" width="6" height="16" rx="3" fill="#4CAF50" />
+            <path d="M50 14 Q60 5 70 10" stroke="#4CAF50" strokeWidth="4" fill="none" strokeLinecap="round" />
+            <circle cx="50" cy="58" r="36" fill="#FF5533" />
+            <ellipse cx="38" cy="44" rx="9" ry="6" fill="rgba(255,255,255,0.25)" />
+          </svg>
+          <div style={{ fontSize: '22px', color: '#888888', marginBottom: '12px', letterSpacing: '0.02em' }}>
+            PomodoroJam
+          </div>
+          <div style={{ fontSize: '52px', fontWeight: '800', color: '#FFFFFF', textAlign: 'center', maxWidth: '900px', lineHeight: '1.2', marginBottom: '16px', padding: '0 40px' }}>
+            {host} invited you to a focus session
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,85,51,0.12)', border: '1px solid rgba(255,85,51,0.3)', borderRadius: '999px', padding: '10px 28px' }}>
+            <span style={{ fontSize: '28px', fontWeight: '700', color: '#FF5533' }}>{focus} min</span>
+            <span style={{ fontSize: '20px', color: '#888888' }}>focus</span>
+          </div>
+          <div style={{ position: 'absolute', bottom: '36px', fontSize: '18px', color: '#444444', fontFamily: 'monospace', letterSpacing: '0.03em' }}>
+            {displayUrl}
           </div>
         </div>
       ),

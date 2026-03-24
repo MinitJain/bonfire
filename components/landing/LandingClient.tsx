@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
@@ -9,7 +9,6 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { ToastProvider, useToast } from '@/components/ui/Toast'
-import { extractSessionId } from '@/lib/session'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
@@ -75,10 +74,6 @@ function StartModal({
   onHost: () => void
   isCreating: boolean
 }) {
-  const router = useRouter()
-  const [joinInput, setJoinInput] = useState('')
-  const [joinError, setJoinError] = useState('')
-  const [isPending, startTransition] = useTransition()
   const modalRef = useRef<HTMLDivElement>(null)
 
   // Escape to close
@@ -113,16 +108,6 @@ function StartModal({
       previous?.focus()
     }
   }, [])
-
-  const handleJoin = () => {
-    setJoinError('')
-    const sessionId = extractSessionId(joinInput)
-    if (!sessionId) {
-      setJoinError('Enter a valid session link or ID')
-      return
-    }
-    startTransition(() => { router.push(`/session/${sessionId}`) })
-  }
 
   return (
     <div
@@ -211,38 +196,9 @@ function StartModal({
             <h3 className="font-semibold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>
               Join a session
             </h3>
-            <p className="text-xs leading-relaxed mb-4" style={{ color: 'var(--text-secondary)' }}>
-              Paste a session link or ID to join a friend&apos;s session.
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              Ask a friend to share their session link and open it in your browser — you&apos;ll join instantly.
             </p>
-            <input
-              type="text"
-              placeholder="Paste link or session ID"
-              value={joinInput}
-              onChange={e => { setJoinInput(e.target.value); setJoinError('') }}
-              onKeyDown={e => e.key === 'Enter' && handleJoin()}
-              className={cn(
-                'w-full px-3 py-2 rounded-xl text-sm outline-none transition-all mb-2',
-                joinError && 'ring-2 ring-red-500/50'
-              )}
-              style={{
-                background: 'var(--bg-elevated)',
-                border: `1px solid ${joinError ? '#ef4444' : 'var(--border)'}`,
-                color: 'var(--text-primary)',
-              }}
-            />
-            {joinError && <p className="text-xs text-red-400 mb-2">{joinError}</p>}
-            <button
-              onClick={handleJoin}
-              disabled={!joinInput.trim() || isPending}
-              className="mt-auto w-full py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer disabled:opacity-50"
-              style={{
-                background: 'var(--bg-elevated)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-primary)',
-              }}
-            >
-              Join session →
-            </button>
           </div>
         </div>
       </div>

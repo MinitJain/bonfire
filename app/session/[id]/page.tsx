@@ -13,24 +13,33 @@ export async function generateMetadata({ params }: SessionPageProps): Promise<Me
   const supabase = createClient()
   const { data } = await supabase
     .from('sessions')
-    .select('title')
+    .select('title, host_name, settings')
     .eq('id', params.id)
     .single()
 
-  const sessionName = data?.title ?? 'Focus Session'
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pomodoro-jam.vercel.app'
+  const hostName = data?.host_name ?? 'Someone'
+  const focusMins: number = (data?.settings as { focus?: number } | null)?.focus ?? 25
+  const ogTitle = `${hostName} invited you to PomodoroJam 🍅`
+  const ogDesc = `Join ${hostName}'s ${focusMins}-min focus session. Open the link to join.`
 
   return {
-    title: sessionName,
+    title: `${hostName}'s focus session`,
+    description: ogDesc,
     openGraph: {
-      title: `${sessionName} | PomodoroJam`,
+      title: ogTitle,
+      description: ogDesc,
       images: [
         {
-          url: `/api/og?session=${encodeURIComponent(params.id)}&name=${encodeURIComponent(sessionName)}`,
+          url: `/api/og?type=invite&host=${encodeURIComponent(hostName)}&focus=${focusMins}`,
           width: 1200,
           height: 630,
         },
       ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: ogTitle,
+      description: ogDesc,
     },
   }
 }
