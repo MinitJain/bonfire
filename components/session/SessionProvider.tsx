@@ -281,18 +281,22 @@ function SessionContent({
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [isHost, status])
 
-  // Toggle jam mode (host only) — persisted to DB and broadcast to existing participants
+  // Toggle jam mode (host only) — await DB first, then broadcast to avoid state divergence
   const handleToggleJamMode = useCallback(async () => {
     const next = !jamMode
+    const { error } = await supabase
+      .from('sessions')
+      .update({ jam_mode: next })
+      .eq('id', session.id)
+    if (error) {
+      console.error('[handleToggleJamMode] DB update failed:', error)
+      return
+    }
     setJamMode(next)
     broadcastJamMode(next)
     const msg = next ? 'Jam Mode on — everyone can control ⚡' : 'Back to host control 👑'
     pushActivity(msg)
     broadcastActivity(msg)
-    await supabase
-      .from('sessions')
-      .update({ jam_mode: next })
-      .eq('id', session.id)
   }, [jamMode, session.id, supabase, broadcastJamMode, broadcastActivity, pushActivity])
 
   // Non-hosts receive jam mode changes from the host
@@ -382,15 +386,14 @@ function SessionContent({
     }
   }, [setMode, actorName, canControl, broadcastTimerState, broadcastActivity, pushActivity, sessionSettings.durations, supabase, session.id])
 
-  const handleApplySettings = useCallback((newSettings: SessionSettings) => {
+  const handleApplySettings = useCallback(async (newSettings: SessionSettings) => {
     setSessionSettings(newSettings)
     setShowSettings(false)
     focusCountRef.current = 0
     setFocusCount(0)
     const newState = reset(toSecs(newSettings.durations))
     if (canControl) {
-      broadcastTimerState(newState)
-      supabase.from('sessions').update({
+      const { error } = await supabase.from('sessions').update({
         running: false,
         time_left: newState.timeLeft,
         mode: newState.mode,
@@ -404,8 +407,13 @@ function SessionContent({
           autoStartPomodoros: newSettings.autoStartPomodoros,
         },
       }).eq('id', session.id)
+      if (error) {
+        console.error('[handleApplySettings] DB update failed:', error)
+      } else {
+        broadcastTimerState(newState)
+        broadcastShareLock(!newSettings.allowGuestShare)
+      }
     }
-    broadcastShareLock(!newSettings.allowGuestShare)
   }, [reset, canControl, broadcastTimerState, broadcastShareLock, supabase, session.id])
 
   const progress = computeProgress(timerState)

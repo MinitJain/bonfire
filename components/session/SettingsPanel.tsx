@@ -19,9 +19,6 @@ export interface SessionSettings {
 interface SettingsPanelProps {
   settings: SessionSettings
   onApply: (settings: SessionSettings) => void
-  onGuestShareChange?: (v: boolean) => void
-  onAutoStartBreaksChange?: (v: boolean) => void
-  onAutoStartPomodorosChange?: (v: boolean) => void
   disabled?: boolean
 }
 
@@ -76,14 +73,7 @@ function ToggleRow({ label, checked, onToggle }: { label: string; checked: boole
   )
 }
 
-export function SettingsPanel({
-  settings,
-  onApply,
-  onGuestShareChange,
-  onAutoStartBreaksChange,
-  onAutoStartPomodorosChange,
-  disabled,
-}: SettingsPanelProps) {
+export function SettingsPanel({ settings, onApply, disabled }: SettingsPanelProps) {
   const [local, setLocal] = useState(settings)
 
   const setDuration = (key: keyof TimerDurations) => (v: number) =>
@@ -124,31 +114,19 @@ export function SettingsPanel({
       <ToggleRow
         label="Auto start breaks"
         checked={local.autoStartBreaks}
-        onToggle={() => {
-          const next = !local.autoStartBreaks
-          setLocal(prev => ({ ...prev, autoStartBreaks: next }))
-          onAutoStartBreaksChange?.(next)
-        }}
+        onToggle={() => setLocal(prev => ({ ...prev, autoStartBreaks: !prev.autoStartBreaks }))}
       />
 
       <ToggleRow
         label="Auto start pomodoros"
         checked={local.autoStartPomodoros}
-        onToggle={() => {
-          const next = !local.autoStartPomodoros
-          setLocal(prev => ({ ...prev, autoStartPomodoros: next }))
-          onAutoStartPomodorosChange?.(next)
-        }}
+        onToggle={() => setLocal(prev => ({ ...prev, autoStartPomodoros: !prev.autoStartPomodoros }))}
       />
 
       <ToggleRow
         label="Allow guests to invite"
         checked={local.allowGuestShare}
-        onToggle={() => {
-          const next = !local.allowGuestShare
-          setLocal(prev => ({ ...prev, allowGuestShare: next }))
-          onGuestShareChange?.(next)
-        }}
+        onToggle={() => setLocal(prev => ({ ...prev, allowGuestShare: !prev.allowGuestShare }))}
       />
 
       <button

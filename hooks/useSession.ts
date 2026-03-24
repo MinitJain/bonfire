@@ -137,11 +137,13 @@ export function useSession({
     })
 
     channel.on('presence', { event: 'leave' }, ({ key }) => {
-      setParticipants((prev) => {
-        const leaving = prev.find((p) => p.user_id === key)
-        leaveCallbacksRef.current.forEach(cb => cb(leaving?.username ?? null))
-        return prev.filter((p) => p.user_id !== key)
-      })
+      // Read participant list before the state update to avoid side effects inside updater
+      const leaving = channelRef.current
+        ? channel.presenceState<{ username?: string | null }>()[key]?.[0]
+        : null
+      const leftUsername = leaving?.username ?? null
+      leaveCallbacksRef.current.forEach(cb => cb(leftUsername))
+      setParticipants((prev) => prev.filter((p) => p.user_id !== key))
     })
 
     // Listen for timer broadcasts
@@ -256,7 +258,7 @@ export function useSession({
     channelRef.current?.send({
       type: 'broadcast',
       event: 'activity',
-      payload: { text } satisfies BroadcastActivityPayload,
+      payload: { type: 'activity', text } satisfies BroadcastActivityPayload,
     })
   }, [])
 

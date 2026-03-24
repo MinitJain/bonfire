@@ -13,6 +13,8 @@ declare
   v_last_active date;
   v_today       date := current_date;
 begin
+  if p_minutes <= 0 then return; end if;
+
   select last_active_date into v_last_active from public.profiles where id = p_user_id;
 
   if v_last_active = v_today - interval '1 day' then

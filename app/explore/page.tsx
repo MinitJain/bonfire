@@ -17,13 +17,15 @@ export default async function ExplorePage() {
 
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
 
-  const { data: sessions } = await supabase
+  const { data: sessions, error } = await supabase
     .from('sessions')
     .select('id, title, host_name, mode, running, updated_at, status')
     .eq('running', true)
     .gt('updated_at', fiveMinutesAgo)
     .order('updated_at', { ascending: false })
     .limit(20)
+
+  if (error) console.error('[ExplorePage] Failed to fetch sessions:', error)
 
   const modeLabel: Record<string, string> = {
     focus: '🍅 Focus',

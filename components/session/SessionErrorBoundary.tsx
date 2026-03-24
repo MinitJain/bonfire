@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 
-interface State { hasError: boolean; message: string }
+interface State { hasError: boolean }
 
 export class SessionErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -11,11 +11,11 @@ export class SessionErrorBoundary extends React.Component<
 > {
   constructor(props: { children: React.ReactNode }) {
     super(props)
-    this.state = { hasError: false, message: '' }
+    this.state = { hasError: false }
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, message: error.message }
+  static getDerivedStateFromError(): State {
+    return { hasError: true }
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
@@ -35,7 +35,7 @@ export class SessionErrorBoundary extends React.Component<
           </p>
           <div className="flex gap-3">
             <button
-              onClick={() => { this.setState({ hasError: false, message: '' }); window.location.reload() }}
+              onClick={() => window.location.reload()}
               className="px-5 py-2.5 rounded-xl text-sm font-medium cursor-pointer"
               style={{ background: 'var(--accent)', color: '#fff' }}
             >

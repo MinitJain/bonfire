@@ -113,12 +113,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     const oneYearAgo = new Date()
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
 
-    const { data: logs } = await supabase
+    const { data: logs, error: logsError } = await supabase
       .from('pomodoro_logs')
       .select('duration_minutes, completed_at')
       .eq('user_id', typedProfile.id)
       .gte('completed_at', oneYearAgo.toISOString())
 
+    if (logsError) console.error('[ProfilePage] Failed to fetch pomodoro_logs:', logsError)
     if (logs) {
       for (const log of logs) {
         const dateStr = log.completed_at.slice(0, 10)

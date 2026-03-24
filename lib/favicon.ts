@@ -22,6 +22,9 @@ function getCanvas(): HTMLCanvasElement {
 }
 
 function getLink(): HTMLLinkElement {
+  if (_link && !_link.isConnected) {
+    _link = null
+  }
   if (!_link) {
     _link = document.createElement('link')
     _link.rel = 'icon'

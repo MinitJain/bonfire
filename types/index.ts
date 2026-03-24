@@ -90,5 +90,6 @@ export interface ActivityItem {
 }
 
 export interface BroadcastActivityPayload {
+  type: 'activity'
   text: string
 }
