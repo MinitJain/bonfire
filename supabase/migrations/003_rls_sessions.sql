@@ -11,4 +11,8 @@ CREATE POLICY "Host or jam participants can update sessions"
     host_id = auth.uid()
     OR jam_mode = true
     OR host_id IS NULL  -- guest-hosted sessions (no auth.uid())
+  )
+  WITH CHECK (
+    -- Participants may not change immutable ownership columns
+    host_id IS NOT DISTINCT FROM host_id
   );

@@ -3,8 +3,11 @@
 
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS last_active_at timestamptz DEFAULT now();
 
--- Update trigger to also set last_active_at
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+-- Index for efficient expiry queries
+CREATE INDEX IF NOT EXISTS idx_sessions_last_active_at ON sessions (last_active_at);
+
+-- Rename trigger function to reflect it sets both timestamps
+CREATE OR REPLACE FUNCTION update_session_timestamps()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = now();
