@@ -3,15 +3,27 @@ import type { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
+const VALID_TYPES = new Set(['', 'stats'])
+
+function clampInt(value: string | null, max = 999999): number {
+  const n = parseInt(value ?? '0', 10)
+  return isNaN(n) || n < 0 ? 0 : Math.min(n, max)
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
+  const type = searchParams.get('type') ?? ''
+
+  if (!VALID_TYPES.has(type)) {
+    return new Response('Invalid type', { status: 400 })
+  }
+
   const name = (searchParams.get('name') ?? '').slice(0, 50)
   const sessionId = (searchParams.get('session') ?? '').slice(0, 60)
-  const type = searchParams.get('type') ?? ''
   const username = (searchParams.get('username') ?? '').slice(0, 30)
-  const pomodoros = parseInt(searchParams.get('pomodoros') ?? '0', 10) || 0
-  const streak = parseInt(searchParams.get('streak') ?? '0', 10) || 0
-  const hours = parseInt(searchParams.get('hours') ?? '0', 10) || 0
+  const pomodoros = clampInt(searchParams.get('pomodoros'))
+  const streak = clampInt(searchParams.get('streak'))
+  const hours = clampInt(searchParams.get('hours'))
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pomodoro-jam.vercel.app'
   const displayUrl = appUrl.replace(/^https?:\/\//, '')
 

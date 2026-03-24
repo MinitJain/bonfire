@@ -5,7 +5,7 @@ interface CalendarCell {
 }
 
 interface StreakCalendarProps {
-  cells: CalendarCell[]   // exactly 364 cells, Mon → Sun per column, oldest first
+  cells: CalendarCell[]   // exactly 371 cells (53 weeks), Mon → Sun per column, oldest first
   totalMinutesYear: number
   totalPomodorosYear: number
 }
@@ -20,7 +20,7 @@ function cellColor(minutes: number): string {
 }
 
 const DAY_LABELS = ['M', '', 'W', '', 'F', '', ''] // Mon=0 … Sun=6 (ISO)
-const WEEKS = 52
+const WEEKS = 53
 
 export function StreakCalendar({ cells, totalMinutesYear, totalPomodorosYear }: StreakCalendarProps) {
   // Derive month labels: find first cell of each month to get column index

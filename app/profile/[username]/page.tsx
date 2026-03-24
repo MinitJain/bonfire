@@ -48,16 +48,16 @@ function buildCalendarCells(dayMap: Record<string, number>) {
   const today = new Date()
   const todayStr = today.toISOString().slice(0, 10)
 
-  // Find the Monday 52 weeks ago
+  // Find the Monday 53 weeks ago
   const start = new Date(today)
-  start.setDate(start.getDate() - 364)
+  start.setDate(start.getDate() - 371)
   // Rewind to the nearest Monday on or before `start`
   const dow = start.getDay() // 0=Sun…6=Sat
   start.setDate(start.getDate() - (dow === 0 ? 6 : dow - 1))
 
   const cells: { date: string; minutes: number; isToday: boolean }[] = []
   const cur = new Date(start)
-  while (cells.length < 52 * 7) {
+  while (cells.length < 53 * 7) {
     const dateStr = cur.toISOString().slice(0, 10)
     cells.push({
       date: dateStr,

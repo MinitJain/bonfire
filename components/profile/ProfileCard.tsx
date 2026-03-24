@@ -14,6 +14,7 @@ interface ProfileCardProps {
 export function ProfileCard({ profile, isOwnProfile }: ProfileCardProps) {
   const [showEditModal, setShowEditModal] = useState(false)
   const [currentProfile, setCurrentProfile] = useState(profile)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => { setCurrentProfile(profile) }, [profile])
 
@@ -81,14 +82,17 @@ export function ProfileCard({ profile, isOwnProfile }: ProfileCardProps) {
                         hours: String(Math.round(currentProfile.total_focus_minutes / 60)),
                       })
                       const url = `${window.location.origin}/api/og?${params}`
-                      navigator.clipboard?.writeText(url).then(() => alert('Stats card link copied!')).catch(() => {})
+                      navigator.clipboard?.writeText(url).then(() => {
+                        setCopied(true)
+                        setTimeout(() => setCopied(false), 2000)
+                      }).catch(err => console.error('Clipboard write failed:', err))
                     }}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer flex-shrink-0"
                     style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-primary)', minHeight: '44px' }}
                     aria-label="Share stats"
                   >
                     <Share2 className="w-4 h-4" />
-                    Share
+                    {copied ? 'Copied!' : 'Share'}
                   </button>
                 )}
               </div>
