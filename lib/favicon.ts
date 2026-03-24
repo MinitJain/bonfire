@@ -83,8 +83,32 @@ export function updateFavicon(timeLeft: number, mode: string): void {
 
 export function resetFavicon(): void {
   if (typeof window === 'undefined') return
-  if (_link) {
-    _link.remove()
-    _link = null
-  }
+
+  const canvas = getCanvas()
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  ctx.clearRect(0, 0, FAVICON_SIZE, FAVICON_SIZE)
+
+  // Red circle background
+  ctx.beginPath()
+  ctx.arc(16, 16, 15, 0, 2 * Math.PI)
+  ctx.fillStyle = '#e8472a'
+  ctx.fill()
+
+  // Thin ring
+  ctx.beginPath()
+  ctx.arc(16, 16, 14, 0, 2 * Math.PI)
+  ctx.strokeStyle = '#c23820'
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
+  // Tomato emoji — canvas uses system emoji fonts, always renders correctly
+  ctx.font = '18px serif'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('🍅', 16, 17)
+
+  const link = getLink()
+  link.href = canvas.toDataURL('image/png')
 }
