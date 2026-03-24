@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     title: 'PomodoroJam',
   },
   icons: {
-    apple: '/icon-192.png',
+    apple: '/apple-touch-icon.png',
   },
   alternates: {
     canonical: appUrl,
