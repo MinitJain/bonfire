@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { DM_Sans, Syne, JetBrains_Mono } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 import { Analytics } from '@vercel/analytics/next'
+import { FaviconInit } from '@/components/ui/FaviconInit'
 import './globals.css'
 
 const dmSans = DM_Sans({
@@ -112,6 +113,7 @@ export default function RootLayout({
               }),
             }}
           />
+          <FaviconInit />
           {children}
           <Analytics />
         </ThemeProvider>
