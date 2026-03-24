@@ -1,7 +1,8 @@
+'use client'
+
 interface CalendarCell {
   date: string    // YYYY-MM-DD
   minutes: number
-  isToday: boolean
 }
 
 interface StreakCalendarProps {
@@ -23,6 +24,8 @@ const DAY_LABELS = ['M', '', 'W', '', 'F', '', ''] // Mon=0 … Sun=6 (ISO)
 const WEEKS = 53
 
 export function StreakCalendar({ cells, totalMinutesYear, totalPomodorosYear }: StreakCalendarProps) {
+  // Compute today in the client's local timezone (YYYY-MM-DD)
+  const todayStr = new Date().toLocaleDateString('en-CA')
   // Derive month labels: find first cell of each month to get column index
   const monthLabels: { label: string; col: number }[] = []
   let lastMonth = -1
@@ -122,7 +125,7 @@ export function StreakCalendar({ cells, totalMinutesYear, totalPomodorosYear }: 
                     height: '12px',
                     borderRadius: '2px',
                     background: cellColor(cell.minutes),
-                    outline: cell.isToday ? '1.5px solid var(--accent)' : undefined,
+                    outline: cell.date === todayStr ? '1.5px solid var(--accent)' : undefined,
                     outlineOffset: '1px',
                     cursor: cell.minutes > 0 ? 'default' : undefined,
                   }}

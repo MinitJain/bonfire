@@ -15,7 +15,11 @@ declare
 begin
   if p_minutes <= 0 then return; end if;
 
-  select last_active_date into v_last_active from public.profiles where id = p_user_id;
+  -- Lock the row to prevent concurrent streak miscalculation
+  select last_active_date into v_last_active
+  from public.profiles
+  where id = p_user_id
+  for update;
 
   if v_last_active = v_today - interval '1 day' then
     -- Continuing streak
