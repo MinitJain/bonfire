@@ -40,7 +40,7 @@ export function StreakCalendar({ cells, totalMinutesYear, totalPomodorosYear }: 
     }
   })
 
-  const totalHours = (totalMinutesYear / 60).toFixed(0)
+  const totalHours = Math.floor(totalMinutesYear / 60)
   const activeDays = cells.filter(c => c.minutes > 0).length
 
   return (
