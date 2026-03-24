@@ -35,10 +35,15 @@
 | 👥 | **Live participants** | See who's focusing with you via real-time presence. |
 | 🏷️ | **Guest nicknames** | Guests can set a display name — visible to everyone in the session. |
 | 🔔 | **Break notifications** | Browser push notification when your session ends. |
-| 📊 | **Profiles & streaks** | Track total pomodoros, focus hours, and daily streaks. |
+| 📊 | **Analytics dashboard** | Track pomodoros, focus hours, streaks, and a GitHub-style activity heatmap. |
+| 🔄 | **Auto start** | Optionally auto-start breaks or next focus sessions when the timer ends. |
+| ⏭️ | **Round cycle** | Configurable long-break interval (default every 4 sessions). |
+| 💬 | **Activity feed** | Live floating messages when participants start, pause, skip, or join. |
 | 🔗 | **One-tap share** | Copy link or use the native OS share sheet. |
+| 🌍 | **Explore page** | Browse live sessions happening right now. |
 | 👋 | **No account needed** | Start and join sessions as a guest. |
 | 🌗 | **Dark / light theme** | Persisted per device via next-themes. |
+| 📱 | **PWA** | Installable on mobile with custom icons. |
 
 ---
 
@@ -102,6 +107,15 @@ Run the migrations in your Supabase SQL editor in order:
 ```text
 supabase/migrations/001_init.sql
 supabase/migrations/002_jam_mode.sql
+supabase/migrations/003_rls_sessions.sql
+supabase/migrations/004_session_expiry.sql
+supabase/migrations/005_log_pomodoros.sql
+```
+
+Or push via the Supabase CLI:
+
+```bash
+npx supabase db push
 ```
 
 **4. Enable OAuth providers**
@@ -134,17 +148,6 @@ After deploying, complete these three steps or auth will break:
 
 PRs are welcome. For major changes, open an issue first.
 This repo uses [CodeRabbit](https://coderabbit.ai) for AI code review — every PR gets reviewed automatically.
-
----
-
-## Known Limitations
-
-This is an MVP. These are known tradeoffs:
-
-- **Open session mutations** — RLS `update using (true)` means any user can mutate any session row directly. Acceptable for v1.
-- **Stats for signed-in users only** — guests get no pomodoro tracking.
-- **No session expiry** — old sessions accumulate in the DB over time.
-- **PWA not installable** — icons missing from manifest; add 192×192 and 512×512 PNGs to fix.
 
 ---
 

@@ -3,12 +3,55 @@ import type { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
+const VALID_TYPES = new Set(['', 'stats'])
+
+function clampInt(value: string | null, max = 999999): number {
+  const n = parseInt(value ?? '0', 10)
+  return isNaN(n) || n < 0 ? 0 : Math.min(n, max)
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const name = searchParams.get('name') ?? ''
-  const sessionId = searchParams.get('session') ?? ''
+  const type = searchParams.get('type') ?? ''
+
+  if (!VALID_TYPES.has(type)) {
+    return new Response('Invalid type', { status: 400 })
+  }
+
+  const name = (searchParams.get('name') ?? '').slice(0, 50)
+  const sessionId = (searchParams.get('session') ?? '').slice(0, 60)
+  const username = (searchParams.get('username') ?? '').slice(0, 30)
+  const pomodoros = clampInt(searchParams.get('pomodoros'))
+  const streak = clampInt(searchParams.get('streak'))
+  const hours = clampInt(searchParams.get('hours'))
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pomodoro-jam.vercel.app'
   const displayUrl = appUrl.replace(/^https?:\/\//, '')
+
+  if (type === 'stats') {
+    return new ImageResponse(
+      (
+        <div style={{ background: '#0F0F0D', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', position: 'relative' }}>
+          <div style={{ position: 'absolute', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,85,51,0.1) 0%, transparent 65%)', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+          <div style={{ fontSize: '20px', color: '#666', marginBottom: '8px' }}>🍅 PomodoroJam</div>
+          <div style={{ fontSize: '40px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>{username}</div>
+          <div style={{ fontSize: '16px', color: '#888', marginBottom: '48px' }}>Focus stats</div>
+          <div style={{ display: 'flex', gap: '40px' }}>
+            {[
+              { value: String(pomodoros), label: 'Pomodoros' },
+              { value: `${hours}h`, label: 'Focus time' },
+              { value: `${streak}d`, label: 'Streak' },
+            ].map(({ value, label }) => (
+              <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '52px', fontWeight: '800', color: '#FF5533' }}>{value}</span>
+                <span style={{ fontSize: '16px', color: '#666' }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+      { width: 1200, height: 630 }
+    )
+  }
 
   return new ImageResponse(
     (
