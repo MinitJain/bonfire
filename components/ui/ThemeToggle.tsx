@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useTheme } from 'next-themes'
@@ -10,7 +11,7 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ className }: ThemeToggleProps) {
-  const { resolvedTheme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
   // Prevent hydration mismatch
@@ -25,11 +26,10 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
     )
   }
 
-  const isDark = resolvedTheme === 'dark'
+  const isDark = theme === 'dark'
 
   return (
     <button
-      type="button"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       className={cn(
