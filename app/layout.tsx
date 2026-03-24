@@ -58,6 +58,17 @@ export const metadata: Metadata = {
     images: ['/api/og'],
   },
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'PomodoroJam',
+  },
+  icons: {
+    apple: '/icon-192.png',
+  },
+  alternates: {
+    canonical: appUrl,
+  },
 }
 
 export const viewport: Viewport = {
@@ -82,6 +93,25 @@ export default function RootLayout({
     >
 <body className="bg-background text-foreground font-sans min-h-screen antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'WebApplication',
+                name: 'PomodoroJam',
+                url: appUrl,
+                description: 'A shared Pomodoro timer for friends. Start a session, share the link, focus in sync.',
+                applicationCategory: 'ProductivityApplication',
+                operatingSystem: 'Any',
+                offers: {
+                  '@type': 'Offer',
+                  price: '0',
+                  priceCurrency: 'USD',
+                },
+              }),
+            }}
+          />
           {children}
           <Analytics />
         </ThemeProvider>

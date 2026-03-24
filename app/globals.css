@@ -191,6 +191,19 @@ body {
 .overlay-exit  { animation: fadeOut 0.3s ease-in-out forwards; }
 
 /* ─────────────────────────────────────────────
+   ACTIVITY FEED
+───────────────────────────────────────────── */
+@keyframes activity-life {
+  0%   { opacity: 0; transform: translateX(-10px); }
+  8%   { opacity: 1; transform: translateX(0); }
+  75%  { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(-6px); }
+}
+.activity-item {
+  animation: activity-life 2.8s ease forwards;
+}
+
+/* ─────────────────────────────────────────────
    ACCESSIBILITY — REDUCED MOTION
 ───────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {

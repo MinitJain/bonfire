@@ -21,8 +21,9 @@ export function TimerDisplay({ timeLeft, status, mode = 'focus', className }: Ti
   return (
     <div
       className={cn('flex flex-col items-center gap-2', className)}
-      aria-label={`Timer: ${formatted}`}
+      aria-label={`Timer: ${formatted}, ${modeLabel[mode]}`}
       role="timer"
+      aria-live="off"
     >
       <span
         className={cn(

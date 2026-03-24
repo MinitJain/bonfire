@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Edit3, Calendar } from 'lucide-react'
+import { Edit3, Calendar, Share2 } from 'lucide-react'
 import type { Profile } from '@/types'
 import { Avatar } from '@/components/ui/Avatar'
 import { EditProfileModal } from '@/components/profile/EditProfileModal'
@@ -55,20 +55,43 @@ export function ProfileCard({ profile, isOwnProfile }: ProfileCardProps) {
             </div>
 
             {isOwnProfile && (
-              <button
-                onClick={() => setShowEditModal(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer flex-shrink-0"
-                style={{
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-primary)',
-                  minHeight: '44px',
-                }}
-                aria-label="Edit profile"
-              >
-                <Edit3 className="w-4 h-4" />
-                Edit
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer flex-shrink-0"
+                  style={{
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-primary)',
+                    minHeight: '44px',
+                  }}
+                  aria-label="Edit profile"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  Edit
+                </button>
+                {currentProfile.total_pomodoros > 0 && (
+                  <button
+                    onClick={() => {
+                      const params = new URLSearchParams({
+                        type: 'stats',
+                        username: currentProfile.display_name ?? currentProfile.username,
+                        pomodoros: String(currentProfile.total_pomodoros),
+                        streak: String(currentProfile.current_streak),
+                        hours: String(Math.round(currentProfile.total_focus_minutes / 60)),
+                      })
+                      const url = `${window.location.origin}/api/og?${params}`
+                      navigator.clipboard?.writeText(url).then(() => alert('Stats card link copied!')).catch(() => {})
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer flex-shrink-0"
+                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-primary)', minHeight: '44px' }}
+                    aria-label="Share stats"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    Share
+                  </button>
+                )}
+              </div>
             )}
           </div>
 

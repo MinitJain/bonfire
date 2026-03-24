@@ -4,6 +4,20 @@ import { generateSessionId } from '@/lib/session'
 import { TIMER_DURATIONS } from '@/lib/timer'
 import { z } from 'zod'
 
+// In-memory rate limiter: 10 sessions per IP per minute
+const rateLimitMap = new Map<string, number[]>()
+const RATE_LIMIT = 10
+const RATE_WINDOW_MS = 60_000
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now()
+  const timestamps = (rateLimitMap.get(ip) ?? []).filter(t => now - t < RATE_WINDOW_MS)
+  if (timestamps.length >= RATE_LIMIT) return true
+  timestamps.push(now)
+  rateLimitMap.set(ip, timestamps)
+  return false
+}
+
 const CreateSessionSchema = z.object({
   title: z.string().max(100).optional(),
   jam_mode: z.boolean().optional(),
@@ -11,6 +25,11 @@ const CreateSessionSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    if (isRateLimited(ip)) {
+      return NextResponse.json({ error: 'Too many sessions created. Please wait.' }, { status: 429 })
+    }
+
     const supabase = createClient()
     const {
       data: { user },

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { Participant, TimerState } from '@/types'
+import type { BroadcastActivityPayload, Participant, TimerState } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -22,7 +22,10 @@ interface UseSessionReturn {
   onShareLock: (callback: (locked: boolean) => void) => () => void
   broadcastJamMode: (jamMode: boolean) => void
   onJamMode: (callback: (jamMode: boolean) => void) => () => void
-  onParticipantJoin: (callback: () => void) => () => void
+  onParticipantJoin: (callback: (username: string | null) => void) => () => void
+  onParticipantLeave: (callback: (username: string | null) => void) => () => void
+  broadcastActivity: (text: string) => void
+  onActivity: (callback: (text: string) => void) => () => void
   updatePresence: (newUsername: string | null) => void
 }
 
@@ -56,7 +59,9 @@ export function useSession({
   const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())
   const shareLockCallbacksRef = useRef<Set<(locked: boolean) => void>>(new Set())
   const jamModeCallbacksRef = useRef<Set<(jamMode: boolean) => void>>(new Set())
-  const joinCallbacksRef = useRef<Set<() => void>>(new Set())
+  const joinCallbacksRef = useRef<Set<(username: string | null) => void>>(new Set())
+  const leaveCallbacksRef = useRef<Set<(username: string | null) => void>>(new Set())
+  const activityCallbacksRef = useRef<Set<(text: string) => void>>(new Set())
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
@@ -106,14 +111,15 @@ export function useSession({
     })
 
     channel.on('presence', { event: 'join' }, ({ key, newPresences }) => {
-      // Fire join callbacks so the host can re-broadcast current timer state to the new joiner
-      joinCallbacksRef.current.forEach(cb => cb())
       const presence = newPresences[0] as unknown as {
         username: string | null
         avatar_url: string | null
         is_host: boolean
         joined_at: string
       }
+      const joinedUsername = presence.username ?? null
+      // Fire join callbacks (host re-broadcasts state + activity messages)
+      joinCallbacksRef.current.forEach(cb => cb(joinedUsername))
       setParticipants((prev) => {
         const existing = prev.find((p) => p.user_id === key)
         if (existing) return prev
@@ -121,7 +127,7 @@ export function useSession({
           ...prev,
           {
             user_id: key,
-            username: presence.username ?? null,
+            username: joinedUsername,
             avatar_url: presence.avatar_url ?? null,
             joined_at: presence.joined_at,
             is_host: presence.is_host,
@@ -131,7 +137,11 @@ export function useSession({
     })
 
     channel.on('presence', { event: 'leave' }, ({ key }) => {
-      setParticipants((prev) => prev.filter((p) => p.user_id !== key))
+      setParticipants((prev) => {
+        const leaving = prev.find((p) => p.user_id === key)
+        leaveCallbacksRef.current.forEach(cb => cb(leaving?.username ?? null))
+        return prev.filter((p) => p.user_id !== key)
+      })
     })
 
     // Listen for timer broadcasts
@@ -150,6 +160,12 @@ export function useSession({
     channel.on('broadcast', { event: 'jam_mode_update' }, ({ payload }) => {
       const jamMode = (payload as { jamMode: boolean }).jamMode
       jamModeCallbacksRef.current.forEach((cb) => cb(jamMode))
+    })
+
+    // Listen for activity broadcasts (timer events, status messages)
+    channel.on('broadcast', { event: 'activity' }, ({ payload }) => {
+      const { text } = payload as BroadcastActivityPayload
+      activityCallbacksRef.current.forEach((cb) => cb(text))
     })
 
     channel
@@ -222,10 +238,32 @@ export function useSession({
     }
   }, [])
 
-  const onParticipantJoin = useCallback((callback: () => void) => {
+  const onParticipantJoin = useCallback((callback: (username: string | null) => void) => {
     joinCallbacksRef.current.add(callback)
     return () => {
       joinCallbacksRef.current.delete(callback)
+    }
+  }, [])
+
+  const onParticipantLeave = useCallback((callback: (username: string | null) => void) => {
+    leaveCallbacksRef.current.add(callback)
+    return () => {
+      leaveCallbacksRef.current.delete(callback)
+    }
+  }, [])
+
+  const broadcastActivity = useCallback((text: string) => {
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'activity',
+      payload: { text } satisfies BroadcastActivityPayload,
+    })
+  }, [])
+
+  const onActivity = useCallback((callback: (text: string) => void) => {
+    activityCallbacksRef.current.add(callback)
+    return () => {
+      activityCallbacksRef.current.delete(callback)
     }
   }, [])
 
@@ -250,6 +288,9 @@ export function useSession({
     broadcastJamMode,
     onJamMode,
     onParticipantJoin,
+    onParticipantLeave,
+    broadcastActivity,
+    onActivity,
     updatePresence,
   }
 }

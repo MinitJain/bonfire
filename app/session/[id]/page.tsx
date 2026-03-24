@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import type { Session } from '@/types'
 import { SessionProvider } from '@/components/session/SessionProvider'
+import { SessionErrorBoundary } from '@/components/session/SessionErrorBoundary'
 
 interface SessionPageProps {
   params: { id: string }
@@ -71,12 +72,14 @@ export default async function SessionPage({ params }: SessionPageProps) {
   const isHost = user?.id === typedSession.host_id
 
   return (
-    <SessionProvider
-      session={typedSession}
-      userId={user?.id ?? null}
-      isHost={isHost}
-      username={userProfile?.username ?? user?.email?.split('@')[0] ?? null}
-      avatarUrl={userProfile?.avatar_url ?? null}
-    />
+    <SessionErrorBoundary>
+      <SessionProvider
+        session={typedSession}
+        userId={user?.id ?? null}
+        isHost={isHost}
+        username={userProfile?.username ?? user?.email?.split('@')[0] ?? null}
+        avatarUrl={userProfile?.avatar_url ?? null}
+      />
+    </SessionErrorBoundary>
   )
 }

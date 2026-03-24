@@ -98,7 +98,7 @@ export function useTimer({
   const start = useCallback((): TimerState => {
     const now = Date.now()
     const newState: TimerState = {
-      ...timerState,
+      ...timerStateRef.current,
       status: 'running',
       startedAt: now,
       pausedAt: null,
@@ -106,7 +106,7 @@ export function useTimer({
     setTimerState(newState)
     expiredRef.current = false
     return newState
-  }, [timerState])
+  }, []) // no deps — reads from ref
 
   const pause = useCallback((): TimerState => {
     const now = Date.now()

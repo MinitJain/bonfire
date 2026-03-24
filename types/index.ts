@@ -83,3 +83,12 @@ export interface BroadcastParticipantPayload {
 }
 
 export type BroadcastPayload = BroadcastTimerPayload | BroadcastParticipantPayload
+
+export interface ActivityItem {
+  id: string
+  text: string
+}
+
+export interface BroadcastActivityPayload {
+  text: string
+}

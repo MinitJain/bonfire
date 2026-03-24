@@ -1,11 +1,26 @@
 {
   "name": "PomodoroJam",
   "short_name": "PomodoroJam",
-  "description": "Real-time shared Pomodoro timer. Focus together.",
-  "theme_color": "#FF5533",
-  "background_color": "#0F0F0D",
-  "display": "standalone",
-  "orientation": "portrait",
+  "description": "A shared Pomodoro timer for friends. Start a session, share the link, focus in sync.",
   "start_url": "/",
-  "scope": "/"
+  "display": "standalone",
+  "background_color": "#0F0F0D",
+  "theme_color": "#FF5533",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["productivity", "utilities"]
 }
