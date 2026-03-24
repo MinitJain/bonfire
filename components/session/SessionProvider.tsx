@@ -474,11 +474,13 @@ function SessionContent({
       }).eq('id', session.id)
       if (error) {
         console.error('[handleApplySettings] DB update failed:', error)
+        return false
       } else {
         broadcastTimerState(newState)
         broadcastShareLock(!newSettings.allowGuestShare)
       }
     }
+    return true
   }, [reset, canControl, broadcastTimerState, broadcastShareLock, supabase, session.id])
 
   const handleAcceptRequest = useCallback(async () => {
@@ -490,8 +492,8 @@ function SessionContent({
       autoStartBreaks: pendingRequest.autoStartBreaks,
       autoStartPomodoros: pendingRequest.autoStartPomodoros,
     }
-    await handleApplySettings(newSettings)
-    broadcastSettingsResponse({ requester_id: pendingRequest.requester_id, accepted: true })
+    const ok = await handleApplySettings(newSettings)
+    broadcastSettingsResponse({ requester_id: pendingRequest.requester_id, accepted: ok !== false })
     setPendingRequest(null)
   }, [pendingRequest, sessionSettings.allowGuestShare, handleApplySettings, broadcastSettingsResponse])
 
