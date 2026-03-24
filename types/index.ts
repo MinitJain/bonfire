@@ -9,6 +9,7 @@ export interface TimerState {
   totalTime: number // seconds
   startedAt: number | null // unix ms
   pausedAt: number | null // unix ms
+  focusCount?: number // included in broadcasts so watchers stay in sync
 }
 
 export interface TimerSettings {
@@ -92,4 +93,29 @@ export interface ActivityItem {
 export interface BroadcastActivityPayload {
   type: 'activity'
   text: string
+}
+
+export interface SettingsChangeRequest {
+  requester_id: string
+  requester_name: string | null
+  focus: number
+  short: number
+  long: number
+  rounds: number
+  autoStartBreaks: boolean
+  autoStartPomodoros: boolean
+}
+
+export interface SettingsChangeResponse {
+  requester_id: string
+  accepted: boolean
+  /** Present when accepted=true so watchers can apply the new settings locally */
+  settings?: {
+    focus: number
+    short: number
+    long: number
+    rounds: number
+    autoStartBreaks: boolean
+    autoStartPomodoros: boolean
+  }
 }

@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Volume2, VolumeX } from 'lucide-react'
 import { AmbientPlayer as Player, AMBIENT_SOUNDS, type AmbientType } from '@/lib/ambient'
 
-export function AmbientPlayer() {
+interface AmbientPlayerProps {
+  onActiveChange?: (active: boolean) => void
+}
+
+export function AmbientPlayer({ onActiveChange }: AmbientPlayerProps) {
   const playerRef = useRef<Player | null>(null)
   const [active, setActive] = useState<AmbientType | null>(null)
   const [volume, setVolume] = useState(0.25)
@@ -14,6 +18,10 @@ export function AmbientPlayer() {
     playerRef.current = new Player()
     return () => { playerRef.current?.destroy() }
   }, [])
+
+  useEffect(() => {
+    onActiveChange?.(active !== null)
+  }, [active, onActiveChange])
 
   const handleSelect = (type: AmbientType) => {
     if (active === type) {
@@ -39,13 +47,6 @@ export function AmbientPlayer() {
 
   return (
     <div className="w-full max-w-xs">
-      <p
-        className="text-xs uppercase tracking-widest mb-3 font-medium"
-        style={{ color: 'var(--text-muted)' }}
-      >
-        Focus Noise
-      </p>
-
       <div className="grid grid-cols-4 gap-2 mb-3">
         {AMBIENT_SOUNDS.map(({ type, emoji, label }) => (
           <button
@@ -54,7 +55,7 @@ export function AmbientPlayer() {
             title={label}
             aria-label={`${label} ambient sound`}
             aria-pressed={active === type}
-            className="flex flex-col items-center gap-1 py-3 px-1 rounded-xl text-xs transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+            className="flex flex-col items-center justify-center gap-1 aspect-square p-0 rounded-xl text-xs transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
             style={
               active === type
                 ? {
@@ -69,7 +70,7 @@ export function AmbientPlayer() {
                   }
             }
           >
-            <span className="text-base">{emoji}</span>
+            <span className="text-sm">{emoji}</span>
             <span className="font-semibold truncate w-full text-center leading-tight text-[11px]">{label}</span>
           </button>
         ))}

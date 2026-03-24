@@ -23,15 +23,15 @@ export function TimerDisplay({ timeLeft, status, mode = 'focus', className }: Ti
       className={cn('flex flex-col items-center gap-2', className)}
       aria-label={`Timer: ${formatted}, ${modeLabel[mode]}`}
       role="timer"
-      aria-live="off"
+      aria-live="off" // intentional: timer updates every second; polite/assertive would spam screen readers
     >
       <span
         className={cn(
           'font-mono text-6xl sm:text-7xl font-bold tracking-tight',
           'transition-colors duration-300',
           status === 'running' && 'text-foreground',
-          status === 'paused' && 'text-[color:var(--text-muted)]',
-          status === 'idle' && 'text-[color:var(--text-secondary)]',
+          status === 'paused' && 'text-[color:var(--text-secondary)]',
+          status === 'idle' && 'text-foreground',
           status === 'finished' && 'text-brand',
           !status && 'text-foreground',
         )}

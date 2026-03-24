@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { BroadcastActivityPayload, Participant, TimerState } from '@/types'
+import type { BroadcastActivityPayload, Participant, SettingsChangeRequest, SettingsChangeResponse, TimerState } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -27,6 +27,10 @@ interface UseSessionReturn {
   broadcastActivity: (text: string) => void
   onActivity: (callback: (text: string) => void) => () => void
   updatePresence: (newUsername: string | null) => void
+  broadcastSettingsRequest: (request: SettingsChangeRequest) => void
+  onSettingsRequest: (callback: (request: SettingsChangeRequest) => void) => () => void
+  broadcastSettingsResponse: (response: SettingsChangeResponse) => void
+  onSettingsResponse: (callback: (response: SettingsChangeResponse) => void) => () => void
 }
 
 export function useSession({
@@ -62,6 +66,8 @@ export function useSession({
   const joinCallbacksRef = useRef<Set<(username: string | null) => void>>(new Set())
   const leaveCallbacksRef = useRef<Set<(username: string | null) => void>>(new Set())
   const activityCallbacksRef = useRef<Set<(text: string) => void>>(new Set())
+  const settingsRequestCallbacksRef = useRef<Set<(req: SettingsChangeRequest) => void>>(new Set())
+  const settingsResponseCallbacksRef = useRef<Set<(res: SettingsChangeResponse) => void>>(new Set())
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
@@ -147,6 +153,7 @@ export function useSession({
     })
 
     // Listen for timer broadcasts
+    // Supabase broadcast payload arrives as Record<string, unknown>; shape is guaranteed by broadcastTimerState
     channel.on('broadcast', { event: 'timer_update' }, ({ payload }) => {
       const timerState = payload as TimerState
       timerCallbacksRef.current.forEach((cb) => cb(timerState))
@@ -168,6 +175,16 @@ export function useSession({
     channel.on('broadcast', { event: 'activity' }, ({ payload }) => {
       const { text } = payload as BroadcastActivityPayload
       activityCallbacksRef.current.forEach((cb) => cb(text))
+    })
+
+    // Listen for settings change requests (host receives from watchers)
+    channel.on('broadcast', { event: 'settings_request' }, ({ payload }) => {
+      settingsRequestCallbacksRef.current.forEach((cb) => cb(payload as SettingsChangeRequest))
+    })
+
+    // Listen for settings change responses (watchers receive from host)
+    channel.on('broadcast', { event: 'settings_response' }, ({ payload }) => {
+      settingsResponseCallbacksRef.current.forEach((cb) => cb(payload as SettingsChangeResponse))
     })
 
     channel
@@ -269,6 +286,32 @@ export function useSession({
     }
   }, [])
 
+  const broadcastSettingsRequest = useCallback((request: SettingsChangeRequest) => {
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'settings_request',
+      payload: request,
+    })
+  }, [])
+
+  const onSettingsRequest = useCallback((callback: (req: SettingsChangeRequest) => void) => {
+    settingsRequestCallbacksRef.current.add(callback)
+    return () => { settingsRequestCallbacksRef.current.delete(callback) }
+  }, [])
+
+  const broadcastSettingsResponse = useCallback((response: SettingsChangeResponse) => {
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'settings_response',
+      payload: response,
+    })
+  }, [])
+
+  const onSettingsResponse = useCallback((callback: (res: SettingsChangeResponse) => void) => {
+    settingsResponseCallbacksRef.current.add(callback)
+    return () => { settingsResponseCallbacksRef.current.delete(callback) }
+  }, [])
+
   const updatePresence = useCallback((newUsername: string | null) => {
     if (!channelRef.current) return
     usernameRef.current = newUsername
@@ -294,5 +337,9 @@ export function useSession({
     broadcastActivity,
     onActivity,
     updatePresence,
+    broadcastSettingsRequest,
+    onSettingsRequest,
+    broadcastSettingsResponse,
+    onSettingsResponse,
   }
 }
