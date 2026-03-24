@@ -16,18 +16,13 @@ export function WeeklyChart({ days }: WeeklyChartProps) {
 
   return (
     <div
-      className="p-5 rounded-2xl flex flex-col gap-5"
-      style={{
-        background: 'var(--bg-elevated)',
-        border: '1px solid var(--border)',
-        boxShadow: 'var(--shadow-sm)',
-      }}
+      className="p-5 rounded-2xl flex flex-col gap-5 bg-[var(--bg-elevated)] border border-[var(--border)] shadow-[var(--shadow-sm)]"
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">
           Last 7 days
         </h3>
-        <span className="text-xs font-mono tabular-nums" style={{ color: 'var(--text-muted)' }}>
+        <span className="text-xs font-mono tabular-nums text-[var(--text-muted)]">
           {totalHours}h focused
         </span>
       </div>
@@ -42,11 +37,8 @@ export function WeeklyChart({ days }: WeeklyChartProps) {
             <div key={day.date} className="flex flex-col items-center gap-1 flex-1">
               {/* Value label */}
               <span
-                className="text-[10px] font-mono tabular-nums leading-none"
-                style={{
-                  color: 'var(--text-muted)',
-                  visibility: day.minutes > 0 ? 'visible' : 'hidden',
-                }}
+                className="text-[10px] font-mono tabular-nums leading-none text-[var(--text-muted)]"
+                style={{ visibility: day.minutes > 0 ? 'visible' : 'hidden' }}
               >
                 {day.minutes}m
               </span>
