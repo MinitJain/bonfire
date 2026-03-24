@@ -29,7 +29,7 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          { key: 'Content-Security-Policy', value: `default-src 'self'; script-src 'self'${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ''}; style-src 'self' 'unsafe-inline'; connect-src 'self' *.supabase.co wss://*.supabase.co; img-src 'self' data: *.supabase.co *.githubusercontent.com lh3.googleusercontent.com; font-src 'self' data: fonts.gstatic.com fonts.googleapis.com;` },
+          { key: 'Content-Security-Policy', value: `default-src 'self'; script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}; style-src 'self' 'unsafe-inline'; connect-src 'self' *.supabase.co wss://*.supabase.co; img-src 'self' data: *.supabase.co *.githubusercontent.com lh3.googleusercontent.com; font-src 'self' data: fonts.gstatic.com fonts.googleapis.com;` },
         ],
       },
     ]
