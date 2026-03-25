@@ -13,6 +13,7 @@ import { TimerRing } from '@/components/timer/TimerRing'
 import { TimerDisplay } from '@/components/timer/TimerDisplay'
 import { TimerControls } from '@/components/timer/TimerControls'
 import { ModeSelector } from '@/components/timer/ModeSelector'
+import { MissedEventsToast } from '@/components/session/MissedEventsToast'
 import { ParticipantList } from '@/components/session/ParticipantList'
 import { SharePanel } from '@/components/session/SharePanel'
 import { ActivityFeed } from '@/components/session/ActivityFeed'
@@ -69,6 +70,11 @@ function SessionContent({
   const focusCountRef = useRef(0)
   const [focusCount, setFocusCount] = useState(0)
   const [activities, setActivities] = useState<ActivityItem[]>([])
+  const sessionLogRef = useRef<string[]>([])
+  const tabHiddenAtRef = useRef<number | null>(null)
+  const logLenAtHideRef = useRef<number>(0)
+  const missedEventsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [missedEvents, setMissedEvents] = useState<string[]>([])
   // localUsername: for guests this starts null and is set when they save a nickname
   const [localUsername, setLocalUsername] = useState<string | null>(username ?? null)
   const [showNicknamePrompt, setShowNicknamePrompt] = useState(false)
@@ -178,7 +184,7 @@ function SessionContent({
     sessionId: session.id,
     userId,
     isHost,
-    username,
+    username: localUsername,
     avatarUrl,
   })
 
@@ -199,9 +205,32 @@ function SessionContent({
 
   // Push an ephemeral activity item — auto-removes after animation completes
   const pushActivity = useCallback((text: string) => {
+    sessionLogRef.current = [...sessionLogRef.current, text].slice(-10)
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
     setActivities(prev => [...prev.slice(-3), { id, text }])
     setTimeout(() => setActivities(prev => prev.filter(a => a.id !== id)), 2900)
+  }, [])
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'hidden') {
+        tabHiddenAtRef.current = Date.now()
+        logLenAtHideRef.current = sessionLogRef.current.length
+      } else {
+        if (tabHiddenAtRef.current === null) return
+        tabHiddenAtRef.current = null
+        const missed = sessionLogRef.current.slice(logLenAtHideRef.current)
+        if (missed.length === 0) return
+        setMissedEvents(missed)
+        if (missedEventsTimerRef.current) clearTimeout(missedEventsTimerRef.current)
+        missedEventsTimerRef.current = setTimeout(() => setMissedEvents([]), 4000)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (missedEventsTimerRef.current) clearTimeout(missedEventsTimerRef.current)
+    }
   }, [])
 
   // Receive activity broadcasts from other participants
@@ -835,6 +864,9 @@ function SessionContent({
         canControl={canControl}
       />
 
+      {missedEvents.length > 0 && (
+        <MissedEventsToast events={missedEvents} onDismiss={() => setMissedEvents([])} />
+      )}
       <ActivityFeed items={activities} />
 
       {isHost && pendingRequest && (
