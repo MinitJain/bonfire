@@ -50,7 +50,7 @@ export function useSession({
   isHostRef.current = isHost
   avatarUrlRef.current = avatarUrl ?? null
   usernameRef.current = username ?? null
-  // Re-track presence whenever isHost changes so the is_host field stays accurate
+  // Re-track presence whenever isHost or username changes so all fields stay accurate
   useEffect(() => {
     if (!channelRef.current) return
     channelRef.current.track({
@@ -59,7 +59,7 @@ export function useSession({
       is_host: isHost,
       joined_at: new Date().toISOString(),
     })
-  }, [isHost])
+  }, [isHost, username])
   const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())
   const shareLockCallbacksRef = useRef<Set<(locked: boolean) => void>>(new Set())
   const jamModeCallbacksRef = useRef<Set<(jamMode: boolean) => void>>(new Set())
