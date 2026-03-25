@@ -1,5 +1,7 @@
 'use client'
 
+import { X } from 'lucide-react'
+
 interface MissedEventsToastProps {
   events: string[]
   onDismiss: () => void
@@ -18,7 +20,7 @@ export function MissedEventsToast({ events, onDismiss }: MissedEventsToastProps)
         style={{ background: 'var(--accent-soft)', border: '1px solid var(--border)', borderBottom: 'none', color: 'var(--accent)' }}
       >
         <span>While you were away</span>
-        <button type="button" onClick={onDismiss} aria-label="Dismiss" className="ml-2 cursor-pointer opacity-70 hover:opacity-100 transition-opacity" style={{ color: 'var(--accent)' }}>×</button>
+        <button type="button" onClick={onDismiss} aria-label="Dismiss" className="ml-2 cursor-pointer opacity-70 hover:opacity-100 transition-opacity" style={{ color: 'var(--accent)' }}><X size={12} aria-hidden="true" /></button>
       </div>
       <div className="flex flex-col rounded-b-xl overflow-hidden" style={{ border: '1px solid var(--border)', borderTop: 'none', background: 'var(--bg-elevated)', boxShadow: 'var(--shadow-md)', backdropFilter: 'blur(8px)' }}>
         {events.map((text, i) => (
