@@ -21,6 +21,7 @@ export async function generateMetadata({ params }: SessionPageProps): Promise<Me
   const focusMins: number = (data?.settings as { focus?: number } | null)?.focus ?? 25
   const ogTitle = `${hostName} invited you to PomodoroJam 🍅`
   const ogDesc = `Join ${hostName}'s ${focusMins}-min focus session. Open the link to join.`
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pomodoro-jam.vercel.app'
 
   return {
     title: `${hostName}'s focus session`,
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: SessionPageProps): Promise<Me
       description: ogDesc,
       images: [
         {
-          url: `/api/og?type=invite&host=${encodeURIComponent(hostName)}&focus=${focusMins}`,
+          url: `${appUrl}/api/og?type=invite&host=${encodeURIComponent(hostName)}&focus=${focusMins}`,
           width: 1200,
           height: 630,
         },
