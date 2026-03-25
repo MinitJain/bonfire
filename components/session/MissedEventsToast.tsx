@@ -22,7 +22,7 @@ export function MissedEventsToast({ events, onDismiss }: MissedEventsToastProps)
       </div>
       <div className="flex flex-col rounded-b-xl overflow-hidden" style={{ border: '1px solid var(--border)', borderTop: 'none', background: 'var(--bg-elevated)', boxShadow: 'var(--shadow-md)', backdropFilter: 'blur(8px)' }}>
         {events.map((text, i) => (
-          <div key={text} className="px-3.5 py-1.5 text-xs leading-snug" style={{ color: 'var(--text-secondary)', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
+          <div key={`${text}-${i}`} className="px-3.5 py-1.5 text-xs leading-snug" style={{ color: 'var(--text-secondary)', borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
             {text}
           </div>
         ))}
