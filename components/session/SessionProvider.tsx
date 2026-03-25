@@ -71,8 +71,9 @@ function SessionContent({
   const [focusCount, setFocusCount] = useState(0)
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const sessionLogRef = useRef<string[]>([])
+  const totalLogCountRef = useRef<number>(0)
   const tabHiddenAtRef = useRef<number | null>(null)
-  const logLenAtHideRef = useRef<number>(0)
+  const logCountAtHideRef = useRef<number>(0)
   const missedEventsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [missedEvents, setMissedEvents] = useState<string[]>([])
   // localUsername: for guests this starts null and is set when they save a nickname
@@ -205,6 +206,7 @@ function SessionContent({
 
   // Push an ephemeral activity item — auto-removes after animation completes
   const pushActivity = useCallback((text: string) => {
+    totalLogCountRef.current++
     sessionLogRef.current = [...sessionLogRef.current, text].slice(-10)
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
     setActivities(prev => [...prev.slice(-3), { id, text }])
@@ -215,11 +217,12 @@ function SessionContent({
     function handleVisibilityChange() {
       if (document.visibilityState === 'hidden') {
         tabHiddenAtRef.current = Date.now()
-        logLenAtHideRef.current = sessionLogRef.current.length
+        logCountAtHideRef.current = totalLogCountRef.current
       } else {
         if (tabHiddenAtRef.current === null) return
         tabHiddenAtRef.current = null
-        const missed = sessionLogRef.current.slice(logLenAtHideRef.current)
+        const newCount = totalLogCountRef.current - logCountAtHideRef.current
+        const missed = newCount > 0 ? sessionLogRef.current.slice(-newCount) : []
         if (missed.length === 0) return
         setMissedEvents(missed)
         if (missedEventsTimerRef.current) clearTimeout(missedEventsTimerRef.current)

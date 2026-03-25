@@ -8,6 +8,8 @@ interface MissedEventsToastProps {
 export function MissedEventsToast({ events, onDismiss }: MissedEventsToastProps) {
   return (
     <div
+      role="status"
+      aria-live="polite"
       className="fixed bottom-6 left-4 sm:left-6 z-50 flex flex-col pointer-events-auto animate-fade-up"
       style={{ maxWidth: '280px' }}
     >
