@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import type { Profile } from '@/types'
 import { ProfileCard } from '@/components/profile/ProfileCard'
@@ -9,18 +10,19 @@ import { WeeklyChart } from '@/components/profile/WeeklyChart'
 import { StreakCalendar } from '@/components/profile/StreakCalendar'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { toDayKey } from '@/lib/date'
+
+const getProfile = cache(async (username: string) => {
+  const supabase = createClient()
+  return supabase.from('profiles').select('*').eq('username', username).maybeSingle()
+})
 
 interface ProfilePageProps {
   params: { username: string }
 }
 
 export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
-  const supabase = createClient()
-  const { data } = await supabase
-    .from('profiles')
-    .select('display_name, username, bio')
-    .eq('username', params.username)
-    .maybeSingle()
+  const { data } = await getProfile(params.username)
 
   if (!data) {
     return { title: 'Profile Not Found' }
@@ -57,7 +59,7 @@ function buildCalendarCells(dayMap: Record<string, number>) {
   const cells: { date: string; minutes: number }[] = []
   const cur = new Date(start)
   while (cells.length < 53 * 7) {
-    const dateStr = cur.toISOString().slice(0, 10)
+    const dateStr = toDayKey(cur)
     cells.push({
       date: dateStr,
       minutes: dayMap[dateStr] ?? 0,
@@ -73,7 +75,7 @@ function buildWeekDays(dayMap: Record<string, number>) {
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(today)
     d.setDate(d.getDate() - (6 - i))
-    const dateStr = d.toISOString().slice(0, 10)
+    const dateStr = toDayKey(d)
     return {
       date: dateStr,
       label: d.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -86,11 +88,7 @@ function buildWeekDays(dayMap: Record<string, number>) {
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const supabase = createClient()
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('username', params.username)
-    .maybeSingle()
+  const { data: profile, error } = await getProfile(params.username)
 
   if (error) throw error
   if (!profile) notFound()
@@ -120,7 +118,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     if (logsError) console.error('[ProfilePage] Failed to fetch pomodoro_logs:', logsError)
     if (logs) {
       for (const log of logs) {
-        const dateStr = log.completed_at.slice(0, 10)
+        const dateStr = toDayKey(log.completed_at)
         dayMap[dateStr] = (dayMap[dateStr] ?? 0) + log.duration_minutes
         totalMinutesYear += log.duration_minutes
         totalPomodorosYear += 1

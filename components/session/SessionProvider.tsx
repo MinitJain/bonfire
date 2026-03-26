@@ -335,6 +335,16 @@ function SessionContent({
     }
   }, [])
 
+  // Host heartbeat — keeps last_active_at fresh so explore page can filter out zombie sessions
+  useEffect(() => {
+    if (!isHost) return
+    const id = setInterval(() => {
+      supabase.from('sessions').update({ last_active_at: new Date().toISOString() }).eq('id', session.id)
+        .then(({ error }) => { if (error) console.error('[heartbeat] Failed to update last_active_at for session', session.id, error) })
+    }, 30_000)
+    return () => clearInterval(id)
+  }, [isHost, supabase, session.id])
+
   // Warn host before closing tab while timer is running
   useEffect(() => {
     if (!isHost) return
@@ -396,13 +406,14 @@ function SessionContent({
       const myId = userId ?? guestId
       if (response.requester_id !== myId) return
       if (response.accepted && response.settings) {
+        const settings = response.settings
         // Apply the accepted settings locally so round labels and UI stay in sync
         setSessionSettings(prev => ({
-          durations: { focus: response.settings!.focus, short: response.settings!.short, long: response.settings!.long },
-          rounds: response.settings!.rounds,
+          durations: { focus: settings.focus, short: settings.short, long: settings.long },
+          rounds: settings.rounds,
           allowGuestShare: prev.allowGuestShare, // host-only setting, preserve watcher's current value
-          autoStartBreaks: response.settings!.autoStartBreaks,
-          autoStartPomodoros: response.settings!.autoStartPomodoros,
+          autoStartBreaks: settings.autoStartBreaks,
+          autoStartPomodoros: settings.autoStartPomodoros,
         }))
         toast('Host accepted your settings request ✓', 'success')
         setShowWatcherSettings(false)
@@ -552,9 +563,9 @@ function SessionContent({
     const ok = await handleApplySettings(newSettings)
     broadcastSettingsResponse({
       requester_id: pendingRequest.requester_id,
-      accepted: ok !== false,
+      accepted: ok,
       // Include settings so the watcher can apply them locally without a separate broadcast
-      settings: ok !== false ? {
+      settings: ok ? {
         focus: newSettings.durations.focus,
         short: newSettings.durations.short,
         long: newSettings.durations.long,
