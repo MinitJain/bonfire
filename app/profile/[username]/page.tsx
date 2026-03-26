@@ -120,7 +120,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     if (logsError) console.error('[ProfilePage] Failed to fetch pomodoro_logs:', logsError)
     if (logs) {
       for (const log of logs) {
-        const dateStr = log.completed_at.slice(0, 10)
+        const dateStr = new Date(log.completed_at).toLocaleDateString('en-CA')
         dayMap[dateStr] = (dayMap[dateStr] ?? 0) + log.duration_minutes
         totalMinutesYear += log.duration_minutes
         totalPomodorosYear += 1

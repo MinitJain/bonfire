@@ -34,6 +34,8 @@ export async function generateMetadata({ params }: SessionPageProps): Promise<Me
           url: `${appUrl}/api/og?type=invite&host=${encodeURIComponent(hostName)}&focus=${focusMins}`,
           width: 1200,
           height: 630,
+          alt: ogTitle,
+          type: 'image/png',
         },
       ],
     },
@@ -41,6 +43,7 @@ export async function generateMetadata({ params }: SessionPageProps): Promise<Me
       card: 'summary_large_image',
       title: ogTitle,
       description: ogDesc,
+      images: [`${appUrl}/api/og?type=invite&host=${encodeURIComponent(hostName)}&focus=${focusMins}`],
     },
   }
 }
@@ -87,7 +90,7 @@ export default async function SessionPage({ params }: SessionPageProps) {
         session={typedSession}
         userId={user?.id ?? null}
         isHost={isHost}
-        username={userProfile?.username ?? user?.email?.split('@')[0] ?? null}
+        username={userProfile?.display_name ?? userProfile?.username ?? user?.email?.split('@')[0] ?? null}
         avatarUrl={userProfile?.avatar_url ?? null}
       />
     </SessionErrorBoundary>
