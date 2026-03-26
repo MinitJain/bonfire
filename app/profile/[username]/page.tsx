@@ -43,6 +43,9 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
   }
 }
 
+const dayKeyFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' })
+const toDayKey = (value: Date | string) => dayKeyFormatter.format(new Date(value))
+
 // Build the 364-cell calendar grid (52 weeks × 7 days, Mon → Sun, oldest first)
 function buildCalendarCells(dayMap: Record<string, number>) {
   const today = new Date()
@@ -57,7 +60,7 @@ function buildCalendarCells(dayMap: Record<string, number>) {
   const cells: { date: string; minutes: number }[] = []
   const cur = new Date(start)
   while (cells.length < 53 * 7) {
-    const dateStr = cur.toISOString().slice(0, 10)
+    const dateStr = toDayKey(cur)
     cells.push({
       date: dateStr,
       minutes: dayMap[dateStr] ?? 0,
@@ -73,7 +76,7 @@ function buildWeekDays(dayMap: Record<string, number>) {
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(today)
     d.setDate(d.getDate() - (6 - i))
-    const dateStr = d.toISOString().slice(0, 10)
+    const dateStr = toDayKey(d)
     return {
       date: dateStr,
       label: d.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -120,7 +123,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     if (logsError) console.error('[ProfilePage] Failed to fetch pomodoro_logs:', logsError)
     if (logs) {
       for (const log of logs) {
-        const dateStr = new Date(log.completed_at).toLocaleDateString('en-CA')
+        const dateStr = toDayKey(log.completed_at)
         dayMap[dateStr] = (dayMap[dateStr] ?? 0) + log.duration_minutes
         totalMinutesYear += log.duration_minutes
         totalPomodorosYear += 1
