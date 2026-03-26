@@ -9,6 +9,7 @@ import { WeeklyChart } from '@/components/profile/WeeklyChart'
 import { StreakCalendar } from '@/components/profile/StreakCalendar'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { toDayKey } from '@/lib/date'
 
 interface ProfilePageProps {
   params: { username: string }
@@ -42,9 +43,6 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
     },
   }
 }
-
-const dayKeyFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' })
-const toDayKey = (value: Date | string) => dayKeyFormatter.format(new Date(value))
 
 // Build the 364-cell calendar grid (52 weeks × 7 days, Mon → Sun, oldest first)
 function buildCalendarCells(dayMap: Record<string, number>) {

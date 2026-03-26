@@ -1,4 +1,5 @@
 'use client'
+import { toDayKey } from '@/lib/date'
 
 interface CalendarCell {
   date: string    // YYYY-MM-DD
@@ -25,7 +26,7 @@ const WEEKS = 53
 
 export function StreakCalendar({ cells, totalMinutesYear, totalPomodorosYear }: StreakCalendarProps) {
   // Compute today in the client's local timezone (YYYY-MM-DD)
-  const todayStr = new Date().toLocaleDateString('en-CA')
+  const todayStr = toDayKey(new Date())
   // Derive month labels: find first cell of each month to get column index
   const monthLabels: { label: string; col: number }[] = []
   let lastMonth = -1
