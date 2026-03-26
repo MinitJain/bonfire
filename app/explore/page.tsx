@@ -25,7 +25,7 @@ export default async function ExplorePage() {
     .order('last_active_at', { ascending: false })
     .limit(20)
 
-  if (error) console.error('[ExplorePage] Failed to fetch sessions:', error)
+  if (error) throw error
 
   const modeLabel: Record<string, string> = {
     focus: '🍅 Focus',

@@ -340,6 +340,7 @@ function SessionContent({
     if (!isHost) return
     const id = setInterval(() => {
       supabase.from('sessions').update({ last_active_at: new Date().toISOString() }).eq('id', session.id)
+        .then(({ error }) => { if (error) console.error('[heartbeat] Failed to update last_active_at for session', session.id, error) })
     }, 30_000)
     return () => clearInterval(id)
   }, [isHost, supabase, session.id])
