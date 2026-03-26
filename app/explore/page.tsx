@@ -15,14 +15,14 @@ export const revalidate = 30 // revalidate every 30 seconds
 export default async function ExplorePage() {
   const supabase = createClient()
 
-  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+  const ninetySecondsAgo = new Date(Date.now() - 90 * 1000).toISOString()
 
   const { data: sessions, error } = await supabase
     .from('sessions')
-    .select('id, title, host_name, mode, running, updated_at, status')
+    .select('id, title, host_name, mode, running, last_active_at, status')
     .eq('running', true)
-    .gt('updated_at', twoHoursAgo)
-    .order('updated_at', { ascending: false })
+    .gt('last_active_at', ninetySecondsAgo)
+    .order('last_active_at', { ascending: false })
     .limit(20)
 
   if (error) console.error('[ExplorePage] Failed to fetch sessions:', error)
