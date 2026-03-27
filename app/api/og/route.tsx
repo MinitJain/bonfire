@@ -11,6 +11,7 @@ function clampInt(value: string | null, max = 999999): number {
 }
 
 export async function GET(request: NextRequest) {
+  try {
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type') ?? ''
 
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
           </div>
         </div>
       ),
-      { width: 1200, height: 630 }
+      { width: 1200, height: 630, headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=3600' } }
     )
   }
 
@@ -83,7 +84,7 @@ export async function GET(request: NextRequest) {
           </div>
         </div>
       ),
-      { width: 1200, height: 630 }
+      { width: 1200, height: 630, headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=3600' } }
     )
   }
 
@@ -198,6 +199,11 @@ export async function GET(request: NextRequest) {
     {
       width: 1200,
       height: 630,
+      headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=3600' },
     }
   )
+  } catch (err) {
+    console.error('[og] Image generation failed:', err)
+    return new Response('Image generation failed', { status: 500 })
+  }
 }
