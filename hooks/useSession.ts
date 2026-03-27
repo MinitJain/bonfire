@@ -43,6 +43,8 @@ export function useSession({
   const [participants, setParticipants] = useState<Participant[]>([])
   const [isConnected, setIsConnected] = useState(false)
   const channelRef = useRef<RealtimeChannel | null>(null)
+  const effectiveIdRef = useRef<string | null>(null)
+  const joinedAtRef = useRef(new Date().toISOString())
   const isHostRef = useRef(isHost)
   const avatarUrlRef = useRef(avatarUrl)
   const usernameRef = useRef(username)
@@ -50,14 +52,15 @@ export function useSession({
   isHostRef.current = isHost
   avatarUrlRef.current = avatarUrl ?? null
   usernameRef.current = username ?? null
-  // Re-track presence whenever isHost or username changes so all fields stay accurate
+  // Re-track presence whenever isHost or username changes so all fields stay accurate.
+  // Reuse the original joinedAt so Supabase doesn't treat this as a new join event.
   useEffect(() => {
     if (!channelRef.current) return
     channelRef.current.track({
       username: usernameRef.current ?? null,
       avatar_url: avatarUrlRef.current ?? null,
       is_host: isHost,
-      joined_at: new Date().toISOString(),
+      joined_at: joinedAtRef.current,
     })
   }, [isHost, username])
   const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())
@@ -83,6 +86,7 @@ export function useSession({
         localStorage.setItem('pomodoro_guest_id', effectiveId)
       }
     }
+    effectiveIdRef.current = effectiveId
 
     const channel = supabase.channel(channelName, {
       config: {
@@ -124,8 +128,10 @@ export function useSession({
         joined_at: string
       }
       const joinedUsername = presence.username ?? null
-      // Fire join callbacks (host re-broadcasts state + activity messages)
-      joinCallbacksRef.current.forEach(cb => cb(joinedUsername))
+      // Fire join callbacks only for other participants — suppress own join events
+      if (key !== effectiveIdRef.current) {
+        joinCallbacksRef.current.forEach(cb => cb(joinedUsername))
+      }
       setParticipants((prev) => {
         const existing = prev.find((p) => p.user_id === key)
         if (existing) return prev
@@ -148,7 +154,10 @@ export function useSession({
         ? channel.presenceState<{ username?: string | null }>()[key]?.[0]
         : null
       const leftUsername = leaving?.username ?? null
-      leaveCallbacksRef.current.forEach(cb => cb(leftUsername))
+      // Fire leave callbacks only for other participants — suppress own leave events
+      if (key !== effectiveIdRef.current) {
+        leaveCallbacksRef.current.forEach(cb => cb(leftUsername))
+      }
       setParticipants((prev) => prev.filter((p) => p.user_id !== key))
     })
 
@@ -196,7 +205,7 @@ export function useSession({
             username: usernameRef.current ?? null,
             avatar_url: avatarUrlRef.current ?? null,
             is_host: isHostRef.current,
-            joined_at: new Date().toISOString(),
+            joined_at: joinedAtRef.current,
           })
         } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
           setIsConnected(false)
