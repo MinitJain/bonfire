@@ -5,6 +5,19 @@ export const runtime = 'edge'
 
 const VALID_TYPES = new Set(['', 'stats', 'invite'])
 
+const rateLimitMap = new Map<string, number[]>()
+const maxRequestsPerMinute = 60
+const rateLimitWindowMs = 60_000
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now()
+  const timestamps = (rateLimitMap.get(ip) ?? []).filter(t => now - t < rateLimitWindowMs)
+  if (timestamps.length >= maxRequestsPerMinute) return true
+  timestamps.push(now)
+  rateLimitMap.set(ip, timestamps)
+  return false
+}
+
 function clampInt(value: string | null, max = 999999): number {
   const n = parseInt(value ?? '0', 10)
   return isNaN(n) || n < 0 ? 0 : Math.min(n, max)
@@ -12,6 +25,11 @@ function clampInt(value: string | null, max = 999999): number {
 
 export async function GET(request: NextRequest) {
   try {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.ip ?? 'unknown'
+  if (isRateLimited(ip)) {
+    return new Response('Too many requests', { status: 429, headers: { 'Cache-Control': 'no-store' } })
+  }
+
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type') ?? ''
 
@@ -204,6 +222,6 @@ export async function GET(request: NextRequest) {
   )
   } catch (err) {
     console.error('[og] Image generation failed:', err)
-    return new Response('Image generation failed', { status: 500 })
+    return new Response('Image generation failed', { status: 500, headers: { 'Cache-Control': 'no-store' } })
   }
 }
