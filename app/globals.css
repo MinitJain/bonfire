@@ -204,6 +204,14 @@ body {
 }
 
 /* ─────────────────────────────────────────────
+   MODE COMPARISON SECTION
+───────────────────────────────────────────── */
+@keyframes shimmerSweep {
+  0%   { left: -64px; }
+  100% { left: calc(100% + 64px); }
+}
+
+/* ─────────────────────────────────────────────
    ACCESSIBILITY — REDUCED MOTION
 ───────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {

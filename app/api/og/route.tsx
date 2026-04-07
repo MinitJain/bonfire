@@ -5,18 +5,6 @@ export const runtime = 'edge'
 
 const VALID_TYPES = new Set(['', 'stats', 'invite'])
 
-const rateLimitMap = new Map<string, number[]>()
-const maxRequestsPerMinute = 60
-const rateLimitWindowMs = 60_000
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now()
-  const timestamps = (rateLimitMap.get(ip) ?? []).filter(t => now - t < rateLimitWindowMs)
-  if (timestamps.length >= maxRequestsPerMinute) return true
-  timestamps.push(now)
-  rateLimitMap.set(ip, timestamps)
-  return false
-}
 
 function clampInt(value: string | null, max = 999999): number {
   const n = parseInt(value ?? '0', 10)
@@ -25,11 +13,6 @@ function clampInt(value: string | null, max = 999999): number {
 
 export async function GET(request: NextRequest) {
   try {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? request.ip ?? 'unknown'
-  if (isRateLimited(ip)) {
-    return new Response('Too many requests', { status: 429, headers: { 'Cache-Control': 'no-store' } })
-  }
-
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type') ?? ''
 
@@ -79,7 +62,7 @@ export async function GET(request: NextRequest) {
     return new ImageResponse(
       (
         <div style={{ background: '#0F0F0D', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', width: '700px', height: '700px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,85,51,0.12) 0%, transparent 65%)', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+          <div style={{ position: 'absolute', width: '700px', height: '700px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,85,51,0.12) 0%, transparent 65%)', top: '-35px', left: '250px' }} />
           {/* Tomato icon */}
           <svg width="72" height="72" viewBox="0 0 100 100" style={{ marginBottom: '28px' }}>
             <rect x="47" y="8" width="6" height="16" rx="3" fill="#4CAF50" />
@@ -130,9 +113,8 @@ export async function GET(request: NextRequest) {
             height: '700px',
             borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(255,85,51,0.12) 0%, transparent 65%)',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            top: '-35px',
+            left: '250px',
           }}
         />
 
