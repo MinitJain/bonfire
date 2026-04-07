@@ -17,9 +17,16 @@ export default async function HomePage() {
     profileUsername = profile?.username ?? null
   }
 
+  const ninetySecondsAgo = new Date(Date.now() - 90_000).toISOString()
+  const { count: activeSessionCount } = await supabase
+    .from('sessions')
+    .select('id', { count: 'exact', head: true })
+    .eq('running', true)
+    .gt('last_active_at', ninetySecondsAgo)
+
   return (
     <main className="flex flex-col min-h-screen bg-background">
-      <LandingClient user={user} profileUsername={profileUsername} />
+      <LandingClient user={user} profileUsername={profileUsername} activeSessionCount={activeSessionCount ?? 0} />
     </main>
   )
 }

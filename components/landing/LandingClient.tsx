@@ -11,10 +11,12 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { ToastProvider, useToast } from '@/components/ui/Toast'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { ModesSection } from '@/components/landing/ModesSection'
 
 interface LandingClientProps {
   user: User | null
   profileUsername: string | null
+  activeSessionCount: number
 }
 
 const features = [
@@ -206,7 +208,7 @@ function StartModal({
   )
 }
 
-function LandingContent({ user, profileUsername }: LandingClientProps) {
+function LandingContent({ user, profileUsername, activeSessionCount }: LandingClientProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [showModal, setShowModal] = useState(false)
@@ -441,17 +443,31 @@ function LandingContent({ user, profileUsername }: LandingClientProps) {
             Start a 25-minute focus timer. Share the link. Your friends focus in sync and break together.
           </p>
 
-          <div className="animate-fade-up" style={{ animationDelay: '240ms' }}>
+          <div className="animate-fade-up flex flex-col items-center gap-3" style={{ animationDelay: '240ms' }}>
             <button
-              onClick={() => setShowModal(true)}
-              className="px-8 py-3.5 rounded-xl font-semibold text-base transition-all duration-150 cursor-pointer"
+              onClick={handleCreateSession}
+              disabled={isCreating}
+              className="px-8 py-3.5 rounded-xl font-semibold text-base transition-all duration-150 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
               style={{ background: 'var(--accent)', color: '#fff', boxShadow: 'var(--shadow-md)' }}
             >
               <span className="flex items-center gap-2">
-                <Zap className="w-4 h-4" />
-                Start a session
+                {isCreating ? (
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Zap className="w-4 h-4" />
+                )}
+                {isCreating ? 'Creating...' : 'Start a session now →'}
               </span>
             </button>
+            {activeSessionCount > 0 && (
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm"
+                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--green)' }} />
+                {activeSessionCount} session{activeSessionCount !== 1 ? 's' : ''} live now
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -482,6 +498,9 @@ function LandingContent({ user, profileUsername }: LandingClientProps) {
           ))}
         </div>
       </section>
+
+      {/* Mode comparison */}
+      <ModesSection />
 
       {/* How it works */}
       <section className="px-5 sm:px-8 py-16 sm:py-24 w-full" style={{ background: 'var(--bg-secondary)' }}>

@@ -22,6 +22,7 @@ import { GuestNicknamePrompt } from '@/components/session/GuestNicknamePrompt'
 import { SettingsRequestCard } from '@/components/session/SettingsRequestCard'
 import { AmbientPlayer } from '@/components/session/AmbientPlayer'
 import { ModeTipBubble } from '@/components/session/ModeTipBubble'
+import { KeyboardShortcutsModal } from '@/components/session/KeyboardShortcutsModal'
 import { ToastProvider, useToast } from '@/components/ui/Toast'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -85,6 +86,8 @@ function SessionContent({
   const [showAmbient, setShowAmbient] = useState(false)
   const [ambientActive, setAmbientActive] = useState(false)
   const [pendingRequest, setPendingRequest] = useState<SettingsChangeRequest | null>(null)
+  const [pendingSettingsRequest, setPendingSettingsRequest] = useState(false)
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false)
   const pendingRequestRef = useRef<SettingsChangeRequest | null>(null)
   useEffect(() => { pendingRequestRef.current = pendingRequest }, [pendingRequest])
   const [modeTipDismissed, setModeTipDismissed] = useState(false)
@@ -405,6 +408,7 @@ function SessionContent({
       const guestId = typeof window !== 'undefined' ? localStorage.getItem('pomodoro_guest_id') : null
       const myId = userId ?? guestId
       if (response.requester_id !== myId) return
+      setPendingSettingsRequest(false)
       if (response.accepted && response.settings) {
         const settings = response.settings
         // Apply the accepted settings locally so round labels and UI stay in sync
@@ -437,7 +441,7 @@ function SessionContent({
       autoStartBreaks: newSettings.autoStartBreaks,
       autoStartPomodoros: newSettings.autoStartPomodoros,
     })
-    setShowWatcherSettings(false)
+    setPendingSettingsRequest(true)
     toast('Settings request sent to host', 'info')
   }, [userId, localUsername, broadcastSettingsRequest, toast])
 
@@ -464,6 +468,26 @@ function SessionContent({
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft }).eq('id', session.id)
     }
   }, [pause, actorName, canControl, broadcastWithCount, broadcastActivity, pushActivity, supabase, session.id])
+
+  // Global keyboard shortcuts (placed after handleStart/handlePause declarations)
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (e.key === '?') {
+        e.preventDefault()
+        setShowShortcutsModal(v => !v)
+        return
+      }
+      if (e.code === 'Space' && canControl) {
+        e.preventDefault()
+        if (status === 'running') handlePause()
+        else handleStart()
+      }
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [canControl, status, handleStart, handlePause])
 
   const handleReset = useCallback(() => {
     const newState = reset(toSecs(sessionSettings.durations))
@@ -628,6 +652,15 @@ function SessionContent({
             <span className="hidden sm:block">{isConnected ? 'Live' : 'Connecting'}</span>
           </div>
 
+          <button
+            onClick={() => setShowShortcutsModal(v => !v)}
+            aria-label="Keyboard shortcuts"
+            title="Keyboard shortcuts (?)"
+            className="h-8 w-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer text-sm font-medium"
+            style={{ color: 'var(--text-muted)', border: '1px solid var(--border)', background: 'var(--bg-secondary)' }}
+          >
+            ?
+          </button>
           <ThemeToggle />
         </div>
       </header>
@@ -756,11 +789,33 @@ function SessionContent({
                           boxShadow: 'var(--shadow-lg)',
                         }}
                       >
-                        <SettingsPanel
-                          settings={sessionSettings}
-                          onApply={handleSendSettingsRequest}
-                          isWatcher
-                        />
+                        {pendingSettingsRequest ? (
+                          <div className="flex flex-col items-center gap-3 py-4 text-center">
+                            <span
+                              className="w-5 h-5 border-2 rounded-full animate-spin"
+                              style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }}
+                            />
+                            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                              Waiting for host approval...
+                            </p>
+                            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                              The host will accept or decline your request.
+                            </p>
+                            <button
+                              onClick={() => setPendingSettingsRequest(false)}
+                              className="text-xs underline cursor-pointer"
+                              style={{ color: 'var(--text-muted)' }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <SettingsPanel
+                            settings={sessionSettings}
+                            onApply={handleSendSettingsRequest}
+                            isWatcher
+                          />
+                        )}
                       </div>
                     )}
                   </div>
@@ -904,6 +959,10 @@ function SessionContent({
           }}
           onSkip={() => { setShowNicknamePrompt(false); setNicknameReady(true) }}
         />
+      )}
+
+      {showShortcutsModal && (
+        <KeyboardShortcutsModal onClose={() => setShowShortcutsModal(false)} />
       )}
     </div>
   )
