@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     return new ImageResponse(
       (
         <div style={{ background: '#0F0F0D', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', position: 'relative' }}>
-          <div style={{ position: 'absolute', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,85,51,0.1) 0%, transparent 65%)', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+          <div style={{ position: 'absolute', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,85,51,0.1) 0%, transparent 65%)', top: '15px', left: '300px' }} />
           <div style={{ fontSize: '20px', color: '#666', marginBottom: '8px' }}>🍅 PomodoroJam</div>
           <div style={{ fontSize: '40px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>{username}</div>
           <div style={{ fontSize: '16px', color: '#888', marginBottom: '48px' }}>Focus stats</div>

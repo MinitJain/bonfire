@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
-import { Users, Zap, Github, LogOut, UserCircle, Timer, Bell, BarChart2, Link2, X, ChevronDown } from 'lucide-react'
+import { Users, Zap, Github, LogOut, UserCircle, Timer, Bell, BarChart2, Link2, ChevronDown } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -67,151 +67,10 @@ const GoogleIcon = () => (
   </svg>
 )
 
-function StartModal({
-  onClose,
-  onHost,
-  isCreating,
-}: {
-  onClose: () => void
-  onHost: () => void
-  isCreating: boolean
-}) {
-  const modalRef = useRef<HTMLDivElement>(null)
-
-  // Escape to close
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [onClose])
-
-  // Focus trap + restore focus on close
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null
-    const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    const first = modalRef.current?.querySelector<HTMLElement>(FOCUSABLE)
-    first?.focus()
-
-    function handleTab(e: KeyboardEvent) {
-      if (e.key !== 'Tab' || !modalRef.current) return
-      const els = Array.from(modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE))
-      if (!els.length) return
-      const firstEl = els[0]
-      const lastEl = els[els.length - 1]
-      if (e.shiftKey) {
-        if (document.activeElement === firstEl) { e.preventDefault(); lastEl.focus() }
-      } else {
-        if (document.activeElement === lastEl) { e.preventDefault(); firstEl.focus() }
-      }
-    }
-    document.addEventListener('keydown', handleTab)
-    return () => {
-      document.removeEventListener('keydown', handleTab)
-      previous?.focus()
-    }
-  }, [])
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-      style={{ background: 'rgba(15,15,13,0.7)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Start or join a session"
-    >
-      <div
-        ref={modalRef}
-        className="w-full max-w-lg rounded-3xl p-6 sm:p-8 animate-scale-in relative"
-        style={{
-          background: 'var(--bg-elevated)',
-          border: '1px solid var(--border)',
-          boxShadow: 'var(--shadow-lg)',
-        }}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer"
-          style={{ color: 'var(--text-muted)' }}
-          aria-label="Close"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        <h2
-          className="font-display font-bold text-xl mb-1"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          What do you want to do?
-        </h2>
-        <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
-          Start a new session or join a friend&apos;s.
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Host card */}
-          <div
-            className="flex flex-col p-5 rounded-2xl"
-            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
-          >
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-              style={{ background: 'var(--accent-soft)' }}
-            >
-              <Zap className="w-5 h-5" style={{ color: 'var(--accent)' }} />
-            </div>
-            <h3 className="font-semibold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>
-              Host a session
-            </h3>
-            <p className="text-xs leading-relaxed mb-5" style={{ color: 'var(--text-secondary)' }}>
-              Create a timer and invite friends. You can switch between Host and Jam mode once inside.
-            </p>
-
-            <button
-              onClick={onHost}
-              disabled={isCreating}
-              className="mt-auto w-full py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer disabled:opacity-70"
-              style={{ background: 'var(--accent)', color: '#fff', boxShadow: 'var(--shadow-sm)' }}
-            >
-              {isCreating ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Creating...
-                </span>
-              ) : (
-                'Start session →'
-              )}
-            </button>
-          </div>
-
-          {/* Join card */}
-          <div
-            className="flex flex-col p-5 rounded-2xl"
-            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
-          >
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
-            >
-              <Users className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
-            </div>
-            <h3 className="font-semibold text-sm mb-1" style={{ color: 'var(--text-primary)' }}>
-              Join a session
-            </h3>
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              Ask a friend to share their session link and open it in your browser — you&apos;ll join instantly.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function LandingContent({ user, profileUsername, activeSessionCount }: LandingClientProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const [showModal, setShowModal] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [isSigningIn, setIsSigningIn] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -553,14 +412,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
         </a>
       </footer>
 
-      {/* Start modal */}
-      {showModal && (
-        <StartModal
-          onClose={() => setShowModal(false)}
-          onHost={handleCreateSession}
-          isCreating={isCreating}
-        />
-      )}
+
     </div>
   )
 }
