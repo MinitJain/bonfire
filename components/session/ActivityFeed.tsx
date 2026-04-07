@@ -11,7 +11,7 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
 
   return (
     <div
-      className="fixed bottom-6 left-4 sm:left-6 z-40 flex flex-col-reverse gap-2 pointer-events-none"
+      className="fixed top-20 left-4 sm:top-auto sm:bottom-6 sm:left-6 z-40 flex flex-col gap-2 sm:flex-col-reverse pointer-events-none"
       aria-live="polite"
       aria-atomic="false"
     >

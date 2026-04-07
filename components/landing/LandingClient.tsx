@@ -23,7 +23,7 @@ const features = [
   {
     icon: Zap,
     title: 'Like a listening party, but for work',
-    desc: 'One host controls the timer. Or enable Jam Mode and let everyone drive.',
+    desc: 'One host controls the timer. Or enable Open Mode and let everyone drive.',
   },
   {
     icon: Users,
