@@ -93,7 +93,7 @@ export default function RootLayout({
       className={`${dmSans.variable} ${syne.variable} ${jetbrainsMono.variable}`}
     >
 <body className="bg-background text-foreground font-sans min-h-screen antialiased">
-        <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
