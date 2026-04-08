@@ -18,15 +18,17 @@ export default async function HomePage() {
   }
 
   const ninetySecondsAgo = new Date(Date.now() - 90_000).toISOString()
-  const { count: activeSessionCount } = await supabase
+  const { count, error: countError } = await supabase
     .from('sessions')
     .select('id', { count: 'exact', head: true })
     .eq('running', true)
     .gt('last_active_at', ninetySecondsAgo)
+  if (countError) console.error('[home] sessions count query failed:', countError)
+  const activeSessionCount = countError ? 0 : (count ?? 0)
 
   return (
     <main className="flex flex-col min-h-screen bg-background">
-      <LandingClient user={user} profileUsername={profileUsername} activeSessionCount={activeSessionCount ?? 0} />
+      <LandingClient user={user} profileUsername={profileUsername} activeSessionCount={activeSessionCount} />
     </main>
   )
 }

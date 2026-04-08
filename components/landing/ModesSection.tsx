@@ -119,7 +119,7 @@ function ModeCard({ mode, visible }: { mode: ModeConfig; visible: boolean }) {
           style={{
             background: `linear-gradient(90deg, transparent, rgba(${mode.colorRgb},0.06), transparent)`,
             transition: 'opacity 0.3s ease',
-            animation: 'shimmerSweep 1.4s ease forwards',
+            animation: 'shimmer-sweep 1.4s ease forwards',
           }}
         />
       </div>
