@@ -114,9 +114,7 @@ function SessionContent({
       setLocalUsername(stored)
       setNicknameReady(true)
     } else {
-      // Brief delay so the page settles before the prompt appears
-      const t = setTimeout(() => setShowNicknamePrompt(true), 800)
-      return () => clearTimeout(t)
+      setShowNicknamePrompt(true)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // intentionally run once on mount
@@ -385,7 +383,7 @@ function SessionContent({
     }
     setJamMode(next)
     broadcastJamMode(next)
-    const msg = next ? 'Jam Mode on — everyone can control ⚡' : 'Back to host control 👑'
+    const msg = next ? 'Open Mode on — everyone can control ⚡' : 'Back to host control 👑'
     pushActivity(msg)
     broadcastActivity(msg)
   }, [jamMode, session.id, supabase, broadcastJamMode, broadcastActivity, pushActivity])
@@ -678,7 +676,7 @@ function SessionContent({
         </div>
       </header>
 
-      {/* Jam mode banner for watchers */}
+      {/* Open mode banner for watchers */}
       {jamMode && !isHost && (
         <div
           className="px-4 py-2 text-center text-xs"
@@ -689,7 +687,7 @@ function SessionContent({
           }}
         >
           <Zap className="w-3 h-3 inline mr-1" />
-          Jam Mode: everyone controls the timer
+          Open Mode: everyone controls the timer
         </div>
       )}
 
@@ -838,7 +836,7 @@ function SessionContent({
 
             {isHost && (
               <>
-                {/* Mode selector: Host | Jam */}
+                {/* Mode selector: Host | Open */}
                 <div className="flex-1 flex">
                   <div className="flex items-center rounded-xl overflow-hidden border h-10 w-full" style={{ borderColor: 'var(--border)' }}>
                     <button
@@ -863,7 +861,7 @@ function SessionContent({
                           : { background: 'var(--bg-secondary)', color: 'var(--text-muted)' }
                       }
                     >
-                      Jam
+                      Open
                     </button>
                   </div>
                 </div>

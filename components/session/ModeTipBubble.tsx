@@ -139,7 +139,7 @@ export function ModeTipBubble({ externalDismiss, ready = true }: ModeTipBubblePr
             }}
           >
             <p className="text-xs font-semibold mb-1" style={{ color: 'var(--green)' }}>
-              Jam Mode
+              Open Mode
             </p>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
               Everyone in the session controls the timer together — like a group decision.

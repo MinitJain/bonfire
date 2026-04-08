@@ -31,13 +31,17 @@ const messages = {
 
 export function BreakOverlay({ visible, onDismiss, mode, canControl = true }: BreakOverlayProps) {
   const [show, setShow] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     if (visible) {
+      setMounted(true)
       const t = setTimeout(() => setShow(true), 50)
       return () => clearTimeout(t)
     } else {
       setShow(false)
+      const t = setTimeout(() => setMounted(false), 300)
+      return () => clearTimeout(t)
     }
   }, [visible])
 
@@ -48,7 +52,7 @@ export function BreakOverlay({ visible, onDismiss, mode, canControl = true }: Br
     return () => document.removeEventListener('keydown', handleKey)
   }, [visible, onDismiss])
 
-  if (!visible) return null
+  if (!mounted) return null
 
   const { title, subtitle, cta } = messages[mode]
 

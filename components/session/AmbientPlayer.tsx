@@ -15,7 +15,15 @@ export function AmbientPlayer({ onActiveChange }: AmbientPlayerProps) {
   const [muted, setMuted] = useState(false)
 
   useEffect(() => {
+    const savedType = localStorage.getItem('pomodoro_ambient_type') as AmbientType | null
+    const savedVolume = parseFloat(localStorage.getItem('pomodoro_ambient_volume') ?? '0.25')
+    if (!isNaN(savedVolume)) setVolume(savedVolume)
+
     playerRef.current = new Player()
+    if (savedType && AMBIENT_SOUNDS.some(s => s.type === savedType)) {
+      playerRef.current.play(savedType, savedVolume)
+      setActive(savedType)
+    }
     return () => { playerRef.current?.destroy() }
   }, [])
 
@@ -27,15 +35,18 @@ export function AmbientPlayer({ onActiveChange }: AmbientPlayerProps) {
     if (active === type) {
       playerRef.current?.stop()
       setActive(null)
+      localStorage.removeItem('pomodoro_ambient_type')
     } else {
       playerRef.current?.play(type, muted ? 0 : volume)
       setActive(type)
+      localStorage.setItem('pomodoro_ambient_type', type)
     }
   }
 
   const handleVolume = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = parseFloat(e.target.value)
     setVolume(v)
+    localStorage.setItem('pomodoro_ambient_volume', String(v))
     if (!muted) playerRef.current?.setVolume(v)
   }
 
