@@ -484,6 +484,7 @@ function SessionContent({
         setShowShortcutsModal(v => !v)
         return
       }
+      if (showShortcutsModal) return
       if (e.code === 'Space' && canControl) {
         e.preventDefault()
         if (status === 'running') handlePause()
@@ -492,7 +493,7 @@ function SessionContent({
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [canControl, status, handleStart, handlePause])
+  }, [showShortcutsModal, canControl, status, handleStart, handlePause])
 
   const handleReset = useCallback(() => {
     const newState = reset(toSecs(sessionSettings.durations))
