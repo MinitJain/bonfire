@@ -201,6 +201,11 @@ function SessionContent({
   useEffect(() => { skipAndStartRef.current = skipAndStart }, [skipAndStart])
   useEffect(() => { broadcastTimerStateRef.current = broadcastWithCount }, [broadcastWithCount])
 
+  // Clear pending settings request if channel disconnects — avoids infinite spinner
+  useEffect(() => {
+    if (!isConnected) setPendingSettingsRequest(false)
+  }, [isConnected])
+
   // Keep refs up to date
   useEffect(() => { modeRef.current = mode }, [mode])
 

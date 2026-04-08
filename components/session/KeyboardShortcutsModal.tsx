@@ -26,13 +26,16 @@ export function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsModalProps)
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="shortcuts-title"
     >
       <div
         className="w-full max-w-sm mx-4 rounded-3xl p-6"
         style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="font-semibold text-base mb-4" style={{ color: 'var(--text-primary)' }}>
+        <h2 id="shortcuts-title" className="font-semibold text-base mb-4" style={{ color: 'var(--text-primary)' }}>
           Keyboard Shortcuts
         </h2>
         <dl className="flex flex-col gap-3">
@@ -57,6 +60,7 @@ export function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsModalProps)
         </dl>
         <button
           onClick={onClose}
+          aria-label="Close keyboard shortcuts"
           className="mt-5 w-full py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors"
           style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
         >

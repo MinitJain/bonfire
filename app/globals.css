@@ -206,7 +206,7 @@ body {
 /* ─────────────────────────────────────────────
    MODE COMPARISON SECTION
 ───────────────────────────────────────────── */
-@keyframes shimmerSweep {
+@keyframes shimmer-sweep {
   0%   { left: -64px; }
   100% { left: calc(100% + 64px); }
 }
