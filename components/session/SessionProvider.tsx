@@ -206,6 +206,13 @@ function SessionContent({
     if (!isConnected) setPendingSettingsRequest(false)
   }, [isConnected])
 
+  // Auto-cancel pending settings request after 30s if host never responds
+  useEffect(() => {
+    if (!pendingSettingsRequest) return
+    const t = setTimeout(() => setPendingSettingsRequest(false), 30_000)
+    return () => clearTimeout(t)
+  }, [pendingSettingsRequest])
+
   // Keep refs up to date
   useEffect(() => { modeRef.current = mode }, [mode])
 
