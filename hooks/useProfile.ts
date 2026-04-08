@@ -1,8 +1,22 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { z } from 'zod'
 import type { Profile } from '@/types'
 import { createClient } from '@/lib/supabase/client'
+
+const ProfileSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  display_name: z.string().nullable(),
+  avatar_url: z.string().nullable(),
+  bio: z.string().nullable(),
+  total_pomodoros: z.number(),
+  total_focus_minutes: z.number(),
+  current_streak: z.number(),
+  longest_streak: z.number(),
+  created_at: z.string(),
+})
 
 interface UseProfileReturn {
   profile: Profile | null
@@ -35,7 +49,12 @@ export function useProfile(userId: string | null): UseProfileReturn {
         .single()
 
       if (fetchError) throw fetchError
-      setProfile(data as Profile)
+      const parsed = ProfileSchema.safeParse(data)
+      if (!parsed.success) {
+        console.error('Profile shape mismatch:', parsed.error.flatten())
+        throw new Error('Unexpected profile data from database')
+      }
+      setProfile(parsed.data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch profile')
     } finally {
@@ -63,7 +82,12 @@ export function useProfile(userId: string | null): UseProfileReturn {
           .single()
 
         if (updateError) throw updateError
-        setProfile(data as Profile)
+        const parsed = ProfileSchema.safeParse(data)
+        if (!parsed.success) {
+          console.error('Profile shape mismatch after update:', parsed.error.flatten())
+          throw new Error('Unexpected profile data from database')
+        }
+        setProfile(parsed.data)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to update profile')
         throw err

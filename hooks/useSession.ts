@@ -328,7 +328,7 @@ export function useSession({
       username: newUsername,
       avatar_url: avatarUrlRef.current ?? null,
       is_host: isHostRef.current,
-      joined_at: new Date().toISOString(),
+      joined_at: joinedAtRef.current,
     })
   }, [])
 
