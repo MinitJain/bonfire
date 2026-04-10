@@ -77,6 +77,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [ctaRipples, setCtaRipples] = useState<{ id: number; x: number; y: number }[]>([])
   const ctaBtnRef = useRef<HTMLButtonElement>(null)
+  const rippleTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
   const [showSignInMenu, setShowSignInMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const signInRef = useRef<HTMLDivElement>(null)
@@ -150,11 +151,19 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
     el.style.boxShadow = 'var(--shadow-md)'
   }
 
+  useEffect(() => {
+    return () => { rippleTimeoutsRef.current.forEach(clearTimeout) }
+  }, [])
+
   const handleCtaClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const id = Date.now()
     setCtaRipples(prev => [...prev, { id, x: e.clientX - rect.left, y: e.clientY - rect.top }])
-    setTimeout(() => setCtaRipples(prev => prev.filter(r => r.id !== id)), 700)
+    const tid = setTimeout(() => {
+      setCtaRipples(prev => prev.filter(r => r.id !== id))
+      rippleTimeoutsRef.current = rippleTimeoutsRef.current.filter(t => t !== tid)
+    }, 700)
+    rippleTimeoutsRef.current.push(tid)
     handleCreateSession()
   }
 

@@ -22,6 +22,7 @@ export default async function HomePage() {
     .from('sessions')
     .select('id', { count: 'exact', head: true })
     .eq('running', true)
+    .neq('session_mode', 'solo')
     .gt('last_active_at', ninetySecondsAgo)
   if (countError) console.error('[home] sessions count query failed:', countError)
   const activeSessionCount = countError ? 0 : (count ?? 0)

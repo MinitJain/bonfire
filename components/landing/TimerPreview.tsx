@@ -53,12 +53,16 @@ export function TimerPreview({ onStartSession }: TimerPreviewProps) {
   const handleCardClick = async () => {
     if (isStarting || !onStartSession) return
     setIsStarting(true)
-    const id = await onStartSession()
-    if (!id) { setIsStarting(false); return }
-    if ('startViewTransition' in document) {
-      ;(document as any).startViewTransition(() => router.push(`/session/${id}`))
-    } else {
-      router.push(`/session/${id}`)
+    try {
+      const id = await onStartSession()
+      if (!id) return
+      if ('startViewTransition' in document) {
+        ;(document as any).startViewTransition(() => router.push(`/session/${id}`))
+      } else {
+        router.push(`/session/${id}`)
+      }
+    } finally {
+      setIsStarting(false)
     }
   }
 
@@ -124,6 +128,7 @@ export function TimerPreview({ onStartSession }: TimerPreviewProps) {
         {/* Single play/pause button */}
         <button
           onClick={e => { e.stopPropagation(); setRunning(v => !v) }}
+          aria-label={running ? 'Pause timer' : 'Play timer'}
           className="w-16 h-16 flex items-center justify-center rounded-full transition-all cursor-pointer"
           style={{ background: 'var(--accent)', color: '#fff', boxShadow: 'var(--shadow-md)' }}
         >
