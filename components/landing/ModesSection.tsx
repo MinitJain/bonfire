@@ -13,9 +13,6 @@ interface ModeConfig {
   colorRgb: string
   timerText: string
   ringFill: number
-  dotColors: string[]
-  dotDelays: number[]
-  watcherText: string
   cardDelay: number
 }
 
@@ -29,9 +26,6 @@ const modes: ModeConfig[] = [
     colorRgb: '255, 85, 51',
     timerText: '24:13',
     ringFill: 0.75,
-    dotColors: ['#FF5533', '#9B9B8E', '#9B9B8E', '#9B9B8E'],
-    dotDelays: [0, 200, 360, 500],
-    watcherText: '3 watching',
     cardDelay: 0,
   },
   {
@@ -43,23 +37,17 @@ const modes: ModeConfig[] = [
     colorRgb: '240, 160, 80',
     timerText: '18:45',
     ringFill: 0.40,
-    dotColors: ['#FF5533', '#F0A050', '#2DBF8A', '#9B9B8E'],
-    dotDelays: [0, 140, 270, 390],
-    watcherText: '4 jamming',
     cardDelay: 130,
   },
   {
     id: 'solo',
     title: 'Solo',
     tagline: 'Just you',
-    desc: 'A private session — no sharing, no watchers. Pure, distraction-free focus.',
+    desc: 'A private session. No sharing, no watchers. Pure, distraction-free focus.',
     color: '#2DBF8A',
     colorRgb: '45, 191, 138',
     timerText: '04:58',
     ringFill: 0.90,
-    dotColors: ['#2DBF8A'],
-    dotDelays: [0],
-    watcherText: 'Private',
     cardDelay: 260,
   },
 ]
@@ -126,7 +114,7 @@ function ModeCard({ mode, visible }: { mode: ModeConfig; visible: boolean }) {
 
       <div className="relative p-6">
         {/* Card header */}
-        <div className="mb-5">
+        <div className="mb-5 text-center">
           <h3 className="font-bold text-xl mb-1" style={{ color: 'var(--text-primary)' }}>
             {mode.title}
           </h3>
@@ -180,39 +168,10 @@ function ModeCard({ mode, visible }: { mode: ModeConfig; visible: boolean }) {
             </div>
           </div>
 
-          {/* Participant dots */}
-          <div className="flex items-center gap-1.5">
-            {mode.dotColors.map((dotColor, i) => (
-              <div
-                key={i}
-                className="w-5 h-5 rounded-full"
-                style={{
-                  background: dotColor,
-                  opacity: visible ? 1 : 0,
-                  transform: visible ? 'scale(1)' : 'scale(0)',
-                  transition: [
-                    `opacity 0.35s cubic-bezier(0.34,1.56,0.64,1) ${mode.cardDelay + 700 + mode.dotDelays[i]}ms`,
-                    `transform 0.35s cubic-bezier(0.34,1.56,0.64,1) ${mode.cardDelay + 700 + mode.dotDelays[i]}ms`,
-                  ].join(', '),
-                  boxShadow: i === 0 ? `0 0 8px rgba(${mode.colorRgb},0.5)` : undefined,
-                }}
-              />
-            ))}
-            <span
-              className="text-xs ml-1"
-              style={{
-                color: 'var(--text-muted)',
-                opacity: visible ? 1 : 0,
-                transition: `opacity 0.4s ease ${mode.cardDelay + 950}ms`,
-              }}
-            >
-              {mode.watcherText}
-            </span>
-          </div>
         </div>
 
         {/* Description */}
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-sm leading-relaxed text-center" style={{ color: 'var(--text-secondary)' }}>
           {mode.desc}
         </p>
       </div>
@@ -255,7 +214,7 @@ export function ModesSection() {
           transition: 'opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1)',
         }}
       >
-        How do you want to focus?
+        Three modes, one goal.
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

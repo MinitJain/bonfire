@@ -20,8 +20,8 @@ interface UseSessionReturn {
   onTimerUpdate: (callback: (state: TimerState) => void) => () => void
   broadcastShareLock: (locked: boolean) => void
   onShareLock: (callback: (locked: boolean) => void) => () => void
-  broadcastJamMode: (jamMode: boolean) => void
-  onJamMode: (callback: (jamMode: boolean) => void) => () => void
+  broadcastSessionMode: (mode: 'host' | 'jam' | 'solo') => void
+  onSessionMode: (callback: (mode: 'host' | 'jam' | 'solo') => void) => () => void
   onParticipantJoin: (callback: (username: string | null) => void) => () => void
   onParticipantLeave: (callback: (username: string | null) => void) => () => void
   broadcastActivity: (text: string) => void
@@ -65,7 +65,7 @@ export function useSession({
   }, [isHost, username])
   const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())
   const shareLockCallbacksRef = useRef<Set<(locked: boolean) => void>>(new Set())
-  const jamModeCallbacksRef = useRef<Set<(jamMode: boolean) => void>>(new Set())
+  const sessionModeCallbacksRef = useRef<Set<(mode: 'host' | 'jam' | 'solo') => void>>(new Set())
   const joinCallbacksRef = useRef<Set<(username: string | null) => void>>(new Set())
   const leaveCallbacksRef = useRef<Set<(username: string | null) => void>>(new Set())
   const activityCallbacksRef = useRef<Set<(text: string) => void>>(new Set())
@@ -174,10 +174,10 @@ export function useSession({
       shareLockCallbacksRef.current.forEach((cb) => cb(locked))
     })
 
-    // Listen for jam mode broadcasts
-    channel.on('broadcast', { event: 'jam_mode_update' }, ({ payload }) => {
-      const jamMode = (payload as { jamMode: boolean }).jamMode
-      jamModeCallbacksRef.current.forEach((cb) => cb(jamMode))
+    // Listen for session mode broadcasts
+    channel.on('broadcast', { event: 'session_mode_update' }, ({ payload }) => {
+      const mode = (payload as { sessionMode: 'host' | 'jam' | 'solo' }).sessionMode
+      sessionModeCallbacksRef.current.forEach((cb) => cb(mode))
     })
 
     // Listen for activity broadcasts (timer events, status messages)
@@ -251,18 +251,18 @@ export function useSession({
     }
   }, [])
 
-  const broadcastJamMode = useCallback((jamMode: boolean) => {
+  const broadcastSessionMode = useCallback((mode: 'host' | 'jam' | 'solo') => {
     channelRef.current?.send({
       type: 'broadcast',
-      event: 'jam_mode_update',
-      payload: { jamMode },
+      event: 'session_mode_update',
+      payload: { sessionMode: mode },
     })
   }, [])
 
-  const onJamMode = useCallback((callback: (jamMode: boolean) => void) => {
-    jamModeCallbacksRef.current.add(callback)
+  const onSessionMode = useCallback((callback: (mode: 'host' | 'jam' | 'solo') => void) => {
+    sessionModeCallbacksRef.current.add(callback)
     return () => {
-      jamModeCallbacksRef.current.delete(callback)
+      sessionModeCallbacksRef.current.delete(callback)
     }
   }, [])
 
@@ -339,8 +339,8 @@ export function useSession({
     onTimerUpdate,
     broadcastShareLock,
     onShareLock,
-    broadcastJamMode,
-    onJamMode,
+    broadcastSessionMode,
+    onSessionMode,
     onParticipantJoin,
     onParticipantLeave,
     broadcastActivity,

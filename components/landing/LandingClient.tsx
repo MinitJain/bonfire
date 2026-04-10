@@ -12,6 +12,7 @@ import { ToastProvider, useToast } from '@/components/ui/Toast'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { ModesSection } from '@/components/landing/ModesSection'
+import { TimerPreview } from '@/components/landing/TimerPreview'
 
 interface LandingClientProps {
   user: User | null
@@ -22,40 +23,40 @@ interface LandingClientProps {
 const features = [
   {
     icon: Zap,
-    title: 'Like a listening party, but for work',
-    desc: 'One host controls the timer. Or enable Open Mode and let everyone drive.',
+    title: 'Real-time sync, zero lag',
+    desc: 'Clock-based timers keep every participant on the exact same second. Always.',
   },
   {
     icon: Users,
-    title: 'Host controls. Watchers sync.',
-    desc: 'Clock-based sync keeps every participant on the same second, always.',
+    title: 'Three modes for every workflow',
+    desc: 'Host controls the clock, Jam lets everyone drive, Solo keeps it private.',
   },
   {
     icon: Bell,
     title: 'Break notifications',
-    desc: "Browser notifications alert every participant when it's time to rest.",
+    desc: "Browser alerts fire for every participant the moment a session ends.",
   },
   {
     icon: BarChart2,
-    title: 'Profiles and streaks',
-    desc: 'Track your focus hours, daily streaks, and pomodoro count over time.',
+    title: 'Streaks and focus history',
+    desc: 'Daily streaks, weekly charts, and a full heatmap of your focus sessions.',
   },
   {
     icon: Link2,
     title: 'Share in one tap',
-    desc: 'Copy the link and send it anywhere. Friends join instantly.',
+    desc: 'One link. Anyone can join instantly. No app download, no account required.',
   },
   {
     icon: Timer,
-    title: 'No account needed',
-    desc: "Start a session as a guest. Sign in only when you're ready for stats.",
+    title: 'Works as a solo timer too',
+    desc: "Don't have a group? Use Solo mode for pure, distraction-free focus.",
   },
 ]
 
 const steps = [
-  { n: '01', title: 'Start a session', desc: 'Hit the button. A unique session link is generated instantly.' },
-  { n: '02', title: 'Share the link', desc: 'Send it to your friends via any platform. They join in seconds.' },
-  { n: '03', title: 'Focus together', desc: 'One timer, everyone in sync. When the host starts, everyone starts.' },
+  { n: '01', title: 'Start a session', desc: 'Hit the button. A unique link is generated instantly. No setup.' },
+  { n: '02', title: 'Invite your team', desc: 'Send the link via Slack, WhatsApp, Discord. Wherever you work.' },
+  { n: '03', title: 'Focus in sync', desc: 'Everyone runs the same timer. When it ends, everyone takes a break.' },
 ]
 
 const GoogleIcon = () => (
@@ -74,6 +75,8 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
   const [isCreating, setIsCreating] = useState(false)
   const [isSigningIn, setIsSigningIn] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [ctaRipples, setCtaRipples] = useState<{ id: number; x: number; y: number }[]>([])
+  const ctaBtnRef = useRef<HTMLButtonElement>(null)
   const [showSignInMenu, setShowSignInMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const signInRef = useRef<HTMLDivElement>(null)
@@ -98,8 +101,8 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  const handleCreateSession = async () => {
-    setIsCreating(true)
+  // Shared: create a session and return its ID (or null on failure)
+  const createSessionId = async (): Promise<string | null> => {
     try {
       const res = await fetch('/api/session', {
         method: 'POST',
@@ -109,11 +112,50 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
       if (!res.ok) throw new Error('Failed to create session')
       const { id } = await res.json() as { id: string }
       localStorage.setItem(`pomodoro_host_${id}`, '1')
-      router.push(`/session/${id}`)
+      return id
     } catch {
-      setIsCreating(false)
       toast('Could not create session. Please try again.', 'error')
+      return null
     }
+  }
+
+  // CTA button: create + navigate with View Transition
+  const handleCreateSession = async () => {
+    setIsCreating(true)
+    const id = await createSessionId()
+    if (!id) { setIsCreating(false); return }
+    if ('startViewTransition' in document) {
+      ;(document as any).startViewTransition(() => router.push(`/session/${id}`))
+    } else {
+      router.push(`/session/${id}`)
+    }
+  }
+
+  const handleCtaMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const el = ctaBtnRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width - 0.5
+    const y = (e.clientY - rect.top) / rect.height - 0.5
+    el.style.transition = 'transform 0.08s ease, box-shadow 0.08s ease'
+    el.style.transform = `perspective(600px) rotateX(${-y * 7}deg) rotateY(${x * 7}deg) scale(1.04) translateZ(0)`
+    el.style.boxShadow = `0 8px 32px rgba(232,71,42,0.5), 0 2px 8px rgba(232,71,42,0.25)`
+  }
+
+  const handleCtaMouseLeave = () => {
+    const el = ctaBtnRef.current
+    if (!el) return
+    el.style.transition = 'transform 0.45s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s ease'
+    el.style.transform = 'perspective(600px) rotateX(0deg) rotateY(0deg) scale(1) translateZ(0)'
+    el.style.boxShadow = 'var(--shadow-md)'
+  }
+
+  const handleCtaClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const id = Date.now()
+    setCtaRipples(prev => [...prev, { id, x: e.clientX - rect.left, y: e.clientY - rect.top }])
+    setTimeout(() => setCtaRipples(prev => prev.filter(r => r.id !== id)), 700)
+    handleCreateSession()
   }
 
   const handleSignIn = async (provider: 'github' | 'google') => {
@@ -299,17 +341,44 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
             className="text-lg sm:text-xl mb-10 sm:mb-12 max-w-lg mx-auto leading-relaxed animate-fade-up"
             style={{ color: 'var(--text-secondary)', animationDelay: '160ms' }}
           >
-            Start a 25-minute focus timer. Share the link. Your friends focus in sync and break together.
+            A shared Pomodoro timer that keeps everyone in sync. Solo or with a team.
           </p>
 
           <div className="animate-fade-up flex flex-col items-center gap-3" style={{ animationDelay: '240ms' }}>
             <button
-              onClick={handleCreateSession}
+              ref={ctaBtnRef}
+              onClick={handleCtaClick}
+              onMouseMove={handleCtaMouseMove}
+              onMouseLeave={handleCtaMouseLeave}
               disabled={isCreating}
-              className="px-8 py-3.5 rounded-xl font-semibold text-base transition-all duration-150 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-              style={{ background: 'var(--accent)', color: '#fff', boxShadow: 'var(--shadow-md)' }}
+              className="cta-btn relative overflow-hidden px-8 py-3.5 rounded-xl font-semibold text-base cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+              style={{ background: 'var(--accent)', color: '#fff', boxShadow: 'var(--shadow-md)', transformStyle: 'preserve-3d' }}
             >
-              <span className="flex items-center gap-2">
+              {/* Shimmer sweep on hover */}
+              <span className="btn-shimmer" aria-hidden="true" />
+
+              {/* Click ripples */}
+              {ctaRipples.map(r => (
+                <span
+                  key={r.id}
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    left: r.x,
+                    top: r.y,
+                    width: 10,
+                    height: 10,
+                    marginLeft: -5,
+                    marginTop: -5,
+                    borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.45)',
+                    animation: 'btn-ripple 0.65s ease-out forwards',
+                    pointerEvents: 'none',
+                  }}
+                />
+              ))}
+
+              <span className="relative flex items-center gap-2">
                 {isCreating ? (
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
@@ -318,18 +387,22 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
                 {isCreating ? 'Creating...' : 'Start a session now →'}
               </span>
             </button>
-            {activeSessionCount > 0 && (
-              <div
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm"
-                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--green)' }} />
-                {activeSessionCount} session{activeSessionCount !== 1 ? 's' : ''} live now
-              </div>
-            )}
+            <Link
+              href="/explore"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors"
+              style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: activeSessionCount > 0 ? 'var(--green)' : 'var(--text-muted)' }} />
+              {activeSessionCount > 0
+                ? `${activeSessionCount} session${activeSessionCount !== 1 ? 's' : ''} live now. Join one →`
+                : 'No live sessions yet. Start the first one.'}
+            </Link>
           </div>
         </div>
       </section>
+
+      {/* Live timer preview */}
+      <TimerPreview onStartSession={createSessionId} />
 
       {/* Features */}
       <section className="px-5 sm:px-8 py-16 sm:py-24 max-w-5xl mx-auto w-full">
@@ -337,7 +410,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
           className="font-display font-bold text-2xl sm:text-3xl mb-12 text-center"
           style={{ color: 'var(--text-primary)' }}
         >
-          Everything you and your friends need to focus
+          Built for focus. Built for teams.
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {features.map(({ icon: Icon, title, desc }) => (
@@ -372,7 +445,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {steps.map(({ n, title, desc }) => (
-              <div key={n} className="relative flex flex-col animate-fade-up">
+              <div key={n} className="relative flex flex-col animate-fade-up items-center text-center sm:items-start sm:text-left">
                 <span
                   className="font-display font-bold text-[80px] sm:text-[100px] leading-none select-none mb-4"
                   style={{ color: 'var(--accent)', opacity: 0.15 }}

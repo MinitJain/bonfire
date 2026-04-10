@@ -139,10 +139,25 @@ export function ModeTipBubble({ externalDismiss, ready = true }: ModeTipBubblePr
             }}
           >
             <p className="text-xs font-semibold mb-1" style={{ color: 'var(--green)' }}>
-              Open Mode
+              Jam
             </p>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-              Everyone in the session controls the timer together — like a group decision.
+              Everyone controls the timer together. Full collaboration, no gatekeeper.
+            </p>
+          </div>
+          <div
+            style={{
+              background: 'rgba(139,92,246,0.08)',
+              border: '1px solid rgba(139,92,246,0.4)',
+              borderRadius: '10px',
+              padding: '10px 12px',
+            }}
+          >
+            <p className="text-xs font-semibold mb-1" style={{ color: '#8B5CF6' }}>
+              Solo
+            </p>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+              Private session. No sharing, no watchers. Pure, distraction-free focus.
             </p>
           </div>
         </div>

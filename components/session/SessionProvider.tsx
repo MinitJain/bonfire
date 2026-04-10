@@ -54,7 +54,7 @@ function SessionContent({
   avatarUrl,
 }: SessionProviderProps) {
   const [isHost, setIsHost] = useState(isHostProp)
-  const [jamMode, setJamMode] = useState(session.jam_mode ?? false)
+  const [sessionMode, setSessionMode] = useState<'host' | 'jam' | 'solo'>(session.session_mode ?? 'host')
   const [showBreakOverlay, setShowBreakOverlay] = useState(false)
   const [showSharePanel, setShowSharePanel] = useState(false)
   const [sessionSettings, setSessionSettings] = useState<SessionSettings>({
@@ -119,7 +119,7 @@ function SessionContent({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // intentionally run once on mount
 
-  const canControl = isHost || jamMode
+  const canControl = isHost || sessionMode === 'jam'
 
   const modeRef = useRef<TimerMode>('focus')
 
@@ -182,7 +182,7 @@ function SessionContent({
     onExpire: handleExpire,
   })
 
-  const { participants, isConnected, broadcastTimerState, onTimerUpdate, broadcastShareLock, onShareLock, broadcastJamMode, onJamMode, onParticipantJoin, onParticipantLeave, broadcastActivity, onActivity, updatePresence, broadcastSettingsRequest, onSettingsRequest, broadcastSettingsResponse, onSettingsResponse } = useSession({
+  const { participants, isConnected, broadcastTimerState, onTimerUpdate, broadcastShareLock, onShareLock, broadcastSessionMode, onSessionMode, onParticipantJoin, onParticipantLeave, broadcastActivity, onActivity, updatePresence, broadcastSettingsRequest, onSettingsRequest, broadcastSettingsResponse, onSettingsResponse } = useSession({
     sessionId: session.id,
     userId,
     isHost,
@@ -370,32 +370,36 @@ function SessionContent({
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [isHost, status])
 
-  // Toggle jam mode (host only) — await DB first, then broadcast to avoid state divergence
-  const handleToggleJamMode = useCallback(async () => {
-    const next = !jamMode
+  // Set session mode (host only) — await DB first, then broadcast to avoid state divergence
+  const handleSetMode = useCallback(async (mode: 'host' | 'jam' | 'solo') => {
+    if (mode === sessionMode) return
     const { error } = await supabase
       .from('sessions')
-      .update({ jam_mode: next })
+      .update({ session_mode: mode, jam_mode: mode === 'jam' })
       .eq('id', session.id)
     if (error) {
-      console.error('[handleToggleJamMode] DB update failed:', error)
+      console.error('[handleSetMode] DB update failed:', error)
       return
     }
-    setJamMode(next)
-    broadcastJamMode(next)
-    const msg = next ? 'Open Mode on — everyone can control ⚡' : 'Back to host control 👑'
-    pushActivity(msg)
-    broadcastActivity(msg)
-  }, [jamMode, session.id, supabase, broadcastJamMode, broadcastActivity, pushActivity])
+    setSessionMode(mode)
+    broadcastSessionMode(mode)
+    const messages: Record<'host' | 'jam' | 'solo', string> = {
+      host: 'Host mode. Only the host controls 👑',
+      jam: 'Jam mode. Everyone controls ⚡',
+      solo: 'Solo mode. Private session 🎯',
+    }
+    pushActivity(messages[mode])
+    broadcastActivity(messages[mode])
+  }, [sessionMode, session.id, supabase, broadcastSessionMode, broadcastActivity, pushActivity])
 
-  // Non-hosts receive jam mode changes from the host
+  // Non-hosts receive session mode changes from the host
   useEffect(() => {
     if (isHost) return
-    const unsubscribe = onJamMode((next) => {
-      setJamMode(next)
+    const unsubscribe = onSessionMode((next) => {
+      setSessionMode(next)
     })
     return unsubscribe
-  }, [isHost, onJamMode])
+  }, [isHost, onSessionMode])
 
   // Host receives settings change requests from watchers
   useEffect(() => {
@@ -676,8 +680,8 @@ function SessionContent({
         </div>
       </header>
 
-      {/* Open mode banner for watchers */}
-      {jamMode && !isHost && (
+      {/* Jam mode banner for watchers */}
+      {sessionMode === 'jam' && !isHost && (
         <div
           className="px-4 py-2 text-center text-xs"
           style={{
@@ -687,7 +691,7 @@ function SessionContent({
           }}
         >
           <Zap className="w-3 h-3 inline mr-1" />
-          Open Mode: everyone controls the timer
+          Jam Mode: everyone controls the timer
         </div>
       )}
 
@@ -730,7 +734,7 @@ function SessionContent({
           <TimerControls
             status={status}
             isHost={isHost}
-            jamMode={jamMode}
+            jamMode={sessionMode === 'jam'}
             onPlay={handleStart}
             onPause={handlePause}
             onSkip={handleSkip}
@@ -738,15 +742,15 @@ function SessionContent({
           />
 
           {/* Share + Jam row */}
-          <div className="flex items-center gap-2 w-full">
-            {/* Invite button — hidden for viewers when host has locked sharing */}
-            {(isHost || sessionSettings.allowGuestShare) && (
-            <div className="relative flex-1" ref={sharePanelRef}>
+          <div className="flex flex-wrap items-center gap-2 w-full">
+            {/* Invite button — hidden for viewers when host has locked sharing, and hidden in solo mode */}
+            {(isHost || sessionSettings.allowGuestShare) && sessionMode !== 'solo' && (
+            <div className="relative shrink-0" ref={sharePanelRef}>
               <button
                 onClick={() => setShowSharePanel(v => !v)}
                 aria-label="Share session"
                 aria-expanded={showSharePanel}
-                className="h-10 w-full flex items-center justify-center gap-1.5 px-4 rounded-xl border text-sm font-medium transition-all duration-200 cursor-pointer"
+                className="h-10 w-24 flex items-center justify-center gap-1.5 px-3 rounded-xl border text-sm font-medium transition-all duration-200 cursor-pointer"
                 style={{
                   background: showSharePanel ? 'var(--accent)' : 'var(--bg-secondary)',
                   borderColor: showSharePanel ? 'var(--accent)' : 'var(--border)',
@@ -836,33 +840,34 @@ function SessionContent({
 
             {isHost && (
               <>
-                {/* Mode selector: Host | Open */}
+                {/* Mode selector: Host | Jam | Solo */}
                 <div className="flex-1 flex">
                   <div className="flex items-center rounded-xl overflow-hidden border h-10 w-full" style={{ borderColor: 'var(--border)' }}>
-                    <button
-                      onClick={() => { setModeTipDismissed(true); if (jamMode) handleToggleJamMode() }}
-                      title="You control the timer. Everyone else follows along in sync."
-                      className="h-full flex-1 flex items-center justify-center text-sm font-medium transition-all duration-150 cursor-pointer"
-                      style={
-                        !jamMode
-                          ? { background: 'var(--accent)', color: '#fff' }
-                          : { background: 'var(--bg-secondary)', color: 'var(--text-muted)' }
-                      }
-                    >
-                      Host
-                    </button>
-                    <button
-                      onClick={() => { setModeTipDismissed(true); if (!jamMode) handleToggleJamMode() }}
-                      title="Everyone in the session can control the timer."
-                      className="h-full flex-1 flex items-center justify-center text-sm font-medium transition-all duration-150 cursor-pointer"
-                      style={
-                        jamMode
-                          ? { background: 'var(--green)', color: '#fff' }
-                          : { background: 'var(--bg-secondary)', color: 'var(--text-muted)' }
-                      }
-                    >
-                      Open
-                    </button>
+                    {(['host', 'jam', 'solo'] as const).map((m) => {
+                      const active = sessionMode === m
+                      const label = m === 'host' ? 'Host' : m === 'jam' ? 'Jam' : 'Solo'
+                      const activeColor = m === 'host' ? 'var(--accent)' : m === 'jam' ? 'var(--green)' : '#8B5CF6'
+                      const title = m === 'host'
+                        ? 'You control the timer. Everyone else follows along in sync.'
+                        : m === 'jam'
+                        ? 'Everyone in the session can control the timer.'
+                        : 'Private session. No sharing, no watchers.'
+                      return (
+                        <button
+                          key={m}
+                          onClick={() => { setModeTipDismissed(true); handleSetMode(m) }}
+                          title={title}
+                          className="h-full flex-1 flex items-center justify-center text-sm font-medium transition-all duration-150 cursor-pointer"
+                          style={
+                            active
+                              ? { background: activeColor, color: '#fff' }
+                              : { background: 'var(--bg-secondary)', color: 'var(--text-muted)' }
+                          }
+                        >
+                          {label}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
