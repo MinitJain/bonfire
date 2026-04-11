@@ -1,6 +1,6 @@
 <div align="center">
   <h1>🍅 PomodoroJam</h1>
-  <p>The shared Pomodoro timer. Start a session, share the link, focus together.</p>
+  <p>The social Pomodoro timer. Start a room, share the link, focus together.</p>
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
@@ -21,7 +21,9 @@
 
 ## Why PomodoroJam?
 
-Solo focus is hard. Shared accountability makes it stick. One person starts a timer, shares a link — everyone joins and sees the exact same second. When it ends, everyone breaks together. No meetings. No coordination. Just shared focus.
+Every focus app is built for one person. Forest grows a tree — yours, alone. Notion tracks tasks — yours, alone. There is no app built around the fact that focusing with someone else is fundamentally different from focusing solo.
+
+PomodoroJam is that app. Start a room, share the link — your friend joins and sees the exact same second on the exact same timer. When the break hits, it hits for everyone. The accountability is real because the other person is actually there.
 
 ---
 
@@ -33,19 +35,20 @@ Solo focus is hard. Shared accountability makes it stick. One person starts a ti
 ![Short break timer](docs/screenshots/shortBreakTimer.png)
 ![Long break timer](docs/screenshots/longBreakTimer.png)
 
-The timer is clock-based using a `startedAt` Unix timestamp rather than a local countdown. This means everyone in the session — regardless of when they joined or how bad their connection is — always sees the correct second. No drift, no skew.
+The timer is clock-based using a `startedAt` Unix timestamp rather than a local countdown. Everyone in the room — regardless of when they joined or how bad their connection is — always sees the correct second. No drift, no skew.
 
 ---
 
-### Host Mode & Jam Mode
+### Three Focus Modes
 
 ![Host mode](docs/screenshots/hostMode.png)
 ![Jam mode](docs/screenshots/jamMode.png)
 
-Every session has two control modes you can switch between at any time:
+Every room has three modes, switchable at any time:
 
 - **Host mode** — only the host can start, pause, skip, or change settings. Everyone else follows along in sync.
-- **Jam mode** — anyone in the session can control the timer, like a group decision. Great for teams where everyone should have equal say.
+- **Jam mode** — anyone in the room can control the timer. Great for study groups where everyone has equal say.
+- **Solo mode** — private room, no sharing, no watchers. Just you and the timer.
 
 The current mode is visible to all participants in real time.
 
@@ -84,7 +87,7 @@ See who's focusing alongside you via real-time presence. When someone joins or l
 
 ![Guest nickname prompt](docs/screenshots/guestNickname.png)
 
-No account needed. Guests are prompted to set a display name when they first join a session. The name is saved per-session in `localStorage` so it persists across page reloads. It shows up in the participant list and activity feed for everyone in the room.
+No account needed. Guests are prompted to set a display name when they first join a room. The name is saved per-room in `localStorage` so it persists across page reloads. It shows up in the participant list and activity feed for everyone.
 
 ---
 
@@ -92,7 +95,7 @@ No account needed. Guests are prompted to set a display name when they first joi
 
 ![Settings panel](docs/screenshots/Settings.png)
 
-Fully configurable per-session:
+Fully configurable per-room:
 
 - Focus, short break, and long break durations (in minutes)
 - Long break interval (how many focus rounds before a long break)
@@ -107,7 +110,7 @@ Settings are persisted to the database and broadcast to all participants when ap
 
 ![Break overlay](docs/screenshots/breakOverlay.png)
 
-When the timer ends, a full-screen break overlay appears for all participants simultaneously. Browser push notifications fire at the same moment — useful if you've switched tabs. The overlay disappears as soon as the next session starts.
+When the timer ends, a full-screen break overlay appears for all participants simultaneously. Browser push notifications fire at the same moment — useful if you've switched tabs. The overlay disappears as soon as the next round starts.
 
 ---
 
@@ -122,7 +125,7 @@ Authenticated users get a personal analytics dashboard at `/profile/[username]`:
 - **Weekly bar chart** — last 7 days of focus activity
 - **GitHub-style heatmap** — 52-week calendar showing daily pomodoro counts
 
-All data is logged to the `pomodoro_logs` table whenever a focus session completes.
+All data is logged to the `pomodoro_logs` table whenever a focus round completes.
 
 ---
 
@@ -130,15 +133,13 @@ All data is logged to the `pomodoro_logs` table whenever a focus session complet
 
 ![Explore page](docs/screenshots/explorePage.png)
 
-Browse all live sessions happening right now without needing a direct link. The explore page shows active sessions updated in the last 5 minutes — session title, host name, and current mode. Click any card to join instantly.
+Browse all live public rooms happening right now without needing a direct link. The explore page shows active rooms updated in the last 90 seconds — room name, host, and current mode. Click any card to join instantly.
 
 ---
 
 ### One-Tap Share
 
-<!-- SCREENSHOT: Share panel / invite button -->
-
-The share panel lets you copy the session link or trigger the native OS share sheet (on mobile). Guests can only share if the host has "Allow guests to invite" enabled in settings — the host controls whether the room is open or invite-only.
+The share panel lets you copy the room link or trigger the native OS share sheet on mobile. Guests can only share if the host has "Allow guests to invite" enabled in settings — the host controls whether the room is open or invite-only.
 
 ---
 
@@ -153,9 +154,9 @@ Theme toggles between dark and light, persisted per device. The app is installab
 
 ## How it works
 
-1. **Start** — click "Start a session" on the landing page
+1. **Start** — click "Start a room" on the landing page
 2. **Share** — hit the Invite button and send the link to anyone
-3. **Pick your mode** — toggle between **Host** (you lead) and **Jam** (everyone drives)
+3. **Pick your mode** — Host (you lead), Jam (everyone drives), or Solo (just you)
 4. **Focus** — hit Play. Everyone sees the same countdown, on the same second
 5. **Break** — timer ends, notifications fire, break overlay appears for everyone
 
@@ -165,16 +166,16 @@ No account needed. Start in under 30 seconds.
 
 ## Stack
 
-| Layer     | Technology                            |
-| --------- | ------------------------------------- |
-| Framework | Next.js 14 App Router                 |
-| Language  | TypeScript (strict)                   |
-| Database  | Supabase (PostgreSQL + Realtime)      |
-| Auth      | Supabase Auth (GitHub + Google OAuth) |
-| Styling   | Tailwind CSS + CSS variables          |
-| Theme     | next-themes (dark/light, persisted)   |
-| OG Images | @vercel/og                            |
-| Fonts     | Syne + DM Sans + JetBrains Mono       |
+| Layer      | Technology                            |
+| ---------- | ------------------------------------- |
+| Framework  | Next.js 14 App Router                 |
+| Language   | TypeScript (strict)                   |
+| Database   | Supabase (PostgreSQL + Realtime)      |
+| Auth       | Supabase Auth (GitHub + Google OAuth) |
+| Styling    | Tailwind CSS + CSS variables          |
+| OG Images  | @vercel/og                            |
+| Audio      | Web Audio API (no external deps)      |
+| Fonts      | Syne + DM Sans + JetBrains Mono       |
 
 ---
 
@@ -214,6 +215,7 @@ supabase/migrations/002_jam_mode.sql
 supabase/migrations/003_rls_sessions.sql
 supabase/migrations/004_session_expiry.sql
 supabase/migrations/005_log_pomodoros.sql
+supabase/migrations/006_session_mode.sql
 ```
 
 Or push via the Supabase CLI:
