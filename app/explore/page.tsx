@@ -21,6 +21,7 @@ export default async function ExplorePage() {
     .from('sessions')
     .select('id, title, host_name, mode, running, last_active_at, status')
     .eq('running', true)
+    .neq('session_mode', 'solo')
     .gt('last_active_at', ninetySecondsAgo)
     .order('last_active_at', { ascending: false })
     .limit(20)

@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import type { Session } from '@/types'
@@ -83,6 +83,11 @@ export default async function SessionPage({ params }: SessionPageProps) {
   }
 
   const isHost = user?.id === typedSession.host_id
+
+  // Solo sessions are private — redirect non-hosts to home
+  if (typedSession.session_mode === 'solo' && !isHost) {
+    redirect('/?blocked=solo')
+  }
 
   return (
     <SessionErrorBoundary>

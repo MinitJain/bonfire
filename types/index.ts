@@ -40,6 +40,7 @@ export interface Session {
   pomos_done: number | null
   settings: TimerSettings | null
   jam_mode: boolean
+  session_mode: 'host' | 'jam' | 'solo'
   updated_at: string
   created_at: string
 }
