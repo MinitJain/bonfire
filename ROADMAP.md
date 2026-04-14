@@ -485,7 +485,7 @@ Day 45. Buffer — polish, bug fixes, performance
 - [x] Analytics dashboard (streak, heatmap, weekly chart)
 - [x] OG image generation
 - [x] All CodeRabbit review fixes applied (PR #17)
-- [ ] Day 1 — Room rename
+- [x] Day 1 — Room rename
 - [ ] Day 2 — Default room names
 - [ ] Day 3 — Public/Private toggle
 - [ ] Day 4 — Pomodoro counter + long break
