@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
             PomodoroJam
           </div>
           <div style={{ fontSize: '52px', fontWeight: '800', color: '#FFFFFF', textAlign: 'center', maxWidth: '900px', lineHeight: '1.2', marginBottom: '16px', padding: '0 40px' }}>
-            {host} invited you to a focus session
+            {host} invited you to a focus room
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,85,51,0.12)', border: '1px solid rgba(255,85,51,0.3)', borderRadius: '999px', padding: '10px 28px' }}>
             <span style={{ fontSize: '28px', fontWeight: '700', color: '#FF5533' }}>{focus} min</span>
@@ -165,7 +165,7 @@ export async function GET(request: NextRequest) {
         >
           {sessionId && name
             ? name
-            : 'The shared focus timer. Start a session, share the link.'}
+            : 'The shared focus timer. Start a room, share the link.'}
         </div>
 
         {/* Sub-label when showing a session */}
@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
               marginBottom: '0px',
             }}
           >
-            Join this focus session
+            Join this focus room
           </div>
         )}
 

@@ -157,7 +157,7 @@ export function ModeTipBubble({ externalDismiss, ready = true }: ModeTipBubblePr
               Solo
             </p>
             <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-              Private session. No sharing, no watchers. Pure, distraction-free focus.
+              Private room. No sharing, no watchers. Pure, distraction-free focus.
             </p>
           </div>
         </div>

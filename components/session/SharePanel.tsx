@@ -62,8 +62,8 @@ export function SharePanel({ sessionId, sessionName, appUrl }: SharePanelProps) 
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
-          title: sessionName ? `PomodoroJam: ${sessionName}` : 'PomodoroJam Session',
-          text: 'Join my Pomodoro focus session!',
+          title: sessionName ? `PomodoroJam: ${sessionName}` : 'PomodoroJam Room',
+          text: 'Join my focus room!',
           url,
         })
       } catch {
@@ -78,7 +78,7 @@ export function SharePanel({ sessionId, sessionName, appUrl }: SharePanelProps) 
   return (
     <div className="flex flex-col gap-3">
       <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
-        Share Session
+        Share Room
       </p>
 
       {/* URL bar */}
