@@ -34,12 +34,12 @@ const features = [
   {
     icon: Bell,
     title: 'Break notifications',
-    desc: "Browser alerts fire for every participant the moment a session ends.",
+    desc: "Browser alerts fire for every participant the moment a room ends.",
   },
   {
     icon: BarChart2,
     title: 'Streaks and focus history',
-    desc: 'Daily streaks, weekly charts, and a full heatmap of your focus sessions.',
+    desc: 'Daily streaks, weekly charts, and a full heatmap of your focus rooms.',
   },
   {
     icon: Link2,
@@ -54,7 +54,7 @@ const features = [
 ]
 
 const steps = [
-  { n: '01', title: 'Start a session', desc: 'Hit the button. A unique link is generated instantly. No setup.' },
+  { n: '01', title: 'Start a room', desc: 'Hit the button. A unique link is generated instantly. No setup.' },
   { n: '02', title: 'Invite your team', desc: 'Send the link via Slack, WhatsApp, Discord. Wherever you work.' },
   { n: '03', title: 'Focus in sync', desc: 'Everyone runs the same timer. When it ends, everyone takes a break.' },
 ]
@@ -393,7 +393,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
                 ) : (
                   <Zap className="w-4 h-4" />
                 )}
-                {isCreating ? 'Creating...' : 'Start a session now →'}
+                {isCreating ? 'Creating...' : 'Start a room now →'}
               </span>
             </button>
             <Link
@@ -403,8 +403,8 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
             >
               <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: activeSessionCount > 0 ? 'var(--green)' : 'var(--text-muted)' }} />
               {activeSessionCount > 0
-                ? `${activeSessionCount} session${activeSessionCount !== 1 ? 's' : ''} live now. Join one →`
-                : 'No live sessions yet. Start the first one.'}
+                ? `${activeSessionCount} room${activeSessionCount !== 1 ? 's' : ''} live now. Join one →`
+                : 'No live rooms yet. Start the first one.'}
             </Link>
           </div>
         </div>

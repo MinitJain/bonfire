@@ -15,14 +15,14 @@ export default function NotFound() {
         This room doesn&apos;t exist
       </h1>
       <p className="text-base mb-8 max-w-xs" style={{ color: 'var(--text-secondary)' }}>
-        The session link may have expired or the ID is incorrect.
+        The room link may have expired or the ID is incorrect.
       </p>
       <Link
         href="/"
         className="px-6 py-3 rounded-xl text-sm font-medium transition-all"
         style={{ background: 'var(--accent)', color: '#fff', boxShadow: 'var(--shadow-md)' }}
       >
-        Start a new session
+        Start a new room
       </Link>
     </div>
   )

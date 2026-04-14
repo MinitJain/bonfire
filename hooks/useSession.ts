@@ -63,6 +63,7 @@ export function useSession({
       joined_at: joinedAtRef.current,
     })
   }, [isHost, username])
+  const pendingLeaveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())
   const shareLockCallbacksRef = useRef<Set<(locked: boolean) => void>>(new Set())
   const sessionModeCallbacksRef = useRef<Set<(mode: 'host' | 'jam' | 'solo') => void>>(new Set())
@@ -128,8 +129,14 @@ export function useSession({
         joined_at: string
       }
       const joinedUsername = presence.username ?? null
-      // Fire join callbacks only for other participants — suppress own join events
-      if (key !== effectiveIdRef.current) {
+      // If there's a pending leave for this user, they just re-joined after a tab/app switch.
+      // Cancel the leave notification and suppress the join notification — they never really left.
+      const pendingLeave = pendingLeaveTimers.current.get(key)
+      if (pendingLeave !== undefined) {
+        clearTimeout(pendingLeave)
+        pendingLeaveTimers.current.delete(key)
+      } else if (key !== effectiveIdRef.current) {
+        // Fire join callbacks only for other participants — suppress own join events
         joinCallbacksRef.current.forEach(cb => cb(joinedUsername))
       }
       setParticipants((prev) => {
@@ -154,9 +161,15 @@ export function useSession({
         ? channel.presenceState<{ username?: string | null }>()[key]?.[0]
         : null
       const leftUsername = leaving?.username ?? null
-      // Fire leave callbacks only for other participants — suppress own leave events
+      // Debounce leave notifications for other participants — a 15s grace period avoids
+      // false "X left" messages caused by tab minimize / app switch / brief disconnects.
+      // If the same user rejoins within the window the pending timer is cancelled above.
       if (key !== effectiveIdRef.current) {
-        leaveCallbacksRef.current.forEach(cb => cb(leftUsername))
+        const timer = setTimeout(() => {
+          pendingLeaveTimers.current.delete(key)
+          leaveCallbacksRef.current.forEach(cb => cb(leftUsername))
+        }, 15_000)
+        pendingLeaveTimers.current.set(key, timer)
       }
       setParticipants((prev) => prev.filter((p) => p.user_id !== key))
     })
@@ -213,6 +226,8 @@ export function useSession({
       })
 
     return () => {
+      pendingLeaveTimers.current.forEach(timer => clearTimeout(timer))
+      pendingLeaveTimers.current.clear()
       channel.unsubscribe()
       supabase.removeChannel(channel)
       channelRef.current = null

@@ -258,7 +258,7 @@ function SessionContent({
   useEffect(() => {
     return onParticipantJoin((joinedUsername) => {
       const name = joinedUsername ?? 'Someone'
-      pushActivity(`${name} joined the session 👋`)
+      pushActivity(`${name} joined the room 👋`)
       // Host re-broadcasts current timer state to the new joiner
       if (isHost) broadcastWithCount(timerStateRef.current)
     })
@@ -386,7 +386,7 @@ function SessionContent({
     const messages: Record<'host' | 'jam' | 'solo', string> = {
       host: 'Host mode. Only the host controls 👑',
       jam: 'Jam mode. Everyone controls ⚡',
-      solo: 'Solo mode. Private session 🎯',
+      solo: 'Solo mode. Private room 🎯',
     }
     pushActivity(messages[mode])
     broadcastActivity(messages[mode])
@@ -528,7 +528,7 @@ function SessionContent({
     const modeMessages: Record<TimerMode, string> = {
       short: `${actorName} switched to short break ☕`,
       long: `${actorName} switched to long break 🎉`,
-      focus: `${actorName} started a new focus session 🍅`,
+      focus: `${actorName} started a new focus round 🍅`,
     }
     const msg = modeMessages[nextMode]
     pushActivity(msg)
@@ -545,7 +545,7 @@ function SessionContent({
     const modeMessages: Record<TimerMode, string> = {
       short: `${actorName} switched to short break ☕`,
       long: `${actorName} switched to long break 🎉`,
-      focus: `${actorName} started a new focus session 🍅`,
+      focus: `${actorName} started a new focus round 🍅`,
     }
     const msg = modeMessages[newMode]
     pushActivity(msg)
@@ -627,7 +627,7 @@ function SessionContent({
   const focusRoundsLeft = sessionSettings.rounds - ((focusCount % sessionSettings.rounds) + 1)
   const roundLabel = mode === 'focus'
     ? `Round ${focusCount + 1} · ${focusRoundsLeft === 0 ? 'long break next' : `long break after ${focusRoundsLeft} more`}`
-    : `Session ${focusCount} of ${sessionSettings.rounds} · ${mode === 'long' ? 'long break' : 'short break'}`
+    : `Round ${focusCount} of ${sessionSettings.rounds} · ${mode === 'long' ? 'long break' : 'short break'}`
 
   return (
     <div
@@ -748,7 +748,7 @@ function SessionContent({
             <div className="relative shrink-0" ref={sharePanelRef}>
               <button
                 onClick={() => setShowSharePanel(v => !v)}
-                aria-label="Share session"
+                aria-label="Share room"
                 aria-expanded={showSharePanel}
                 className="h-10 w-24 flex items-center justify-center gap-1.5 px-3 rounded-xl border text-sm font-medium transition-all duration-200 cursor-pointer"
                 style={{
@@ -850,8 +850,8 @@ function SessionContent({
                       const title = m === 'host'
                         ? 'You control the timer. Everyone else follows along in sync.'
                         : m === 'jam'
-                        ? 'Everyone in the session can control the timer.'
-                        : 'Private session. No sharing, no watchers.'
+                        ? 'Everyone in the room can control the timer.'
+                        : 'Private room. No sharing, no watchers.'
                       return (
                         <button
                           key={m}
