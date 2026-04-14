@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     template: '%s | PomodoroJam',
   },
   description:
-    'A shared Pomodoro timer for friends. Start a session, share the link, focus in sync.',
+    'A shared Pomodoro timer for friends. Start a room, share the link, focus in sync.',
   keywords: ['pomodoro', 'focus', 'productivity', 'timer', 'shared', 'real-time'],
   authors: [{ name: 'PomodoroJam' }],
   creator: 'PomodoroJam',

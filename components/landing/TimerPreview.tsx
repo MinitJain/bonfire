@@ -96,7 +96,7 @@ export function TimerPreview({ onStartSession }: TimerPreviewProps) {
             style={{ background: 'rgba(15,15,13,0.78)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
           >
             <div className="w-10 h-10 rounded-full animate-spin" style={{ border: '2.5px solid rgba(255,85,51,0.2)', borderTopColor: 'var(--accent)' }} />
-            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Starting your session...</p>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Starting your room...</p>
           </div>
         )}
 
@@ -163,7 +163,7 @@ export function TimerPreview({ onStartSession }: TimerPreviewProps) {
 
       {onStartSession && (
         <p className="mt-4 text-xs" style={{ color: 'var(--text-muted)' }}>
-          Click to start your own session
+          Click to start your own room
         </p>
       )}
     </section>

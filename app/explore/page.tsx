@@ -6,8 +6,8 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { Users, Timer, ArrowRight } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Explore Live Sessions',
-  description: 'Join a live focus session happening right now.',
+  title: 'Explore Live Rooms',
+  description: 'Join a live focus room happening right now.',
 }
 
 export const revalidate = 30 // revalidate every 30 seconds
@@ -48,10 +48,10 @@ export default async function ExplorePage() {
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>Live Now</span>
           </div>
           <h1 className="font-display font-bold text-3xl sm:text-4xl mb-3" style={{ color: 'var(--text-primary)' }}>
-            Explore Sessions
+            Explore Rooms
           </h1>
           <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-            Join a focus session that&apos;s happening right now. No account required.
+            Join a focus room that&apos;s happening right now. No account required.
           </p>
         </div>
 
@@ -62,7 +62,7 @@ export default async function ExplorePage() {
           >
             <div className="text-5xl mb-4">🍅</div>
             <h2 className="font-display font-bold text-xl mb-2" style={{ color: 'var(--text-primary)' }}>
-              No live sessions right now
+              No live rooms right now
             </h2>
             <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
               Be the first to start one!
@@ -72,7 +72,7 @@ export default async function ExplorePage() {
               className="px-5 py-2.5 rounded-xl text-sm font-medium"
               style={{ background: 'var(--accent)', color: '#fff' }}
             >
-              Start a session →
+              Start a room →
             </Link>
           </div>
         ) : (
@@ -91,7 +91,7 @@ export default async function ExplorePage() {
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--accent)' }} />
                     <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-                      {session.title ?? 'Focus Session'}
+                      {session.title ?? 'Focus Room'}
                     </span>
                   </div>
                   <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--text-muted)' }}>
