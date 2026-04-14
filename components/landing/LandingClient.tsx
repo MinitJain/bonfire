@@ -110,12 +110,12 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       })
-      if (!res.ok) throw new Error('Failed to create session')
+      if (!res.ok) throw new Error('Failed to create room')
       const { id } = await res.json() as { id: string }
       localStorage.setItem(`pomodoro_host_${id}`, '1')
       return id
     } catch {
-      toast('Could not create session. Please try again.', 'error')
+      toast('Could not create room. Please try again.', 'error')
       return null
     }
   }

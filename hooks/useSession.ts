@@ -165,6 +165,8 @@ export function useSession({
       // false "X left" messages caused by tab minimize / app switch / brief disconnects.
       // If the same user rejoins within the window the pending timer is cancelled above.
       if (key !== effectiveIdRef.current) {
+        const existing = pendingLeaveTimers.current.get(key)
+        if (existing !== undefined) clearTimeout(existing)
         const timer = setTimeout(() => {
           pendingLeaveTimers.current.delete(key)
           leaveCallbacksRef.current.forEach(cb => cb(leftUsername))

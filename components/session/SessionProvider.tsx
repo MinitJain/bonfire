@@ -135,7 +135,7 @@ function SessionContent({
 
   const handleExpire = useCallback(() => {
     playCompleteSound()
-    showNotification('PomodoroJam', 'Your session has ended! Time for a break.')
+    showNotification('PomodoroJam', 'Your room has ended! Time for a break.')
     const currentMode = modeRef.current
     const settings = sessionSettingsRef.current
     const durations = toSecs(settings.durations)
