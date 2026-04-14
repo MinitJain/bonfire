@@ -22,7 +22,7 @@ interface UseSessionReturn {
   onShareLock: (callback: (locked: boolean) => void) => () => void
   broadcastSessionMode: (mode: 'host' | 'jam' | 'solo') => void
   onSessionMode: (callback: (mode: 'host' | 'jam' | 'solo') => void) => () => void
-  onParticipantJoin: (callback: (username: string | null) => void) => () => void
+  onParticipantJoin: (callback: (username: string | null, isReconnect: boolean) => void) => () => void
   onParticipantLeave: (callback: (username: string | null) => void) => () => void
   broadcastActivity: (text: string) => void
   onActivity: (callback: (text: string) => void) => () => void
@@ -67,7 +67,7 @@ export function useSession({
   const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())
   const shareLockCallbacksRef = useRef<Set<(locked: boolean) => void>>(new Set())
   const sessionModeCallbacksRef = useRef<Set<(mode: 'host' | 'jam' | 'solo') => void>>(new Set())
-  const joinCallbacksRef = useRef<Set<(username: string | null) => void>>(new Set())
+  const joinCallbacksRef = useRef<Set<(username: string | null, isReconnect: boolean) => void>>(new Set())
   const leaveCallbacksRef = useRef<Set<(username: string | null) => void>>(new Set())
   const activityCallbacksRef = useRef<Set<(text: string) => void>>(new Set())
   const settingsRequestCallbacksRef = useRef<Set<(req: SettingsChangeRequest) => void>>(new Set())
@@ -135,9 +135,12 @@ export function useSession({
       if (pendingLeave !== undefined) {
         clearTimeout(pendingLeave)
         pendingLeaveTimers.current.delete(key)
+        // User rejoined within the grace window — still run resync callbacks but
+        // pass isReconnect=true so activity messages ("X joined") are suppressed.
+        joinCallbacksRef.current.forEach(cb => cb(joinedUsername, true))
       } else if (key !== effectiveIdRef.current) {
         // Fire join callbacks only for other participants — suppress own join events
-        joinCallbacksRef.current.forEach(cb => cb(joinedUsername))
+        joinCallbacksRef.current.forEach(cb => cb(joinedUsername, false))
       }
       setParticipants((prev) => {
         const existing = prev.find((p) => p.user_id === key)
@@ -283,7 +286,7 @@ export function useSession({
     }
   }, [])
 
-  const onParticipantJoin = useCallback((callback: (username: string | null) => void) => {
+  const onParticipantJoin = useCallback((callback: (username: string | null, isReconnect: boolean) => void) => {
     joinCallbacksRef.current.add(callback)
     return () => {
       joinCallbacksRef.current.delete(callback)

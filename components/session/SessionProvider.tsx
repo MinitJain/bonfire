@@ -256,11 +256,14 @@ function SessionContent({
 
   // Join / leave presence events → local activity messages
   useEffect(() => {
-    return onParticipantJoin((joinedUsername) => {
-      const name = joinedUsername ?? 'Someone'
-      pushActivity(`${name} joined the room 👋`)
-      // Host re-broadcasts current timer state to the new joiner
+    return onParticipantJoin((joinedUsername, isReconnect) => {
+      // Always resync timer state to the (re)joining participant
       if (isHost) broadcastWithCount(timerStateRef.current)
+      // Suppress activity message on quick reconnects (tab switch / brief disconnect)
+      if (!isReconnect) {
+        const name = joinedUsername ?? 'Someone'
+        pushActivity(`${name} joined the room 👋`)
+      }
     })
   }, [onParticipantJoin, pushActivity, isHost, broadcastWithCount])
 
