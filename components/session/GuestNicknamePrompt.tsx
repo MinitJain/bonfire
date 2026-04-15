@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { Shuffle } from 'lucide-react'
+import { generateUsername } from '@/lib/roomName'
 
 interface GuestNicknamePromptProps {
   onSave: (name: string) => void
@@ -8,7 +10,8 @@ interface GuestNicknamePromptProps {
 }
 
 export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps) {
-  const [name, setName] = useState('')
+  const [name, setName] = useState(() => generateUsername())
+  const inputRef = useRef<HTMLInputElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
 
   const handleSave = () => {
@@ -67,26 +70,43 @@ export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps
             What should we call you?
           </h2>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Your name will be visible to others in this session.
+            Edit the name or shuffle for a new one.
           </p>
         </div>
 
-        <input
-          type="text"
-          autoFocus
-          aria-label="Your name"
-          placeholder="Your name"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleSave() }}
-          maxLength={32}
-          className="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2"
-          style={{
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-primary)',
-          }}
-        />
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="text"
+            autoFocus
+            aria-label="Your name"
+            placeholder="Your name"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleSave() }}
+            maxLength={32}
+            className="w-full pl-3 pr-11 py-2.5 rounded-xl text-sm focus:outline-none"
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-primary)',
+            }}
+            onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+            onBlur={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
+          />
+          <button
+            type="button"
+            onClick={() => { setName(generateUsername()); inputRef.current?.select() }}
+            aria-label="Generate random name"
+            title="Roll a random name"
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer"
+            style={{ color: 'var(--text-muted)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)' }}
+          >
+            <Shuffle className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
         <div className="flex flex-col gap-2">
           <button

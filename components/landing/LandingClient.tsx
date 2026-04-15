@@ -4,12 +4,13 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
-import { Users, Zap, Github, LogOut, UserCircle, Timer, Bell, BarChart2, Link2, ChevronDown } from 'lucide-react'
+import { Users, Zap, Github, LogOut, UserCircle, Timer, Bell, BarChart2, Link2, ChevronDown, Shuffle } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { ToastProvider, useToast } from '@/components/ui/Toast'
 import { createClient } from '@/lib/supabase/client'
+import { generateRoomName } from '@/lib/roomName'
 import { cn } from '@/lib/utils'
 import { ModesSection } from '@/components/landing/ModesSection'
 import { TimerPreview } from '@/components/landing/TimerPreview'
@@ -81,6 +82,9 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
   const [showSignInMenu, setShowSignInMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const signInRef = useRef<HTMLDivElement>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [roomName, setRoomName] = useState('')
+  const roomNameInputRef = useRef<HTMLInputElement>(null)
   const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
@@ -103,12 +107,12 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
   }, [])
 
   // Shared: create a session and return its ID (or null on failure)
-  const createSessionId = async (): Promise<string | null> => {
+  const createSessionId = async (title?: string): Promise<string | null> => {
     try {
       const res = await fetch('/api/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify(title ? { title } : {}),
       })
       if (!res.ok) throw new Error('Failed to create room')
       const { id } = await res.json() as { id: string }
@@ -121,15 +125,23 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
   }
 
   // CTA button: create + navigate with View Transition
-  const handleCreateSession = async () => {
+  const handleCreateSession = async (title?: string) => {
     setIsCreating(true)
-    const id = await createSessionId()
+    setShowCreateModal(false)
+    const id = await createSessionId(title)
     if (!id) { setIsCreating(false); return }
     if ('startViewTransition' in document) {
       ;(document as any).startViewTransition(() => router.push(`/session/${id}`))
     } else {
       router.push(`/session/${id}`)
     }
+  }
+
+  const openCreateModal = () => {
+    setRoomName(generateRoomName())
+    setShowCreateModal(true)
+    // Auto-focus after the modal renders
+    setTimeout(() => roomNameInputRef.current?.select(), 50)
   }
 
   const handleCtaMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -164,7 +176,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
       rippleTimeoutsRef.current = rippleTimeoutsRef.current.filter(t => t !== tid)
     }, 700)
     rippleTimeoutsRef.current.push(tid)
-    handleCreateSession()
+    openCreateModal()
   }
 
   const handleSignIn = async (provider: 'github' | 'google') => {
@@ -468,6 +480,94 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
           </div>
         </div>
       </section>
+
+      {/* Create Room Modal */}
+      {showCreateModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+          onMouseDown={e => { if (e.target === e.currentTarget) setShowCreateModal(false) }}
+          onKeyDown={e => { if (e.key === 'Escape') setShowCreateModal(false) }}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Name your room"
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl p-6 animate-scale-in"
+            style={{
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+          >
+            <h2 className="font-display font-bold text-lg mb-1" style={{ color: 'var(--text-primary)' }}>
+              Name your room
+            </h2>
+            <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>
+              This will be shown to everyone who joins.
+            </p>
+
+            <div className="relative mb-4">
+              <input
+                ref={roomNameInputRef}
+                type="text"
+                value={roomName}
+                onChange={e => setRoomName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && roomName.trim()) void handleCreateSession(roomName.trim())
+                  if (e.key === 'Escape') setShowCreateModal(false)
+                }}
+                maxLength={100}
+                placeholder="e.g. focused-panda-342"
+                className="w-full pl-4 pr-11 py-3 rounded-xl text-sm outline-none"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-primary)',
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                onBlur={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                onClick={() => { setRoomName(generateRoomName()); roomNameInputRef.current?.select() }}
+                aria-label="Generate random name"
+                title="Roll a random name"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer"
+                style={{ color: 'var(--text-muted)', background: 'transparent' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)' }}
+              >
+                <Shuffle className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-colors"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { if (roomName.trim()) void handleCreateSession(roomName.trim()) }}
+                disabled={!roomName.trim()}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: 'var(--accent)', color: '#fff' }}
+              >
+                Start Room →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer

@@ -18,13 +18,14 @@ export async function generateMetadata({ params }: SessionPageProps): Promise<Me
     .single()
 
   const hostName = data?.host_name ?? 'Someone'
+  const roomTitle = data?.title ?? `${hostName}'s Room`
   const focusMins: number = (data?.settings as { focus?: number } | null)?.focus ?? 25
   const ogTitle = `${hostName} invited you to PomodoroJam 🍅`
-  const ogDesc = `Join ${hostName}'s ${focusMins}-min focus session. Open the link to join.`
+  const ogDesc = `Join ${hostName}'s ${focusMins}-min focus room. Open the link to join.`
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pomodoro-jam.vercel.app'
 
   return {
-    title: `${hostName}'s focus session`,
+    title: roomTitle,
     description: ogDesc,
     openGraph: {
       title: ogTitle,

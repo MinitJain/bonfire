@@ -639,23 +639,25 @@ function SessionContent({
     >
       {/* Header */}
       <header
-        className="flex items-center justify-between px-4 sm:px-6 py-4"
+        className="relative flex items-center justify-between px-4 sm:px-6 py-4"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         <Link href="/" aria-label="Back to home">
           <Logo size="sm" />
         </Link>
 
+        {/* Room name — centered absolutely so it doesn't shift the side controls */}
+        {session.title && (
+          <span
+            className="absolute left-1/2 -translate-x-1/2 text-sm font-medium max-w-[40%] truncate"
+            style={{ color: 'var(--text-secondary)' }}
+            title={session.title}
+          >
+            {session.title}
+          </span>
+        )}
+
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Session title */}
-          {session.title && (
-            <span
-              className="text-sm hidden sm:block"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              {session.title}
-            </span>
-          )}
 
           {/* Connection status */}
           <div
