@@ -41,6 +41,7 @@ export interface Session {
   settings: TimerSettings | null
   jam_mode: boolean
   session_mode: 'host' | 'jam' | 'solo'
+  is_public: boolean
   updated_at: string
   created_at: string
 }

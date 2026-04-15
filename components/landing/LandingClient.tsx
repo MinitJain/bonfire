@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
-import { Users, Zap, Github, LogOut, UserCircle, Timer, Bell, BarChart2, Link2, ChevronDown, Shuffle } from 'lucide-react'
+import { Users, Zap, Github, LogOut, UserCircle, Timer, Bell, BarChart2, Link2, ChevronDown, Shuffle, Globe, Lock } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -84,6 +84,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
   const signInRef = useRef<HTMLDivElement>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [roomName, setRoomName] = useState('')
+  const [isRoomPublic, setIsRoomPublic] = useState(true)
   const roomNameInputRef = useRef<HTMLInputElement>(null)
   const supabase = useMemo(() => createClient(), [])
 
@@ -107,12 +108,15 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
   }, [])
 
   // Shared: create a session and return its ID (or null on failure)
-  const createSessionId = async (title?: string): Promise<string | null> => {
+  const createSessionId = async (title?: string, isPublic?: boolean): Promise<string | null> => {
     try {
       const res = await fetch('/api/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(title ? { title } : {}),
+        body: JSON.stringify({
+          ...(title ? { title } : {}),
+          ...(isPublic === false ? { is_public: false } : {}),
+        }),
       })
       if (!res.ok) throw new Error('Failed to create room')
       const { id } = await res.json() as { id: string }
@@ -125,10 +129,10 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
   }
 
   // CTA button: create + navigate with View Transition
-  const handleCreateSession = async (title?: string) => {
+  const handleCreateSession = async (title?: string, isPublic?: boolean) => {
     setIsCreating(true)
     setShowCreateModal(false)
-    const id = await createSessionId(title)
+    const id = await createSessionId(title, isPublic)
     if (!id) { setIsCreating(false); return }
     if ('startViewTransition' in document) {
       ;(document as any).startViewTransition(() => router.push(`/session/${id}`))
@@ -139,6 +143,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
 
   const openCreateModal = () => {
     setRoomName(generateRoomName())
+    setIsRoomPublic(true)
     setShowCreateModal(true)
     // Auto-focus after the modal renders
     setTimeout(() => roomNameInputRef.current?.select(), 50)
@@ -515,7 +520,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
                 value={roomName}
                 onChange={e => setRoomName(e.target.value)}
                 onKeyDown={e => {
-                  if (e.key === 'Enter' && roomName.trim()) void handleCreateSession(roomName.trim())
+                  if (e.key === 'Enter' && roomName.trim()) void handleCreateSession(roomName.trim(), isRoomPublic)
                   if (e.key === 'Escape') setShowCreateModal(false)
                 }}
                 maxLength={100}
@@ -544,6 +549,40 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
               </button>
             </div>
 
+            {/* Public / Private toggle */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isRoomPublic}
+              aria-label="Room visibility"
+              onClick={() => setIsRoomPublic(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl mb-4 transition-colors cursor-pointer"
+              style={{
+                background: 'var(--bg-secondary)',
+                border: `1px solid ${isRoomPublic ? 'var(--border)' : 'rgba(139,92,246,0.4)'}`,
+              }}
+            >
+              <div className="flex flex-col items-start gap-0.5">
+                <span className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+                  {isRoomPublic ? <Globe size={14} /> : <Lock size={14} />}
+                  {isRoomPublic ? 'Public room' : 'Private room'}
+                </span>
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {isRoomPublic ? 'Visible on Explore' : 'Link-only, locked on Explore'}
+                </span>
+              </div>
+              {/* pill toggle */}
+              <div
+                className="relative w-11 h-6 rounded-full transition-colors flex-shrink-0"
+                style={{ background: isRoomPublic ? 'var(--border)' : 'rgba(139,92,246,0.6)' }}
+              >
+                <span
+                  className="absolute top-1 w-4 h-4 rounded-full bg-white transition-transform"
+                  style={{ left: isRoomPublic ? '4px' : '23px' }}
+                />
+              </div>
+            </button>
+
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowCreateModal(false)}
@@ -557,7 +596,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
                 Cancel
               </button>
               <button
-                onClick={() => { if (roomName.trim()) void handleCreateSession(roomName.trim()) }}
+                onClick={() => { if (roomName.trim()) void handleCreateSession(roomName.trim(), isRoomPublic) }}
                 disabled={!roomName.trim()}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: 'var(--accent)', color: '#fff' }}

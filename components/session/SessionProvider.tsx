@@ -55,6 +55,7 @@ function SessionContent({
 }: SessionProviderProps) {
   const [isHost, setIsHost] = useState(isHostProp)
   const [sessionMode, setSessionMode] = useState<'host' | 'jam' | 'solo'>(session.session_mode ?? 'host')
+  const [isPublic, setIsPublic] = useState(session.is_public ?? true)
   const [showBreakOverlay, setShowBreakOverlay] = useState(false)
   const [showSharePanel, setShowSharePanel] = useState(false)
   const [sessionSettings, setSessionSettings] = useState<SessionSettings>({
@@ -593,6 +594,24 @@ function SessionContent({
     return true
   }, [reset, canControl, broadcastWithCount, broadcastShareLock, supabase, session.id])
 
+  const isTogglingPublic = useRef(false)
+
+  const handleTogglePublic = useCallback(async (newValue: boolean) => {
+    if (isTogglingPublic.current) return
+    isTogglingPublic.current = true
+    const oldValue = isPublic
+    setIsPublic(newValue)
+    const { error } = await supabase
+      .from('sessions')
+      .update({ is_public: newValue })
+      .eq('id', session.id)
+    if (error) {
+      console.error('[handleTogglePublic] DB update failed:', error)
+      setIsPublic(oldValue)
+    }
+    isTogglingPublic.current = false
+  }, [isPublic, supabase, session.id])
+
   const handleAcceptRequest = useCallback(async () => {
     if (!pendingRequest) return
     const newSettings: SessionSettings = {
@@ -905,6 +924,8 @@ function SessionContent({
                         settings={sessionSettings}
                         onApply={handleApplySettings}
                         disabled={status === 'running'}
+                        isPublic={isPublic}
+                        onTogglePublic={handleTogglePublic}
                       />
                     </div>
                   )}

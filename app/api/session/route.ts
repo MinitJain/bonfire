@@ -13,6 +13,7 @@ const CreateSessionSchema = z.object({
   title: z.string().max(100).optional(),
   jam_mode: z.boolean().optional(),
   session_mode: z.enum(['host', 'jam', 'solo']).optional(),
+  is_public: z.boolean().optional(),
 })
 
 export async function POST(request: Request) {
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
         settings: { focus: 25, short: 5, long: 15, rounds: 4, allowGuestShare: true },
         jam_mode: parsed.data.jam_mode ?? false,
         session_mode: parsed.data.session_mode ?? (parsed.data.jam_mode ? 'jam' : 'host'),
+        is_public: parsed.data.is_public ?? true,
       })
       .select()
       .single()

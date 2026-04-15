@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Globe, Lock } from 'lucide-react'
 
 export interface TimerDurations {
   focus: number  // minutes
@@ -21,6 +22,8 @@ interface SettingsPanelProps {
   onApply: (settings: SessionSettings) => void
   disabled?: boolean
   isWatcher?: boolean
+  isPublic?: boolean
+  onTogglePublic?: (newValue: boolean) => void
 }
 
 function ClampInput({ label, value, onChange, min, max }: {
@@ -74,7 +77,7 @@ function ToggleRow({ label, checked, onToggle }: { label: string; checked: boole
   )
 }
 
-export function SettingsPanel({ settings, onApply, disabled, isWatcher }: SettingsPanelProps) {
+export function SettingsPanel({ settings, onApply, disabled, isWatcher, isPublic, onTogglePublic }: SettingsPanelProps) {
   const [local, setLocal] = useState(settings)
 
   const setDuration = (key: keyof TimerDurations) => (v: number) =>
@@ -130,6 +133,45 @@ export function SettingsPanel({ settings, onApply, disabled, isWatcher }: Settin
           checked={local.allowGuestShare}
           onToggle={() => setLocal(prev => ({ ...prev, allowGuestShare: !prev.allowGuestShare }))}
         />
+      )}
+
+      {!isWatcher && onTogglePublic !== undefined && isPublic !== undefined && (
+        <>
+          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+            Visibility
+          </p>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isPublic}
+            aria-label="Room visibility"
+            onClick={() => onTogglePublic(!isPublic)}
+            className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl cursor-pointer transition-colors"
+            style={{
+              background: 'var(--bg-secondary)',
+              border: `1px solid ${isPublic ? 'var(--border)' : 'rgba(139,92,246,0.4)'}`,
+            }}
+          >
+            <div className="flex flex-col items-start gap-0.5">
+              <span className="text-sm flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+                {isPublic ? <Globe size={14} /> : <Lock size={14} />}
+                {isPublic ? 'Public room' : 'Private room'}
+              </span>
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {isPublic ? 'Visible on Explore' : 'Link-only, locked on Explore'}
+              </span>
+            </div>
+            <div
+              className="relative w-11 h-6 rounded-full transition-colors flex-shrink-0"
+              style={{ background: isPublic ? 'var(--border)' : 'rgba(139,92,246,0.6)' }}
+            >
+              <span
+                className="absolute top-1 w-4 h-4 rounded-full bg-white transition-transform"
+                style={{ left: isPublic ? '4px' : '23px' }}
+              />
+            </div>
+          </button>
+        </>
       )}
 
       <button
