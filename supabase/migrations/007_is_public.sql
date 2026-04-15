@@ -4,8 +4,11 @@
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS is_public boolean NOT NULL DEFAULT true;
 
 -- Only the host may change room visibility.
--- The existing session_mode_control policy (migration 006) permits jam participants
--- to update other columns; this additional policy restricts is_public to host-only.
+-- Must be RESTRICTIVE so Postgres ANDs it with existing policies instead of ORing —
+-- otherwise jam participants can still toggle is_public via the permissive 006 policy.
+DROP POLICY IF EXISTS "sessions_update_is_public_host_only" ON public.sessions;
+
 CREATE POLICY "sessions_update_is_public_host_only" ON public.sessions
+  AS RESTRICTIVE
   FOR UPDATE USING (auth.uid() = host_id)
   WITH CHECK (auth.uid() = host_id);
