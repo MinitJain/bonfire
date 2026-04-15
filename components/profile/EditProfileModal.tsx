@@ -1,10 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import type { Profile } from '@/types'
 import { Button } from '@/components/ui/Button'
+import { Avatar } from '@/components/ui/Avatar'
+import { AvatarCropModal } from '@/components/profile/AvatarCropModal'
 import { useProfile } from '@/hooks/useProfile'
+import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
 interface EditProfileModalProps {
@@ -19,6 +22,14 @@ export function EditProfileModal({ profile, onClose, onSave }: EditProfileModalP
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Avatar upload state
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [avatarPreviewSrc, setAvatarPreviewSrc] = useState<string | null>(null)
+  const [pendingAvatarUrl, setPendingAvatarUrl] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const { updateProfile } = useProfile(profile.id)
 
   useEffect(() => {
@@ -26,6 +37,52 @@ export function EditProfileModal({ profile, onClose, onSave }: EditProfileModalP
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [onClose])
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!file.type.startsWith('image/')) { setAvatarError('Please select an image file'); return }
+    if (file.size > 5 * 1024 * 1024) { setAvatarError('Image must be under 5MB'); return }
+    setAvatarError('')
+    setCropSrc(URL.createObjectURL(file))
+  }
+
+  const handleCropConfirm = async (blob: Blob) => {
+    if (cropSrc) URL.revokeObjectURL(cropSrc)
+    setCropSrc(null)
+
+    const localPreview = URL.createObjectURL(blob)
+    setAvatarPreviewSrc(localPreview)
+    setIsUploading(true)
+    setAvatarError('')
+
+    try {
+      const supabase = createClient()
+      const path = `${profile.id}/avatar.jpg`
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, blob, { contentType: 'image/jpeg', upsert: true })
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+      const publicUrl = `${data.publicUrl}?t=${Date.now()}`
+      URL.revokeObjectURL(localPreview)
+      setAvatarPreviewSrc(null)
+      setPendingAvatarUrl(publicUrl)
+    } catch (err) {
+      URL.revokeObjectURL(localPreview)
+      setAvatarPreviewSrc(null)
+      setAvatarError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleCropCancel = () => {
+    if (cropSrc) URL.revokeObjectURL(cropSrc)
+    setCropSrc(null)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,6 +93,7 @@ export function EditProfileModal({ profile, onClose, onSave }: EditProfileModalP
       const updates = {
         display_name: displayName.trim() || null,
         bio: bio.trim() || null,
+        ...(pendingAvatarUrl ? { avatar_url: pendingAvatarUrl } : {}),
       }
       await updateProfile(updates)
       onSave(updates)
@@ -47,6 +105,7 @@ export function EditProfileModal({ profile, onClose, onSave }: EditProfileModalP
   }
 
   return (
+    <>
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
       role="dialog"
@@ -72,6 +131,46 @@ export function EditProfileModal({ profile, onClose, onSave }: EditProfileModalP
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-4">
+
+          {/* Avatar picker */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative">
+              {avatarPreviewSrc ? (
+                <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={avatarPreviewSrc} alt="Preview" className="w-full h-full object-cover" />
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
+                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Avatar
+                  src={pendingAvatarUrl ?? profile.avatar_url}
+                  name={displayName || profile.username}
+                  size="xl"
+                />
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="text-sm font-medium text-brand hover:text-brand/80 transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {isUploading ? 'Uploading...' : 'Change photo'}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+            {avatarError && <p className="text-xs text-red-400">{avatarError}</p>}
+          </div>
+
           <div className="flex flex-col gap-1.5">
             <label htmlFor="displayName" className="text-sm font-medium text-foreground-muted">
               Display Name
@@ -145,5 +244,14 @@ export function EditProfileModal({ profile, onClose, onSave }: EditProfileModalP
         </form>
       </div>
     </div>
+
+    {cropSrc && (
+      <AvatarCropModal
+        imageSrc={cropSrc}
+        onConfirm={handleCropConfirm}
+        onCancel={handleCropCancel}
+      />
+    )}
+    </>
   )
 }
