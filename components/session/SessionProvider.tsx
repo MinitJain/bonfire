@@ -227,7 +227,7 @@ function SessionContent({
     sessionLogRef.current = [...sessionLogRef.current, text].slice(-10)
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
     setActivities(prev => [...prev.slice(-2), { id, text }])
-    setTimeout(() => setActivities(prev => prev.filter(a => a.id !== id)), 3050)
+    setTimeout(() => setActivities(prev => prev.filter(a => a.id !== id)), 5050)
   }, [])
 
   useEffect(() => {
@@ -241,6 +241,7 @@ function SessionContent({
         const newCount = totalLogCountRef.current - logCountAtHideRef.current
         const missed = newCount > 0 ? sessionLogRef.current.slice(-newCount) : []
         if (missed.length === 0) return
+        setActivities([])
         setMissedEvents(missed)
         if (missedEventsTimerRef.current) clearTimeout(missedEventsTimerRef.current)
         missedEventsTimerRef.current = setTimeout(() => setMissedEvents([]), 4000)

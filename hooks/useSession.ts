@@ -164,19 +164,23 @@ export function useSession({
         ? channel.presenceState<{ username?: string | null }>()[key]?.[0]
         : null
       const leftUsername = leaving?.username ?? null
-      // Debounce leave notifications for other participants — a 15s grace period avoids
-      // false "X left" messages caused by tab minimize / app switch / brief disconnects.
-      // If the same user rejoins within the window the pending timer is cancelled above.
+      // Debounce leave for other participants — 15s grace period avoids false
+      // "X left" messages and participant list flicker caused by tab minimize /
+      // app switch / brief disconnects. Participant stays visible in the list
+      // until the grace window expires. If they rejoin within 15s the timer is
+      // cancelled above and they never disappear.
       if (key !== effectiveIdRef.current) {
         const existing = pendingLeaveTimers.current.get(key)
         if (existing !== undefined) clearTimeout(existing)
         const timer = setTimeout(() => {
           pendingLeaveTimers.current.delete(key)
           leaveCallbacksRef.current.forEach(cb => cb(leftUsername))
+          setParticipants((prev) => prev.filter((p) => p.user_id !== key))
         }, 15_000)
         pendingLeaveTimers.current.set(key, timer)
+      } else {
+        setParticipants((prev) => prev.filter((p) => p.user_id !== key))
       }
-      setParticipants((prev) => prev.filter((p) => p.user_id !== key))
     })
 
     // Listen for timer broadcasts
