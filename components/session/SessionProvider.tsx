@@ -94,7 +94,9 @@ function SessionContent({
   const [modeTipDismissed, setModeTipDismissed] = useState(false)
   const sharePanelRef = useRef<HTMLDivElement>(null)
   const settingsPanelRef = useRef<HTMLDivElement>(null)
+  const settingsPanelDesktopRef = useRef<HTMLDivElement>(null)
   const watcherSettingsPanelRef = useRef<HTMLDivElement>(null)
+  const watcherSettingsPanelDesktopRef = useRef<HTMLDivElement>(null)
   const hasRequestedNotifRef = useRef(false)
   const supabase = useMemo(() => createClient(), [])
   const { toast } = useToast()
@@ -223,8 +225,8 @@ function SessionContent({
     totalLogCountRef.current++
     sessionLogRef.current = [...sessionLogRef.current, text].slice(-10)
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
-    setActivities(prev => [...prev.slice(-3), { id, text }])
-    setTimeout(() => setActivities(prev => prev.filter(a => a.id !== id)), 2900)
+    setActivities(prev => [...prev.slice(-2), { id, text }])
+    setTimeout(() => setActivities(prev => prev.filter(a => a.id !== id)), 3050)
   }, [])
 
   useEffect(() => {
@@ -321,7 +323,9 @@ function SessionContent({
   // Close settings panel on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (settingsPanelRef.current && !settingsPanelRef.current.contains(e.target as Node)) {
+      const inGear = settingsPanelRef.current?.contains(e.target as Node)
+      const inDesktop = settingsPanelDesktopRef.current?.contains(e.target as Node)
+      if (!inGear && !inDesktop) {
         setShowSettings(false)
       }
     }
@@ -334,7 +338,9 @@ function SessionContent({
   // Close watcher settings panel on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (watcherSettingsPanelRef.current && !watcherSettingsPanelRef.current.contains(e.target as Node)) {
+      const inGear = watcherSettingsPanelRef.current?.contains(e.target as Node)
+      const inDesktop = watcherSettingsPanelDesktopRef.current?.contains(e.target as Node)
+      if (!inGear && !inDesktop) {
         setShowWatcherSettings(false)
       }
     }
@@ -820,42 +826,52 @@ function SessionContent({
                     </button>
 
                     {showWatcherSettings && (
-                      <div
-                        className="absolute right-0 bottom-full mb-2 w-72 rounded-2xl z-50 p-4 animate-scale-in"
-                        style={{
-                          background: 'var(--bg-elevated)',
-                          border: '1px solid var(--border)',
-                          boxShadow: 'var(--shadow-lg)',
-                        }}
-                      >
-                        {pendingSettingsRequest ? (
-                          <div className="flex flex-col items-center gap-3 py-4 text-center">
-                            <span
-                              className="w-5 h-5 border-2 rounded-full animate-spin"
-                              style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }}
-                            />
-                            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                              Waiting for host approval...
-                            </p>
-                            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                              The host will accept or decline your request.
-                            </p>
-                            <button
-                              onClick={() => setPendingSettingsRequest(false)}
-                              className="text-xs underline cursor-pointer"
-                              style={{ color: 'var(--text-muted)' }}
-                            >
-                              Cancel
-                            </button>
+                      <>
+                        {/* Backdrop + bottom sheet — mobile only */}
+                        <div
+                          className="fixed inset-0 z-40 xl:hidden"
+                          style={{ background: 'rgba(0,0,0,0.5)' }}
+                          onClick={() => setShowWatcherSettings(false)}
+                        />
+                        <div className="fixed bottom-0 left-0 right-0 z-50 xl:hidden">
+                          <div
+                            className="rounded-t-2xl p-4 animate-slide-up-sheet max-h-[85vh] overflow-y-auto"
+                            style={{
+                              background: 'var(--bg-elevated)',
+                              border: '1px solid var(--border)',
+                              boxShadow: 'var(--shadow-lg)',
+                            }}
+                          >
+                            {pendingSettingsRequest ? (
+                              <div className="flex flex-col items-center gap-3 py-4 text-center">
+                                <span
+                                  className="w-5 h-5 border-2 rounded-full animate-spin"
+                                  style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }}
+                                />
+                                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                                  Waiting for host approval...
+                                </p>
+                                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                                  The host will accept or decline your request.
+                                </p>
+                                <button
+                                  onClick={() => setPendingSettingsRequest(false)}
+                                  className="text-xs underline cursor-pointer"
+                                  style={{ color: 'var(--text-muted)' }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <SettingsPanel
+                                settings={sessionSettings}
+                                onApply={handleSendSettingsRequest}
+                                isWatcher
+                              />
+                            )}
                           </div>
-                        ) : (
-                          <SettingsPanel
-                            settings={sessionSettings}
-                            onApply={handleSendSettingsRequest}
-                            isWatcher
-                          />
-                        )}
-                      </div>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -912,22 +928,32 @@ function SessionContent({
                   </button>
 
                   {showSettings && (
-                    <div
-                      className="absolute right-0 bottom-full mb-2 w-72 rounded-2xl z-50 p-4 animate-scale-in"
-                      style={{
-                        background: 'var(--bg-elevated)',
-                        border: '1px solid var(--border)',
-                        boxShadow: 'var(--shadow-lg)',
-                      }}
-                    >
-                      <SettingsPanel
-                        settings={sessionSettings}
-                        onApply={handleApplySettings}
-                        disabled={status === 'running'}
-                        isPublic={isPublic}
-                        onTogglePublic={handleTogglePublic}
+                    <>
+                      {/* Backdrop + bottom sheet — mobile only */}
+                      <div
+                        className="fixed inset-0 z-40 xl:hidden"
+                        style={{ background: 'rgba(0,0,0,0.5)' }}
+                        onClick={() => setShowSettings(false)}
                       />
-                    </div>
+                      <div className="fixed bottom-0 left-0 right-0 z-50 xl:hidden">
+                        <div
+                          className="rounded-t-2xl p-4 animate-slide-up-sheet max-h-[85vh] overflow-y-auto"
+                          style={{
+                            background: 'var(--bg-elevated)',
+                            border: '1px solid var(--border)',
+                            boxShadow: 'var(--shadow-lg)',
+                          }}
+                        >
+                          <SettingsPanel
+                            settings={sessionSettings}
+                            onApply={handleApplySettings}
+                            disabled={status === 'running'}
+                            isPublic={isPublic}
+                            onTogglePublic={handleTogglePublic}
+                          />
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </>
@@ -961,7 +987,82 @@ function SessionContent({
             )}
           </div>
         </div>
+
       </main>
+
+      {/* Desktop settings panel — host. Fixed in right free space, vertically centred.
+          Outer div: positioning only (no animation) so -translate-y-1/2 is never overwritten.
+          Inner div: scale-in animation only. */}
+      {showSettings && isHost && (
+        <div
+          ref={settingsPanelDesktopRef}
+          className="hidden xl:block fixed z-50"
+          style={{ top: '50%', left: 'calc(50% + 15rem)', transform: 'translateY(-50%)' }}
+        >
+          <div
+            className="w-72 rounded-2xl p-4 animate-scale-in"
+            style={{
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+          >
+            <SettingsPanel
+              settings={sessionSettings}
+              onApply={handleApplySettings}
+              disabled={status === 'running'}
+              isPublic={isPublic}
+              onTogglePublic={handleTogglePublic}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Desktop settings panel — watcher. Same fixed layout. */}
+      {showWatcherSettings && !isHost && (
+        <div
+          ref={watcherSettingsPanelDesktopRef}
+          className="hidden xl:block fixed z-50"
+          style={{ top: '50%', left: 'calc(50% + 15rem)', transform: 'translateY(-50%)' }}
+        >
+          <div
+            className="w-72 rounded-2xl p-4 animate-scale-in"
+            style={{
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+          >
+            {pendingSettingsRequest ? (
+              <div className="flex flex-col items-center gap-3 py-4 text-center">
+                <span
+                  className="w-5 h-5 border-2 rounded-full animate-spin"
+                  style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }}
+                />
+                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  Waiting for host approval...
+                </p>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  The host will accept or decline your request.
+                </p>
+                <button
+                  onClick={() => setPendingSettingsRequest(false)}
+                  className="text-xs underline cursor-pointer"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <SettingsPanel
+                settings={sessionSettings}
+                onApply={handleSendSettingsRequest}
+                isWatcher
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {isHost && <ModeTipBubble externalDismiss={modeTipDismissed} ready={nicknameReady} />}
 

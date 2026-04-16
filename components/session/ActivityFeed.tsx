@@ -11,20 +11,20 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
 
   return (
     <div
-      className="fixed top-20 left-4 sm:top-auto sm:bottom-6 sm:left-6 z-40 flex flex-col gap-2 sm:flex-col-reverse pointer-events-none"
+      className="fixed bottom-6 right-4 sm:bottom-8 sm:right-6 z-40 flex flex-col-reverse gap-2 pointer-events-none max-w-[300px]"
       aria-live="polite"
       aria-atomic="false"
     >
       {items.map(item => (
         <div
           key={item.id}
-          className="activity-item max-w-[280px] px-3.5 py-2 rounded-xl text-xs leading-snug"
+          className="activity-item px-3.5 py-2.5 rounded-xl text-xs leading-snug font-medium"
           style={{
             background: 'var(--bg-elevated)',
             border: '1px solid var(--border)',
-            color: 'var(--text-secondary)',
-            boxShadow: 'var(--shadow-md)',
-            backdropFilter: 'blur(8px)',
+            color: 'var(--text-primary)',
+            boxShadow: 'var(--shadow-lg)',
+            backdropFilter: 'blur(12px)',
           }}
         >
           {item.text}

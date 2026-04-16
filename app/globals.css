@@ -194,13 +194,13 @@ body {
    ACTIVITY FEED
 ───────────────────────────────────────────── */
 @keyframes activity-life {
-  0%   { opacity: 0; transform: translateX(-10px); }
-  8%   { opacity: 1; transform: translateX(0); }
-  75%  { opacity: 1; transform: translateX(0); }
-  100% { opacity: 0; transform: translateX(-6px); }
+  0%   { opacity: 0; transform: translateX(16px); }
+  10%  { opacity: 1; transform: translateX(0); }
+  70%  { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(10px); }
 }
 .activity-item {
-  animation: activity-life 2.8s ease forwards;
+  animation: activity-life 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* ─────────────────────────────────────────────

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+
 import { Globe, Lock } from 'lucide-react'
 
 export interface TimerDurations {
@@ -154,6 +155,8 @@ export function SettingsPanel({ settings, onApply, disabled, isWatcher, isPublic
           >
             <div className="flex flex-col items-start gap-0.5">
               <span className="text-sm flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+
+                {isPublic ? <Globe size={14} /> : <Lock size={14} />}
                 {isPublic ? <Globe size={14} /> : <Lock size={14} />}
                 {isPublic ? 'Public room' : 'Private room'}
               </span>
