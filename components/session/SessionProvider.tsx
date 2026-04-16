@@ -164,14 +164,14 @@ function SessionContent({
       if (!newState) return
       if (canControlRef.current) {
         broadcastTimerStateRef.current?.(newState)
-        supabase.from('sessions').update({ running: true, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
+        supabase.from('sessions').update({ running: true, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id).then(({ error }) => { if (error) console.error('[session] DB write failed:', error) })
       }
     } else if ((currentMode === 'short' || currentMode === 'long') && settings.autoStartPomodoros) {
       const newState = skipAndStartRef.current?.('focus', durations)
       if (!newState) return
       if (canControlRef.current) {
         broadcastTimerStateRef.current?.(newState)
-        supabase.from('sessions').update({ running: true, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
+        supabase.from('sessions').update({ running: true, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id).then(({ error }) => { if (error) console.error('[session] DB write failed:', error) })
       }
     } else {
       setShowBreakOverlay(true)
@@ -476,7 +476,7 @@ function SessionContent({
     broadcastActivity(msg)
     if (canControl) {
       broadcastWithCount(newState)
-      supabase.from('sessions').update({ running: true, time_left: newState.timeLeft, mode: newState.mode }).eq('id', session.id)
+      supabase.from('sessions').update({ running: true, time_left: newState.timeLeft, mode: newState.mode }).eq('id', session.id).then(({ error }) => { if (error) console.error('[session] DB write failed:', error) })
     }
   }, [start, actorName, canControl, broadcastWithCount, broadcastActivity, supabase, session.id])
 
@@ -488,7 +488,7 @@ function SessionContent({
     broadcastActivity(msg)
     if (canControl) {
       broadcastWithCount(newState)
-      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft }).eq('id', session.id)
+      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft }).eq('id', session.id).then(({ error }) => { if (error) console.error('[session] DB write failed:', error) })
     }
   }, [pause, actorName, canControl, broadcastWithCount, broadcastActivity, supabase, session.id])
 
@@ -520,7 +520,7 @@ function SessionContent({
     broadcastActivity(msg)
     if (canControl) {
       broadcastWithCount(newState)
-      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
+      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id).then(({ error }) => { if (error) console.error('[session] DB write failed:', error) })
     }
   }, [reset, actorName, canControl, broadcastWithCount, broadcastActivity, sessionSettings.durations, supabase, session.id])
 
@@ -544,7 +544,7 @@ function SessionContent({
     setShowBreakOverlay(false)
     if (canControl) {
       broadcastWithCount(newState)
-      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
+      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id).then(({ error }) => { if (error) console.error('[session] DB write failed:', error) })
     }
   }, [mode, actorName, setMode, canControl, broadcastWithCount, broadcastActivity, sessionSettings.durations, sessionSettings.rounds, supabase, session.id])
 
@@ -560,7 +560,7 @@ function SessionContent({
     setShowBreakOverlay(false)
     if (canControl) {
       broadcastWithCount(newState)
-      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
+      supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id).then(({ error }) => { if (error) console.error('[session] DB write failed:', error) })
     }
   }, [setMode, actorName, canControl, broadcastWithCount, broadcastActivity, sessionSettings.durations, supabase, session.id])
 
