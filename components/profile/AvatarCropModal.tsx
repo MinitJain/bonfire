@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react'
 import Cropper from 'react-easy-crop'
 import type { Area } from 'react-easy-crop'
+import 'react-easy-crop/react-easy-crop.css'
 import { X, ZoomIn, ZoomOut } from 'lucide-react'
 
 interface AvatarCropModalProps {
