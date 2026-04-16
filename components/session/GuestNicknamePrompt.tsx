@@ -115,7 +115,7 @@ export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps
             Join
           </button>
           <button
-            onClick={() => onSave(generateUsername())}
+            onClick={onSkip}
             className="w-full py-2 text-sm transition-all cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
           >
