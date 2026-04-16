@@ -17,9 +17,9 @@ describe('write queue serialization', () => {
 
     // 'start' takes 50ms, 'pause' 10ms, 'reset' 5ms
     // Without queue: pause and reset would finish first
-    enqueue(() => new Promise(r => setTimeout(() => { order.push('start'); r() }, 50)))
-    enqueue(() => new Promise(r => setTimeout(() => { order.push('pause'); r() }, 10)))
-    enqueue(() => new Promise(r => setTimeout(() => { order.push('reset'); r() }, 5)))
+    enqueue(() => new Promise<void>(r => setTimeout(() => { order.push('start'); r() }, 50)))
+    enqueue(() => new Promise<void>(r => setTimeout(() => { order.push('pause'); r() }, 10)))
+    enqueue(() => new Promise<void>(r => setTimeout(() => { order.push('reset'); r() }, 5)))
 
     await new Promise(r => setTimeout(r, 100))
     expect(order).toEqual(['start', 'pause', 'reset'])
@@ -30,7 +30,7 @@ describe('write queue serialization', () => {
     const { enqueue, getQueue } = makeWriteQueue()
 
     enqueue(() => Promise.reject(new Error('DB error')))
-    enqueue(() => Promise.resolve().then(() => order.push('after-error')))
+    enqueue(() => Promise.resolve().then(() => { order.push('after-error') }))
 
     await getQueue().catch(() => undefined)
     // Give microtasks time to flush
