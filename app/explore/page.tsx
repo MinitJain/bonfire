@@ -3,14 +3,14 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
-import { Users, Timer, ArrowRight, EyeOff } from 'lucide-react'
+import { Users, Timer, ArrowRight } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Explore Live Rooms',
   description: 'Join a live focus room happening right now.',
 }
 
-export const revalidate = 30 // revalidate every 30 seconds
+export const revalidate = 10 // revalidate every 10 seconds — this is a live feed
 
 export default async function ExplorePage() {
   const supabase = createClient()
@@ -19,8 +19,9 @@ export default async function ExplorePage() {
 
   const { data: sessions, error } = await supabase
     .from('sessions')
-    .select('id, title, host_name, mode, running, last_active_at, status, is_public')
+    .select('id, title, host_name, mode, session_mode, running, last_active_at, status, is_public')
     .eq('running', true)
+    .eq('is_public', true)
     .neq('session_mode', 'solo')
     .gt('last_active_at', ninetySecondsAgo)
     .order('last_active_at', { ascending: false })
@@ -77,61 +78,37 @@ export default async function ExplorePage() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {sessions.map(session => {
-              const isPrivate = session.is_public === false
-              return (
-                <Link
-                  key={session.id}
-                  href={`/session/${session.id}`}
-                  className="group flex items-center justify-between p-5 rounded-2xl transition-all duration-200"
-                  style={{
-                    background: 'var(--bg-elevated)',
-                    border: `1px solid ${isPrivate ? 'rgba(139,92,246,0.3)' : 'var(--border)'}`,
-                  }}
-                >
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2">
-                      {isPrivate ? (
-                        <EyeOff className="w-3 h-3 flex-shrink-0" style={{ color: '#8B5CF6' }} />
-                      ) : (
-                        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: 'var(--accent)' }} />
-                      )}
-                      <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-                        {session.title ?? 'Focus Room'}
-                      </span>
-                      {isPrivate && (
-                        <span
-                          className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                          style={{ background: 'rgba(139,92,246,0.12)', color: '#8B5CF6' }}
-                        >
-                          Private
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {isPrivate ? (
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          {session.host_name}
-                        </span>
-                      ) : (
-                        <>
-                          <span className="flex items-center gap-1">
-                            <Users className="w-3 h-3" />
-                            {session.host_name}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Timer className="w-3 h-3" />
-                            {modeLabel[session.mode] ?? session.mode}
-                          </span>
-                        </>
-                      )}
-                    </div>
+            {sessions.map(session => (
+              <Link
+                key={session.id}
+                href={`/session/${session.id}`}
+                className="group flex items-center justify-between p-5 rounded-2xl transition-all duration-200"
+                style={{
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: 'var(--accent)' }} />
+                    <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                      {session.title ?? 'Focus Room'}
+                    </span>
                   </div>
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" style={{ color: 'var(--text-muted)' }} />
-                </Link>
-              )
-            })}
+                  <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      {session.host_name}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Timer className="w-3 h-3" />
+                      {modeLabel[session.mode] ?? session.mode}
+                    </span>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" style={{ color: 'var(--text-muted)' }} />
+              </Link>
+            ))}
           </div>
         )}
       </main>
