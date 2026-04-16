@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
-import { Users, Timer, ArrowRight, Lock } from 'lucide-react'
+import { Users, Timer, ArrowRight, EyeOff } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Explore Live Rooms',
@@ -92,7 +92,7 @@ export default async function ExplorePage() {
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-2">
                       {isPrivate ? (
-                        <Lock className="w-3 h-3 flex-shrink-0" style={{ color: '#8B5CF6' }} />
+                        <EyeOff className="w-3 h-3 flex-shrink-0" style={{ color: '#8B5CF6' }} />
                       ) : (
                         <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: 'var(--accent)' }} />
                       )}

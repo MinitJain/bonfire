@@ -11,13 +11,13 @@ interface AmbientPlayerProps {
 export function AmbientPlayer({ onActiveChange }: AmbientPlayerProps) {
   const playerRef = useRef<Player | null>(null)
   const [active, setActive] = useState<AmbientType | null>(null)
-  const [volume, setVolume] = useState(0.25)
+  const [volume, setVolume] = useState(0.12)
   const [muted, setMuted] = useState(false)
 
   useEffect(() => {
     const savedType = localStorage.getItem('pomodoro_ambient_type') as AmbientType | null
-    const savedVolume = parseFloat(localStorage.getItem('pomodoro_ambient_volume') ?? '0.25')
-    if (!isNaN(savedVolume)) setVolume(savedVolume)
+    const savedVolume = parseFloat(localStorage.getItem('pomodoro_ambient_volume') ?? '0.12')
+    if (!isNaN(savedVolume)) setVolume(Math.min(savedVolume, 0.35))
 
     playerRef.current = new Player()
     if (savedType && AMBIENT_SOUNDS.some(s => s.type === savedType)) {
@@ -100,7 +100,7 @@ export function AmbientPlayer({ onActiveChange }: AmbientPlayerProps) {
           <input
             type="range"
             min="0"
-            max="0.6"
+            max="0.35"
             step="0.01"
             value={volume}
             onChange={handleVolume}

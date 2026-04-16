@@ -13,6 +13,7 @@ export class AmbientPlayer {
   private ctx: AudioContext | null = null
   private source: AudioBufferSourceNode | null = null
   private gainNode: GainNode | null = null
+  private filterNode: BiquadFilterNode | null = null
   private _playing = false
   private _currentType: AmbientType | null = null
 
@@ -32,8 +33,9 @@ export class AmbientPlayer {
       const data = buffer.getChannelData(channel)
 
       if (type === 'white') {
+        // Attenuated — harshness handled by lowpass filter downstream
         for (let i = 0; i < bufferSize; i++) {
-          data[i] = Math.random() * 2 - 1
+          data[i] = (Math.random() * 2 - 1) * 0.6
         }
       } else if (type === 'brown') {
         let lastOut = 0
@@ -41,7 +43,7 @@ export class AmbientPlayer {
           const white = Math.random() * 2 - 1
           data[i] = (lastOut + 0.02 * white) / 1.02
           lastOut = data[i]
-          data[i] *= 3.5
+          data[i] *= 2.5 // reduced from 3.5 to avoid clipping
         }
       } else if (type === 'pink') {
         // Paul Kellett's pink noise algorithm
@@ -54,18 +56,17 @@ export class AmbientPlayer {
           b3 = 0.86650 * b3 + w * 0.3104856
           b4 = 0.55000 * b4 + w * 0.5329522
           b5 = -0.7616 * b5 - w * 0.0168980
-          data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11
+          data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.09
           b6 = w * 0.115926
         }
       } else if (type === 'rain') {
-        // Brown noise base + high-freq texture = rain feel
+        // Brown base only — no raw high-freq texture (that was the sharp part)
         let lastOut = 0
         for (let i = 0; i < bufferSize; i++) {
           const white = Math.random() * 2 - 1
           const brown = (lastOut + 0.02 * white) / 1.02
           lastOut = brown
-          const texture = (Math.random() * 2 - 1) * 0.25
-          data[i] = (brown * 3.5 * 0.6 + texture) * 0.7
+          data[i] = brown * 2.2
         }
       }
     }
@@ -92,6 +93,12 @@ export class AmbientPlayer {
     this.source = ctx.createBufferSource()
     this.gainNode = ctx.createGain()
 
+    // Lowpass filter cuts harsh high frequencies — cutoff tuned per type
+    this.filterNode = ctx.createBiquadFilter()
+    this.filterNode.type = 'lowpass'
+    this.filterNode.frequency.value = type === 'brown' ? 500 : type === 'pink' ? 1800 : type === 'rain' ? 2500 : 2800
+    this.filterNode.Q.value = 0.4 // gentle rolloff
+
     this.source.buffer = buffer
     this.source.loop = true
 
@@ -99,7 +106,8 @@ export class AmbientPlayer {
     this.gainNode.gain.setValueAtTime(0, ctx.currentTime)
     this.gainNode.gain.linearRampToValueAtTime(volume, ctx.currentTime + 1.5)
 
-    this.source.connect(this.gainNode)
+    this.source.connect(this.filterNode)
+    this.filterNode.connect(this.gainNode)
     this.gainNode.connect(ctx.destination)
     this.source.start()
 
@@ -118,16 +126,19 @@ export class AmbientPlayer {
       const ctx = this.ctx
       const gain = this.gainNode
       const src = this.source
+      const filter = this.filterNode
       // Fade out then disconnect
       gain.gain.setTargetAtTime(0, ctx.currentTime, 0.2)
       setTimeout(() => {
         try { src?.stop() } catch { /* already stopped */ }
         src?.disconnect()
+        filter?.disconnect()
         gain.disconnect()
       }, 600)
     }
     this.source = null
     this.gainNode = null
+    this.filterNode = null
     this._playing = false
     this._currentType = null
   }

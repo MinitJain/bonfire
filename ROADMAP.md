@@ -226,6 +226,8 @@
 ## Phase 4 — The Bonfire (Visual Soul)
 > Our answer to Forest's growing tree — but inherently multiplayer.
 > A fire gets bigger when people gather around it. No explanation needed.
+>
+> **Build order note:** 4a–4d move to Days 11–14 (right after Phase 1) — they only need existing timer state and presence. 4e (ashes screen) is built alongside the session recap screen (Day 23) since users need an exit state. 4f (duo card) stays in Phase 3 alongside shared stats.
 
 ### 4a. Bonfire on the session screen
 - [ ] Three.js WebGL particle system — CSS fire looks predictable, Three.js fire breathes
@@ -428,6 +430,7 @@ Everything else is infrastructure. The bonfire card is the hook.
 ## Build Order (one per day)
 
 ```
+── Phase 1 — Rooms + Foundation ──────────────────────────────────────────────
 Day 1.  Room rename — UI only, no DB
 Day 2.  Default room names + name customization on creation
 Day 3.  Public/Private toggle (DB migration + UI)
@@ -438,41 +441,51 @@ Day 7.  Task list in session (pre-session task entry, live checklist, recap)
 Day 8.  Daily focus goal (profile settings + progress ring on session screen)
 Day 9.  Avatar upload (Supabase Storage + EditProfileModal)
 Day 10. Invite system (DB + in-app notifications + invite link preview)
-Day 11. User search (username/display name, shown on explore + header)
-Day 12. Follow/Unfollow (DB + profile buttons + counts)
-Day 13. Following/Followers list pages
-Day 14. Live status badge on profiles
-Day 15. Friends tab on Explore
-Day 16. "Friend started a room" in-app notification banner
-Day 17. Room reactions (emoji floats, rate-limited, broadcast)
-Day 18. Accountability buddy mode (DB + nudges + shared streak)
-Day 19. Session recap screen + guest conversion nudge
-Day 20. Offline / Realtime error state on session screen
-Day 21. Room history on profile page
-Day 22. Discord OAuth login (Supabase provider + profile link)
-Day 23. Spotify now playing (OAuth + real-time broadcast + top tracks on profile)
-Day 24. Apple Music + Last.fm connections
-Day 25. Discord Rich Presence (opt-in, room state broadcast to Discord)
-Day 26. PWA — manifest + service worker + install prompt + Web Push
-Day 27. Discord bot (/start-room, /focus-status, scheduled room reminders)
-Day 28. Shared focus stats query + profile section
-Day 29. Shared streak between two users
-Day 30. Streak surfaced on session screen + at-risk warning
-Day 31. Cold start / global feel ("X focusing now" on session screen)
-Day 32. Solo shareable card (Web Share API + OG variant)
-Day 33. Milestone toasts in-session
-Day 34. Mobile layout audit + fixes
-Day 35. Bonfire — Three.js setup + basic particle flame
-Day 36. Bonfire — flame states (grow/shrink/calm based on timer)
-Day 37. Bonfire — log pile (3D mesh, grows per pomodoro)
-Day 38. Bonfire — shared fire (scales with participant count)
-Day 39. Bonfire — tab-switch accountability (Page Visibility API)
-Day 40. Bonfire — ashes state + ashes screen
-Day 41. Duo shareable card with bonfire
-Day 42. Onboarding flow (3-step, skip-friendly)
-Day 43. Scheduled rooms (DB + explore card + commit button)
-Day 44. Weekly stats email digest (Supabase Edge Function + Resend)
-Day 45. Buffer — polish, bug fixes, performance
+
+── Phase 1.5 — Bonfire (core visual) ─────────────────────────────────────────
+Day 11. Bonfire — Three.js setup + particle flame + all flame states
+Day 12. Bonfire — log pile (3D mesh, grows per pomodoro)
+Day 13. Bonfire — shared fire (scales with participant count)
+Day 14. Bonfire — tab-switch accountability (Page Visibility API)
+
+── Phase 2 — Social Graph ────────────────────────────────────────────────────
+Day 15. User search (username/display name, shown on explore + header)
+Day 16. Follow/Unfollow (DB + profile buttons + counts)
+Day 17. Following/Followers list pages
+Day 18. Live status badge on profiles
+Day 19. Friends tab on Explore
+Day 20. "Friend started a room" in-app notification banner
+Day 21. Room reactions (emoji floats, rate-limited, broadcast)
+Day 22. Accountability buddy mode (DB + nudges + shared streak)
+Day 23. Session recap screen + bonfire ashes state (4e) + guest conversion nudge
+Day 24. Offline / Realtime error state on session screen
+Day 25. Room history on profile page
+
+── Phase 2.5 — Integrations ──────────────────────────────────────────────────
+Day 26. Discord OAuth login (Supabase provider + profile link)
+Day 27. Spotify now playing (OAuth + real-time broadcast + top tracks on profile)
+Day 28. Apple Music + Last.fm connections
+Day 29. Discord Rich Presence (opt-in, room state broadcast to Discord)
+Day 30. PWA — manifest + service worker + install prompt + Web Push
+Day 31. Discord bot (/start-room, /focus-status, scheduled room reminders)
+
+── Phase 3 — Gamification + Shared Stats ─────────────────────────────────────
+Day 32. Shared focus stats query + profile section
+Day 33. Shared streak between two users
+Day 34. Streak surfaced on session screen + at-risk warning
+Day 35. Cold start / global feel ("X focusing now" on session screen)
+Day 36. Solo shareable card (Web Share API + OG variant)
+Day 37. Milestone toasts in-session
+Day 38. Duo shareable card with bonfire (4f)
+
+── Phase 5 — Retention + Onboarding ─────────────────────────────────────────
+Day 39. Onboarding flow (3-step, skip-friendly)
+Day 40. Scheduled rooms (DB + explore card + commit button)
+Day 41. Weekly stats email digest (Supabase Edge Function + Resend)
+
+── Phase 6 — Reliability + Polish ───────────────────────────────────────────
+Day 42. Mobile layout audit + fixes
+Day 43. Buffer — polish, bug fixes, performance
 ```
 
 ---
@@ -486,42 +499,46 @@ Day 45. Buffer — polish, bug fixes, performance
 - [x] OG image generation
 - [x] All CodeRabbit review fixes applied (PR #17)
 - [x] Day 1 — Room rename
-- [ ] Day 2 — Default room names
-- [ ] Day 3 — Public/Private toggle
+- [x] Day 2 — Default room names
+- [x] Day 3 — Public/Private toggle
 - [ ] Day 4 — Pomodoro counter + long break
 - [ ] Day 5 — Custom timer presets
 - [ ] Day 6 — Session tags
 - [ ] Day 7 — Task list in session
 - [ ] Day 8 — Daily focus goal
-- [ ] Day 9 — Avatar upload
+- [x] Day 9 — Avatar upload
 - [ ] Day 10 — Invite system
-- [ ] Day 11 — User search
-- [ ] Day 12 — Follow/Unfollow
-- [ ] Day 13 — Following/Followers pages
-- [ ] Day 14 — Live status on profiles
-- [ ] Day 15 — Friends tab on Explore
-- [ ] Day 16 — Friend room notification
-- [ ] Day 17 — Room reactions
-- [ ] Day 18 — Accountability buddy mode
-- [ ] Day 19 — Session recap screen + guest conversion
-- [ ] Day 20 — Offline / error state on session screen
-- [ ] Day 21 — Room history on profile
-- [ ] Day 22 — Discord OAuth login
-- [ ] Day 23 — Spotify now playing
-- [ ] Day 24 — Apple Music + Last.fm
-- [ ] Day 25 — Discord Rich Presence
-- [ ] Day 26 — PWA (manifest + service worker + install prompt)
-- [ ] Day 27 — Discord bot
-- [ ] Day 28 — Shared stats
-- [ ] Day 29 — Shared streak
-- [ ] Day 30 — Streak on session screen + at-risk warning
-- [ ] Day 31 — Cold start / global feel
-- [ ] Day 32 — Solo shareable card
-- [ ] Day 33 — Milestone toasts
-- [ ] Day 34 — Mobile layout audit
-- [ ] Day 35-40 — Bonfire (Three.js)
-- [ ] Day 41 — Duo shareable card
-- [ ] Day 42 — Onboarding flow
-- [ ] Day 43 — Scheduled rooms
-- [ ] Day 44 — Weekly email digest
-- [ ] Day 45 — Polish + buffer
+- [ ] Day 11 — Bonfire: Three.js setup + particle flame + flame states
+- [ ] Day 12 — Bonfire: log pile
+- [ ] Day 13 — Bonfire: shared fire (participant count)
+- [ ] Day 14 — Bonfire: tab-switch accountability
+- [ ] Day 15 — User search
+- [ ] Day 16 — Follow/Unfollow
+- [ ] Day 17 — Following/Followers pages
+- [ ] Day 18 — Live status on profiles
+- [ ] Day 19 — Friends tab on Explore
+- [ ] Day 20 — Friend room notification
+- [ ] Day 21 — Room reactions
+- [ ] Day 22 — Accountability buddy mode
+- [ ] Day 23 — Session recap screen + ashes state (4e) + guest conversion
+- [ ] Day 24 — Offline / error state on session screen
+- [ ] Day 25 — Room history on profile
+- [ ] Day 26 — Discord OAuth login
+- [ ] Day 27 — Spotify now playing
+- [ ] Day 28 — Apple Music + Last.fm
+- [ ] Day 29 — Discord Rich Presence
+- [ ] Day 30 — PWA (manifest + service worker + install prompt)
+- [ ] Day 31 — Discord bot
+- [ ] Day 32 — Shared stats
+- [ ] Day 33 — Shared streak
+- [ ] Day 34 — Streak on session screen + at-risk warning
+- [ ] Day 35 — Cold start / global feel
+- [ ] Day 36 — Solo shareable card
+- [ ] Day 37 — Milestone toasts
+- [ ] Day 38 — Duo shareable card with bonfire (4f)
+- [ ] Day 39 — Onboarding flow
+- [ ] Day 40 — Scheduled rooms
+- [ ] Day 41 — Weekly email digest
+- [ ] Day 42 — Mobile layout audit
+- [ ] Day 43 — Polish + buffer
+

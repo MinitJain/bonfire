@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
+
 import { Users, Zap, Github, LogOut, UserCircle, Timer, Bell, BarChart2, Link2, ChevronDown, Shuffle, Globe, Lock } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Logo } from '@/components/ui/Logo'
@@ -564,6 +565,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
             >
               <div className="flex flex-col items-start gap-0.5">
                 <span className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+
                   {isRoomPublic ? <Globe size={14} /> : <Lock size={14} />}
                   {isRoomPublic ? 'Public room' : 'Private room'}
                 </span>

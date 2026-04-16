@@ -84,6 +84,27 @@ export function useTimer({
     timerStateRef.current = timerState
   }, [timerState])
 
+  // Force-sync timer display when tab becomes visible again.
+  // Browsers throttle setInterval in background tabs (~1fps), so returning to the tab
+  // could show a stale timeLeft for up to a second. This listener fires immediately on
+  // tab return and recomputes from the wall-clock startedAt anchor — same logic as the
+  // interval, but instant. Also catches timers that expired while the tab was hidden.
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState !== 'visible') return
+      if (timerStateRef.current.status !== 'running') return
+      const left = computeTimeLeft(timerStateRef.current)
+      setTimeLeft(left)
+      if (left <= 0 && !expiredRef.current) {
+        expiredRef.current = true
+        clearTimer()
+        setTimerState(current => ({ ...current, status: 'finished', timeLeft: 0 }))
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [clearTimer])
+
   // Sync timeLeft for external state changes (applyState, pause, reset, etc.)
   // and fire onExpire when state transitions to finished
   useEffect(() => {
