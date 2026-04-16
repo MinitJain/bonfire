@@ -15,9 +15,7 @@ export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps
   const dialogRef = useRef<HTMLDivElement>(null)
 
   const handleSave = () => {
-    const trimmed = name.trim()
-    if (!trimmed) return
-    onSave(trimmed)
+    onSave(name.trim() || generateUsername())
   }
 
   // Escape to skip — skip during IME composition to avoid breaking CJK input
@@ -111,18 +109,17 @@ export function GuestNicknamePrompt({ onSave, onSkip }: GuestNicknamePromptProps
         <div className="flex flex-col gap-2">
           <button
             onClick={handleSave}
-            disabled={!name.trim()}
-            className="w-full py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer disabled:opacity-40"
+            className="w-full py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer"
             style={{ background: 'var(--accent)', color: '#fff' }}
           >
-            Save
+            Join
           </button>
           <button
             onClick={onSkip}
             className="w-full py-2 text-sm transition-all cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
           >
-            Skip
+            Join anonymously
           </button>
         </div>
       </div>

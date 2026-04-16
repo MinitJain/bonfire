@@ -7,6 +7,7 @@ import type { ActivityItem, Session, SettingsChangeRequest, TimerMode, TimerStat
 import { useTimer } from '@/hooks/useTimer'
 import { useSession } from '@/hooks/useSession'
 import { computeProgress, sessionToTimerState } from '@/lib/timer'
+import { generateUsername } from '@/lib/roomName'
 import { SettingsPanel, type TimerDurations, type SessionSettings } from '@/components/session/SettingsPanel'
 import { playCompleteSound, showNotification, requestNotificationPermission } from '@/lib/audio'
 import { TimerRing } from '@/components/timer/TimerRing'
@@ -226,7 +227,7 @@ function SessionContent({
     sessionLogRef.current = [...sessionLogRef.current, text].slice(-10)
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
     setActivities(prev => [...prev.slice(-2), { id, text }])
-    setTimeout(() => setActivities(prev => prev.filter(a => a.id !== id)), 3050)
+    setTimeout(() => setActivities(prev => prev.filter(a => a.id !== id)), 5050)
   }, [])
 
   useEffect(() => {
@@ -240,6 +241,7 @@ function SessionContent({
         const newCount = totalLogCountRef.current - logCountAtHideRef.current
         const missed = newCount > 0 ? sessionLogRef.current.slice(-newCount) : []
         if (missed.length === 0) return
+        setActivities([])
         setMissedEvents(missed)
         if (missedEventsTimerRef.current) clearTimeout(missedEventsTimerRef.current)
         missedEventsTimerRef.current = setTimeout(() => setMissedEvents([]), 4000)
@@ -265,7 +267,7 @@ function SessionContent({
       // Suppress activity message on quick reconnects (tab switch / brief disconnect)
       if (!isReconnect) {
         const name = joinedUsername ?? 'Someone'
-        pushActivity(`${name} joined the room 👋`)
+        pushActivity(`${name} joined 👋`)
       }
     })
   }, [onParticipantJoin, pushActivity, isHost, broadcastWithCount])
@@ -273,7 +275,7 @@ function SessionContent({
   useEffect(() => {
     return onParticipantLeave((leftUsername) => {
       const name = leftUsername ?? 'Someone'
-      pushActivity(`${name} left`)
+      pushActivity(`${name} left the room`)
     })
   }, [onParticipantLeave, pushActivity])
 
@@ -394,13 +396,12 @@ function SessionContent({
     setSessionMode(mode)
     broadcastSessionMode(mode)
     const messages: Record<'host' | 'jam' | 'solo', string> = {
-      host: 'Host mode. Only the host controls 👑',
-      jam: 'Jam mode. Everyone controls ⚡',
-      solo: 'Solo mode. Private room 🎯',
+      host: `${actorName} switched to Host mode 👑`,
+      jam: `${actorName} switched to Jam mode ⚡`,
+      solo: `${actorName} switched to Solo mode 🎯`,
     }
-    pushActivity(messages[mode])
     broadcastActivity(messages[mode])
-  }, [sessionMode, session.id, supabase, broadcastSessionMode, broadcastActivity, pushActivity])
+  }, [sessionMode, session.id, supabase, broadcastSessionMode, broadcastActivity, actorName])
 
   // Non-hosts receive session mode changes from the host
   useEffect(() => {
@@ -471,27 +472,25 @@ function SessionContent({
 
   const handleStart = useCallback(() => {
     const newState = start()
-    const msg = `${actorName} started the timer ▶`
-    pushActivity(msg)
+    const msg = `${actorName} started the timer 🍅`
     broadcastActivity(msg)
     if (canControl) {
       broadcastWithCount(newState)
       supabase.from('sessions').update({ running: true, time_left: newState.timeLeft, mode: newState.mode }).eq('id', session.id)
     }
-  }, [start, actorName, canControl, broadcastWithCount, broadcastActivity, pushActivity, supabase, session.id])
+  }, [start, actorName, canControl, broadcastWithCount, broadcastActivity, supabase, session.id])
 
   const handlePause = useCallback(() => {
     const newState = pause()
     const mins = String(Math.floor(newState.timeLeft / 60)).padStart(2, '0')
     const secs = String(newState.timeLeft % 60).padStart(2, '0')
-    const msg = `${actorName} paused · ${mins}:${secs} left ⏸`
-    pushActivity(msg)
+    const msg = `${actorName} paused — ${mins}:${secs} remaining ⏸`
     broadcastActivity(msg)
     if (canControl) {
       broadcastWithCount(newState)
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft }).eq('id', session.id)
     }
-  }, [pause, actorName, canControl, broadcastWithCount, broadcastActivity, pushActivity, supabase, session.id])
+  }, [pause, actorName, canControl, broadcastWithCount, broadcastActivity, supabase, session.id])
 
   // Global keyboard shortcuts (placed after handleStart/handlePause declarations)
   useEffect(() => {
@@ -518,13 +517,12 @@ function SessionContent({
     const newState = reset(toSecs(sessionSettings.durations))
     setShowBreakOverlay(false)
     const msg = `${actorName} reset the timer ↺`
-    pushActivity(msg)
     broadcastActivity(msg)
     if (canControl) {
       broadcastWithCount(newState)
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
-  }, [reset, actorName, canControl, broadcastWithCount, broadcastActivity, pushActivity, sessionSettings.durations, supabase, session.id])
+  }, [reset, actorName, canControl, broadcastWithCount, broadcastActivity, sessionSettings.durations, supabase, session.id])
 
   const handleSkip = useCallback(() => {
     let nextMode: TimerMode
@@ -536,12 +534,11 @@ function SessionContent({
       nextMode = 'focus'
     }
     const modeMessages: Record<TimerMode, string> = {
-      short: `${actorName} switched to short break ☕`,
-      long: `${actorName} switched to long break 🎉`,
+      short: `Short break started ☕`,
+      long: `Long break — take a proper rest 🎉`,
       focus: `${actorName} started a new focus round 🍅`,
     }
     const msg = modeMessages[nextMode]
-    pushActivity(msg)
     broadcastActivity(msg)
     const newState = setMode(nextMode, toSecs(sessionSettings.durations))
     setShowBreakOverlay(false)
@@ -549,16 +546,15 @@ function SessionContent({
       broadcastWithCount(newState)
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
-  }, [mode, actorName, setMode, canControl, broadcastWithCount, broadcastActivity, pushActivity, sessionSettings.durations, sessionSettings.rounds, supabase, session.id])
+  }, [mode, actorName, setMode, canControl, broadcastWithCount, broadcastActivity, sessionSettings.durations, sessionSettings.rounds, supabase, session.id])
 
   const handleModeChange = useCallback((newMode: TimerMode) => {
     const modeMessages: Record<TimerMode, string> = {
-      short: `${actorName} switched to short break ☕`,
-      long: `${actorName} switched to long break 🎉`,
+      short: `Short break started ☕`,
+      long: `Long break — take a proper rest 🎉`,
       focus: `${actorName} started a new focus round 🍅`,
     }
     const msg = modeMessages[newMode]
-    pushActivity(msg)
     broadcastActivity(msg)
     const newState = setMode(newMode, toSecs(sessionSettings.durations))
     setShowBreakOverlay(false)
@@ -566,7 +562,7 @@ function SessionContent({
       broadcastWithCount(newState)
       supabase.from('sessions').update({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode }).eq('id', session.id)
     }
-  }, [setMode, actorName, canControl, broadcastWithCount, broadcastActivity, pushActivity, sessionSettings.durations, supabase, session.id])
+  }, [setMode, actorName, canControl, broadcastWithCount, broadcastActivity, sessionSettings.durations, supabase, session.id])
 
   const handleApplySettings = useCallback(async (newSettings: SessionSettings) => {
     setSessionSettings(newSettings)
@@ -892,12 +888,14 @@ function SessionContent({
                         : m === 'jam'
                         ? 'Everyone in the room can control the timer.'
                         : 'Private room. No sharing, no watchers.'
+                      const soloBlocked = m === 'solo' && participants.length > 1
                       return (
                         <button
                           key={m}
-                          onClick={() => { setModeTipDismissed(true); handleSetMode(m) }}
-                          title={title}
-                          className="h-full flex-1 flex items-center justify-center text-sm font-medium transition-all duration-150 cursor-pointer"
+                          onClick={() => { if (!soloBlocked) { setModeTipDismissed(true); handleSetMode(m) } }}
+                          disabled={soloBlocked}
+                          title={soloBlocked ? `${participants.length} people in the room — can't switch to Solo` : title}
+                          className="h-full flex-1 flex items-center justify-center text-sm font-medium transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                           style={
                             active
                               ? { background: activeColor, color: '#fff' }
@@ -1100,7 +1098,15 @@ function SessionContent({
             setShowNicknamePrompt(false)
             setNicknameReady(true)
           }}
-          onSkip={() => { setShowNicknamePrompt(false); setNicknameReady(true) }}
+          onSkip={() => {
+            // Safety net: assign a random name instead of leaving username null
+            const fallback = generateUsername()
+            setLocalUsername(fallback)
+            localStorage.setItem(`pomodoro_nick_${session.id}`, fallback)
+            updatePresence(fallback)
+            setShowNicknamePrompt(false)
+            setNicknameReady(true)
+          }}
         />
       )}
 
