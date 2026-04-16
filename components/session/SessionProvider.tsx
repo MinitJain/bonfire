@@ -360,12 +360,29 @@ function SessionContent({
     }
   }, [])
 
-  // Host heartbeat — keeps last_active_at fresh so explore page can filter out zombie sessions
+  // Track latest participants in a ref so the heartbeat can read it without restarting the interval
+  const participantsRef = useRef(participants)
+  useEffect(() => { participantsRef.current = participants }, [participants])
+
+  // Write participant count + preview immediately whenever the list changes (so explore reflects joins fast)
+  useEffect(() => {
+    if (!isHost) return
+    const preview = participants.slice(0, 3).map(p => ({ username: p.username ?? null, avatar_url: p.avatar_url ?? null }))
+    supabase.from('sessions').update({ participant_count: participants.length, participant_preview: preview }).eq('id', session.id)
+      .then(({ error }) => { if (error) console.error('[participant-sync] Failed:', error) })
+  }, [isHost, participants, supabase, session.id])
+
+  // Host heartbeat — keeps last_active_at + participant data fresh for explore page
   useEffect(() => {
     if (!isHost) return
     const id = setInterval(() => {
-      supabase.from('sessions').update({ last_active_at: new Date().toISOString() }).eq('id', session.id)
-        .then(({ error }) => { if (error) console.error('[heartbeat] Failed to update last_active_at for session', session.id, error) })
+      const preview = participantsRef.current.slice(0, 3).map(p => ({ username: p.username ?? null, avatar_url: p.avatar_url ?? null }))
+      supabase.from('sessions').update({
+        last_active_at: new Date().toISOString(),
+        participant_count: participantsRef.current.length,
+        participant_preview: preview,
+      }).eq('id', session.id)
+        .then(({ error }) => { if (error) console.error('[heartbeat] Failed:', error) })
     }, 30_000)
     return () => clearInterval(id)
   }, [isHost, supabase, session.id])
