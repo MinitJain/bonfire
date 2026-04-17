@@ -22,6 +22,7 @@ import { BreakOverlay } from '@/components/session/BreakOverlay'
 import { GuestNicknamePrompt } from '@/components/session/GuestNicknamePrompt'
 import { SettingsRequestCard } from '@/components/session/SettingsRequestCard'
 import { AmbientPlayer } from '@/components/session/AmbientPlayer'
+import { StatsTab } from '@/components/session/StatsTab'
 import { ModeTipBubble } from '@/components/session/ModeTipBubble'
 import { KeyboardShortcutsModal } from '@/components/session/KeyboardShortcutsModal'
 import { ToastProvider, useToast } from '@/components/ui/Toast'
@@ -55,6 +56,7 @@ function SessionContent({
   avatarUrl,
 }: SessionProviderProps) {
   const [isHost, setIsHost] = useState(isHostProp)
+  const [activeTab, setActiveTab] = useState<'timer' | 'tasks' | 'stats'>('timer')
   const [sessionMode, setSessionMode] = useState<'host' | 'jam' | 'solo'>(session.session_mode ?? 'host')
   const [isPublic, setIsPublic] = useState(session.is_public ?? true)
   const [showBreakOverlay, setShowBreakOverlay] = useState(false)
@@ -70,8 +72,10 @@ function SessionContent({
     autoStartBreaks: session.settings?.autoStartBreaks ?? false,
     autoStartPomodoros: session.settings?.autoStartPomodoros ?? false,
   })
-  const focusCountRef = useRef(0)
-  const [focusCount, setFocusCount] = useState(0)
+  const initialPomosDone = session.pomos_done ?? 0
+  const focusCountRef = useRef(initialPomosDone)
+  const [focusCount, setFocusCount] = useState(initialPomosDone)
+  const [todayCount, setTodayCount] = useState<number | null>(null)
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const sessionLogRef = useRef<string[]>([])
   const totalLogCountRef = useRef<number>(0)
@@ -101,6 +105,19 @@ function SessionContent({
   const hasRequestedNotifRef = useRef(false)
   const supabase = useMemo(() => createClient(), [])
   const { toast } = useToast()
+
+  // Fetch today's completed pomodoro count for the counter badge
+  useEffect(() => {
+    if (!userId) return
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    supabase
+      .from('pomodoro_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('completed_at', today.toISOString())
+      .then(({ count }) => { setTodayCount(count ?? 0) })
+  }, [userId, supabase])
 
   // Guest host detection via localStorage
   useEffect(() => {
@@ -170,12 +187,13 @@ function SessionContent({
     if (currentMode === 'focus' && settings.autoStartBreaks) {
       focusCountRef.current += 1
       setFocusCount(focusCountRef.current)
+      setTodayCount(prev => (prev ?? 0) + 1)
       const nextMode = focusCountRef.current % settings.rounds === 0 ? 'long' : 'short'
       const newState = skipAndStartRef.current?.(nextMode, durations)
       if (!newState) return
       if (canControlRef.current) {
         broadcastTimerStateRef.current?.(newState)
-        enqueueSessionUpdate({ running: true, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode })
+        enqueueSessionUpdate({ running: true, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode, pomos_done: focusCountRef.current })
       }
     } else if ((currentMode === 'short' || currentMode === 'long') && settings.autoStartPomodoros) {
       const newState = skipAndStartRef.current?.('focus', durations)
@@ -554,9 +572,11 @@ function SessionContent({
 
   const handleSkip = useCallback(() => {
     let nextMode: TimerMode
-    if (mode === 'focus') {
+    const skippingFocus = mode === 'focus'
+    if (skippingFocus) {
       focusCountRef.current += 1
       setFocusCount(focusCountRef.current)
+      setTodayCount(prev => (prev ?? 0) + 1)
       nextMode = focusCountRef.current % sessionSettings.rounds === 0 ? 'long' : 'short'
     } else {
       nextMode = 'focus'
@@ -572,7 +592,13 @@ function SessionContent({
     setShowBreakOverlay(false)
     if (canControl) {
       broadcastWithCount(newState)
-      enqueueSessionUpdate({ running: false, time_left: newState.timeLeft, total_time: newState.totalTime, mode: newState.mode })
+      enqueueSessionUpdate({
+        running: false,
+        time_left: newState.timeLeft,
+        total_time: newState.totalTime,
+        mode: newState.mode,
+        ...(skippingFocus ? { pomos_done: focusCountRef.current } : {}),
+      })
     }
   }, [mode, actorName, setMode, canControl, broadcastWithCount, broadcastActivity, sessionSettings.durations, sessionSettings.rounds, enqueueSessionUpdate])
 
@@ -595,8 +621,6 @@ function SessionContent({
   const handleApplySettings = useCallback(async (newSettings: SessionSettings) => {
     setSessionSettings(newSettings)
     setShowSettings(false)
-    focusCountRef.current = 0
-    setFocusCount(0)
     const newState = reset(toSecs(newSettings.durations))
     if (canControl) {
       const { error } = await supabase.from('sessions').update({
@@ -675,11 +699,7 @@ function SessionContent({
   }, [pendingRequest, broadcastSettingsResponse])
 
   const progress = computeProgress(timerState)
-  const isFirstRoundIdle = focusCount === 0 && mode === 'focus'
-  const focusRoundsLeft = sessionSettings.rounds - ((focusCount % sessionSettings.rounds) + 1)
-  const roundLabel = mode === 'focus'
-    ? `Round ${focusCount + 1} · ${focusRoundsLeft === 0 ? 'long break next' : `long break after ${focusRoundsLeft} more`}`
-    : `Round ${focusCount} of ${sessionSettings.rounds} · ${mode === 'long' ? 'long break' : 'short break'}`
+  const roundLabel = `${focusCount} pomodoro${focusCount !== 1 ? 's' : ''} completed`
 
   return (
     <div
@@ -695,16 +715,26 @@ function SessionContent({
           <Logo size="sm" />
         </Link>
 
-        {/* Room name — centered absolutely so it doesn't shift the side controls */}
-        {session.title && (
-          <span
-            className="absolute left-1/2 -translate-x-1/2 text-sm font-medium max-w-[40%] truncate"
-            style={{ color: 'var(--text-secondary)' }}
-            title={session.title}
-          >
-            {session.title}
-          </span>
-        )}
+        {/* Tab nav — centered absolutely */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+          {(['timer', 'tasks', 'stats'] as const).map((tab) => {
+            const label = tab.charAt(0).toUpperCase() + tab.slice(1)
+            const active = activeTab === tab
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className="px-3 py-1 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer"
+                style={active
+                  ? { background: 'var(--bg-elevated)', color: 'var(--text-primary)', boxShadow: 'var(--shadow-sm)' }
+                  : { color: 'var(--text-muted)' }
+                }
+              >
+                {label}
+              </button>
+            )
+          })}
+        </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
 
@@ -749,8 +779,37 @@ function SessionContent({
         </div>
       )}
 
+      {/* Stats tab */}
+      {activeTab === 'stats' && (
+        <div className="flex-1 overflow-y-auto">
+          <StatsTab userId={userId} username={localUsername} avatarUrl={avatarUrl ?? null} />
+        </div>
+      )}
+
+      {/* Tasks tab */}
+      {activeTab === 'tasks' && (
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 gap-3">
+          <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Tasks</p>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Coming in an upcoming update.</p>
+        </div>
+      )}
+
       {/* Main */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-8">
+      <main className={activeTab === 'timer' ? 'flex-1 flex flex-col items-center justify-start px-4 sm:px-6 pt-6 sm:pt-8 pb-4' : 'hidden'}>
+        {/* Room name */}
+        {session.title && (
+          <div className="flex flex-col items-center gap-1 mb-2">
+            <p className="text-[10px] font-semibold tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>Room</p>
+            <h1
+              className="text-lg font-bold text-center max-w-xs truncate"
+              style={{ color: 'var(--text-primary)' }}
+              title={session.title}
+            >
+              {session.title}
+            </h1>
+          </div>
+        )}
+
         {/* Timer card */}
         <div
           className="w-full max-w-sm sm:max-w-md flex flex-col items-center gap-4 sm:gap-5 p-5 sm:p-8 rounded-3xl animate-scale-in"
@@ -762,16 +821,20 @@ function SessionContent({
         >
           <ModeSelector mode={mode} isHost={canControl} onChange={handleModeChange} />
 
-          {/* Round indicator — always visible; dimmed on round 1 idle */}
+          {/* Round indicator */}
           <p
-            className="text-xs transition-opacity duration-300 mt-1"
-            style={{
-              color: isFirstRoundIdle ? 'var(--text-secondary)' : 'var(--text-primary)',
-              fontSize: isFirstRoundIdle ? '11px' : undefined,
-            }}
+            className="text-xs mt-1"
+            style={{ color: 'var(--text-muted)' }}
           >
             {roundLabel}
           </p>
+
+          {/* Today's pomodoro count — auth users only */}
+          {userId && todayCount !== null && (
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              #{todayCount} today
+            </p>
+          )}
 
           {/* Timer ring */}
           <div className="block sm:hidden">
