@@ -795,7 +795,7 @@ function SessionContent({
       )}
 
       {/* Main */}
-      <main className={activeTab === 'timer' ? 'flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-8' : 'hidden'}>
+      <main className={activeTab === 'timer' ? 'flex-1 flex flex-col items-center justify-start px-4 sm:px-6 pt-6 sm:pt-8 pb-4' : 'hidden'}>
         {/* Room name */}
         {session.title && (
           <div className="flex flex-col items-center gap-1 mb-2">
