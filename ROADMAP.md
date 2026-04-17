@@ -501,7 +501,7 @@ Day 43. Buffer — polish, bug fixes, performance
 - [x] Day 1 — Room rename
 - [x] Day 2 — Default room names
 - [x] Day 3 — Public/Private toggle
-- [ ] Day 4 — Pomodoro counter + long break
+- [x] Day 4 — Pomodoro counter + long break
 - [ ] Day 5 — Custom timer presets
 - [ ] Day 6 — Session tags
 - [ ] Day 7 — Task list in session
