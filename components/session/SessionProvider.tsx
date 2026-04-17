@@ -619,15 +619,12 @@ function SessionContent({
   const handleApplySettings = useCallback(async (newSettings: SessionSettings) => {
     setSessionSettings(newSettings)
     setShowSettings(false)
-    focusCountRef.current = 0
-    setFocusCount(0)
     const newState = reset(toSecs(newSettings.durations))
     if (canControl) {
       const { error } = await supabase.from('sessions').update({
         running: false,
         time_left: newState.timeLeft,
         mode: newState.mode,
-        pomos_done: 0,
         settings: {
           focus: newSettings.durations.focus,
           short: newSettings.durations.short,
