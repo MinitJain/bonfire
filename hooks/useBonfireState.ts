@@ -82,6 +82,7 @@ export function useBonfireState({
   const prevParticipantRef     = useRef(participantCount)
   const tabHiddenAtRef         = useRef<number | null>(null)
   const surgeTimerRef          = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const returnSurgeTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
   const accountabilityRef      = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // ── Pomodoro complete → surge ─────────────────────────────────────────────
@@ -147,10 +148,11 @@ export function useBonfireState({
         // Always recover from any accountability decay on return
         setAccountabilityDecay(0)
 
-        // Return surge — (B from plan) reward coming back
+        // Return surge — reward coming back to the tab
         if (status === 'running') {
           setIntensityBoost(b => b + 0.15)
-          setTimeout(() => setIntensityBoost(b => Math.max(b - 0.15, 0)), 1500)
+          if (returnSurgeTimerRef.current) clearTimeout(returnSurgeTimerRef.current)
+          returnSurgeTimerRef.current = setTimeout(() => setIntensityBoost(b => Math.max(b - 0.15, 0)), 1500)
         }
       }
     }
@@ -159,6 +161,7 @@ export function useBonfireState({
     return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange)
       if (accountabilityRef.current) clearInterval(accountabilityRef.current)
+      if (returnSurgeTimerRef.current) clearTimeout(returnSurgeTimerRef.current)
     }
   }, [accountabilityMode, status, mode])
 

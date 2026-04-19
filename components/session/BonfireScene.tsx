@@ -553,7 +553,7 @@ export function BonfireScene({ targetIntensity, isSurging, focusCount, mode }: B
   const logCount = Math.min(2 + focusCount, 8)
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: 'clamp(140px, 26vh, 260px)', position: 'relative' }}>
+    <div ref={containerRef} aria-hidden="true" style={{ width: '100%', height: 'clamp(140px, 26vh, 260px)', position: 'relative' }}>
       {ready && (
         <Canvas
           camera={{ fov: 42, near: 0.1, far: 50 }}

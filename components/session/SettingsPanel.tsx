@@ -80,7 +80,7 @@ function ToggleRow({ label, checked, onToggle }: { label: string; checked: boole
 
 export function SettingsPanel({ settings, onApply, disabled, isWatcher, isPublic, onTogglePublic }: SettingsPanelProps) {
   const [local, setLocal] = useState(settings)
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
 
   const setDuration = (key: keyof TimerDurations) => (v: number) =>
     setLocal(prev => ({ ...prev, durations: { ...prev.durations, [key]: v } }))
@@ -187,7 +187,7 @@ export function SettingsPanel({ settings, onApply, disabled, isWatcher, isPublic
         style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
       >
         {(['light', 'dark'] as const).map((t) => {
-          const active = theme === t || (!theme && t === 'dark')
+          const active = resolvedTheme === t
           return (
             <button
               key={t}

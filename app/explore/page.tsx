@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Flame } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -152,7 +153,7 @@ export default async function ExplorePage() {
             className="flex flex-col items-center justify-center text-center py-24 rounded-3xl"
             style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
           >
-            <div className="text-5xl mb-4">🍅</div>
+            <Flame className="w-12 h-12 mb-4" style={{ color: 'var(--accent)' }} />
             <h2 className="font-display font-bold text-xl mb-2" style={{ color: 'var(--text-primary)' }}>
               No live rooms right now
             </h2>

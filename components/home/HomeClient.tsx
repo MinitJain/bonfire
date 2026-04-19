@@ -94,8 +94,9 @@ function HomeContent({ user, profileUsername, activeSessionCount }: HomeClientPr
       const { id } = await res.json() as { id: string }
       if (finalGuestName) localStorage.setItem(`pomodoro_nick_${id}`, finalGuestName)
       localStorage.setItem(`pomodoro_host_${id}`, '1')
-      if ('startViewTransition' in document) {
-        ;(document as any).startViewTransition(() => router.push(`/session/${id}`))
+      const doc = document as Document & { startViewTransition?: (cb: () => void) => void }
+      if (doc.startViewTransition) {
+        doc.startViewTransition(() => router.push(`/session/${id}`))
       } else {
         router.push(`/session/${id}`)
       }
@@ -178,7 +179,7 @@ function HomeContent({ user, profileUsername, activeSessionCount }: HomeClientPr
                 >
                   <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                      {user.user_metadata?.full_name as string ?? 'User'}
+                      {typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : 'User'}
                     </p>
                     <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user.email}</p>
                   </div>

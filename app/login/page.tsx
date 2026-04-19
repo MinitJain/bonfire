@@ -3,6 +3,7 @@
 import { Suspense, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Mail } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { createClient } from '@/lib/supabase/client'
@@ -86,7 +87,7 @@ function LoginContent() {
           {emailSent ? (
             /* ── Confirmation state ── */
             <div className="flex flex-col items-center text-center gap-3">
-              <div className="text-4xl">📬</div>
+              <Mail className="w-10 h-10" style={{ color: 'var(--accent)' }} />
               <h1 className="font-display font-bold text-xl" style={{ color: 'var(--text-primary)' }}>
                 Check your inbox
               </h1>

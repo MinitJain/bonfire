@@ -797,10 +797,15 @@ function SessionContent({
   const handleSkip = useCallback(() => {
     let nextMode: TimerMode;
     const skippingFocus = mode === "focus";
+    // Only count a focus completion when the timer has naturally finished —
+    // skipping mid-session should not inflate stats.
+    const countCompletion = skippingFocus && status === "finished";
     if (skippingFocus) {
-      focusCountRef.current += 1;
-      setFocusCount(focusCountRef.current);
-      setTodayCount((prev) => (prev ?? 0) + 1);
+      if (countCompletion) {
+        focusCountRef.current += 1;
+        setFocusCount(focusCountRef.current);
+        setTodayCount((prev) => (prev ?? 0) + 1);
+      }
       nextMode =
         focusCountRef.current % sessionSettings.rounds === 0 ? "long" : "short";
     } else {
@@ -822,7 +827,7 @@ function SessionContent({
         time_left: newState.timeLeft,
         total_time: newState.totalTime,
         mode: newState.mode,
-        ...(skippingFocus ? { pomos_done: focusCountRef.current } : {}),
+        ...(countCompletion ? { pomos_done: focusCountRef.current } : {}),
       });
     }
   }, [
@@ -871,8 +876,6 @@ function SessionContent({
 
   const handleApplySettings = useCallback(
     async (newSettings: SessionSettings) => {
-      setSessionSettings(newSettings);
-      setShowSettings(false);
       const newState = reset(toSecs(newSettings.durations));
       if (canControl) {
         const { error } = await supabase
@@ -895,11 +898,13 @@ function SessionContent({
         if (error) {
           console.error("[handleApplySettings] DB update failed:", error);
           return false;
-        } else {
-          broadcastWithCount(newState);
-          broadcastShareLock(!newSettings.allowGuestShare);
         }
+        broadcastWithCount(newState);
+        broadcastShareLock(!newSettings.allowGuestShare);
       }
+      // Apply local state only after DB confirms (or in solo/watcher mode)
+      setSessionSettings(newSettings);
+      setShowSettings(false);
       return true;
     },
     [
@@ -920,15 +925,18 @@ function SessionContent({
       isTogglingPublic.current = true;
       const oldValue = isPublic;
       setIsPublic(newValue);
-      const { error } = await supabase
-        .from("sessions")
-        .update({ is_public: newValue })
-        .eq("id", session.id);
-      if (error) {
-        console.error("[handleTogglePublic] DB update failed:", error);
-        setIsPublic(oldValue);
+      try {
+        const { error } = await supabase
+          .from("sessions")
+          .update({ is_public: newValue })
+          .eq("id", session.id);
+        if (error) {
+          console.error("[handleTogglePublic] DB update failed:", error);
+          setIsPublic(oldValue);
+        }
+      } finally {
+        isTogglingPublic.current = false;
       }
-      isTogglingPublic.current = false;
     },
     [isPublic, supabase, session.id],
   );
@@ -979,7 +987,9 @@ function SessionContent({
     setPendingRequest(null);
   }, [pendingRequest, broadcastSettingsResponse]);
 
-  const roundLabel = `${focusCount} pomodoro${focusCount !== 1 ? "s" : ""} completed today`;
+  const labelCount = userId ? (todayCount ?? 0) : focusCount;
+  const labelScope = userId ? "today" : "in this room";
+  const roundLabel = `${labelCount} pomodoro${labelCount !== 1 ? "s" : ""} completed ${labelScope}`;
 
   return (
     <div

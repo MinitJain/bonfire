@@ -14,7 +14,7 @@ const CreateSessionSchema = z.object({
   jam_mode: z.boolean().optional(),
   session_mode: z.enum(['host', 'jam', 'solo']).optional(),
   is_public: z.boolean().optional(),
-  display_name: z.string().max(40).nullable().optional(),
+  display_name: z.string().trim().min(1).max(40).nullable().optional(),
 })
 
 export async function POST(request: Request) {

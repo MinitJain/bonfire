@@ -525,7 +525,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
                   if (e.key === 'Escape') setShowCreateModal(false)
                 }}
                 maxLength={100}
-                placeholder="e.g. focused-panda-342"
+                placeholder="e.g. focused panda 342"
                 className="w-full pl-4 pr-11 py-3 rounded-xl text-sm outline-none"
                 style={{
                   background: 'var(--bg-secondary)',
@@ -622,7 +622,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
           <span>© {new Date().getFullYear()} Bonfire</span>
         </div>
         <a
-          href="https://github.com/MinitJain/pomodoro-jam"
+          href="https://github.com/MinitJain/bonfire"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 transition-colors"
