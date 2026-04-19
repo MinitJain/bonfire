@@ -40,3 +40,6 @@ A real-time shared Pomodoro timer app built with Next.js 14.
 - `npm run build` - Production build
 - `npm run typecheck` - TypeScript check
 - `npm run lint` - ESLint
+
+## Writing Rules
+- Never use em dashes (—) in any text: UI copy, READMEs, docs, commit messages, or any other written output. Use a colon, period, or plain hyphen (-) instead.
