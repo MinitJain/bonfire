@@ -139,7 +139,7 @@ export default async function ExplorePage() {
               <div className="font-display font-bold text-2xl" style={{ color: 'var(--text-primary)' }}>
                 {totalFocusing}
               </div>
-              <div className="text-[10px] font-semibold uppercase tracking-widest mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              <div className="text-xs font-medium mt-0.5" style={{ color: 'var(--text-muted)' }}>
                 Focusing Now
               </div>
             </div>
@@ -200,11 +200,16 @@ export default async function ExplorePage() {
                     </span>
                   </div>
 
-                  {/* Middle: room title */}
+                  {/* Middle: room title + host */}
                   <div className="flex-1 mb-4">
                     <h2 className="font-display font-bold text-lg leading-snug" style={{ color: 'var(--text-primary)' }}>
                       {session.title ?? 'Focus Room'}
                     </h2>
+                    {session.host_name && (
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                        hosted by {session.host_name}
+                      </p>
+                    )}
                   </div>
 
                   {/* Bottom: avatar stack + count */}
@@ -248,7 +253,7 @@ export default async function ExplorePage() {
                     </div>
 
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {count === 1 ? 'Focusing now' : `${count} focusing${count >= 5 ? ' 🔥' : ''}`}
+                      {count === 1 ? 'Focusing now' : `${count} focusing`}
                     </span>
                   </div>
                 </Link>

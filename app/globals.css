@@ -46,7 +46,7 @@
 
   /* Fonts */
   --font-dm-sans: 'DM Sans', system-ui, sans-serif;
-  --font-syne: 'Syne', sans-serif;
+  --font-display: 'Plus Jakarta Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-space-mono: var(--font-mono); /* backward compat */
 }
@@ -60,7 +60,7 @@
   --bg-elevated: #222220;
   --text-primary: #F5F5F0;
   --text-secondary: #9B9B8E;
-  --text-muted: #5A5A50;
+  --text-muted: #7E7E72;
   --accent: #FF5533;
   --accent-soft: rgba(255, 85, 51, 0.1);
   --accent-hover: #FF6644;

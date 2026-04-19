@@ -20,9 +20,9 @@ export async function generateMetadata({ params }: SessionPageProps): Promise<Me
   const hostName = data?.host_name ?? 'Someone'
   const roomTitle = data?.title ?? `${hostName}'s Room`
   const focusMins: number = (data?.settings as { focus?: number } | null)?.focus ?? 25
-  const ogTitle = `${hostName} invited you to PomodoroJam 🍅`
+  const ogTitle = `${hostName} invited you to Bonfire`
   const ogDesc = `Join ${hostName}'s ${focusMins}-min focus room. Open the link to join.`
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pomodoro-jam.vercel.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bonfirefocus.vercel.app'
 
   return {
     title: roomTitle,
@@ -98,6 +98,7 @@ export default async function SessionPage({ params }: SessionPageProps) {
         isHost={isHost}
         username={userProfile?.display_name ?? userProfile?.username ?? user?.email?.split('@')[0] ?? null}
         avatarUrl={userProfile?.avatar_url ?? null}
+        profileUsername={userProfile?.username ?? null}
       />
     </SessionErrorBoundary>
   )

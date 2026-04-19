@@ -1,4 +1,4 @@
-# PomodoroJam
+# Bonfire
 
 A real-time shared Pomodoro timer app built with Next.js 14.
 

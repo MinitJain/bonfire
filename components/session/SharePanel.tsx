@@ -15,7 +15,7 @@ function getSessionUrl(sessionId: string, appUrl?: string): string {
     appUrl ||
     (typeof window !== 'undefined'
       ? window.location.origin
-      : process.env.NEXT_PUBLIC_APP_URL || 'https://pomodoro-jam.vercel.app')
+      : process.env.NEXT_PUBLIC_APP_URL || 'https://bonfirefocus.vercel.app')
   return `${base}/session/${sessionId}`
 }
 
@@ -62,7 +62,7 @@ export function SharePanel({ sessionId, sessionName, appUrl }: SharePanelProps) 
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
-          title: sessionName ? `PomodoroJam: ${sessionName}` : 'PomodoroJam Room',
+          title: sessionName ? `Bonfire: ${sessionName}` : 'Bonfire Room',
           text: 'Join my focus room!',
           url,
         })

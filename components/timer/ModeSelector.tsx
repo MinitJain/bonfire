@@ -45,8 +45,8 @@ export function ModeSelector({ mode, isHost, onChange, className }: ModeSelector
             style={
               isActive
                 ? {
-                    background: 'var(--bg-elevated)',
-                    color: 'var(--text-primary)',
+                    background: 'var(--accent)',
+                    color: '#fff',
                     boxShadow: 'var(--shadow-sm)',
                   }
                 : {

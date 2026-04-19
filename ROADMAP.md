@@ -1,6 +1,6 @@
-# PomodoroJam — Product Roadmap
+# Bonfire — Product Roadmap
 
-> Vision: Transform PomodoroJam from a shared timer into a focus social network —
+> Vision: Transform Bonfire from a shared timer into a focus social network —
 > where sessions become rooms, productivity becomes identity, and your streak with
 > a friend is worth sharing.
 >
@@ -277,7 +277,7 @@
 > Makes the app sticky for new users who have zero friends on it yet.
 
 ### 5a. Onboarding flow
-- [ ] First-time visitor sees a 3-step onboarding: what is PomodoroJam, how rooms work, the bonfire mechanic
+- [ ] First-time visitor sees a 3-step onboarding: what is Bonfire, how rooms work, the bonfire mechanic
 - [ ] "Aha moment" designed in: show a live room with the fire burning before they even sign up
 - [ ] Skip-friendly — should never feel forced
 - [ ] After sign-up: prompt to follow 1-2 suggested users (seeded accounts that are always "active")

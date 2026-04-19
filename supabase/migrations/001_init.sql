@@ -1,5 +1,5 @@
 -- ============================================================
--- PomodoroJam — Initial Schema
+-- Bonfire — Initial Schema
 -- ============================================================
 
 -- Profiles (extends Supabase auth.users)

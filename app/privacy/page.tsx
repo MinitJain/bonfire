@@ -3,7 +3,7 @@ import { PolicyPageLayout } from '@/components/ui/PolicyPageLayout'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'Privacy Policy for PomodoroJam',
+  description: 'Privacy Policy for Bonfire',
 }
 
 export default function PrivacyPage() {
@@ -15,7 +15,7 @@ export default function PrivacyPage() {
       </section>
       <section>
         <h2 className="font-semibold text-base mb-2 text-[var(--text-primary)]">How we use it</h2>
-        <p>Your data is used solely to provide the PomodoroJam service: displaying your profile, tracking your focus stats, and enabling real-time session sync. We do not sell your data or use it for advertising.</p>
+        <p>Your data is used solely to provide the Bonfire service: displaying your profile, tracking your focus stats, and enabling real-time session sync. We do not sell your data or use it for advertising.</p>
       </section>
       <section>
         <h2 className="font-semibold text-base mb-2 text-[var(--text-primary)]">Third parties</h2>

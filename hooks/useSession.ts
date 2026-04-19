@@ -63,6 +63,25 @@ export function useSession({
       joined_at: joinedAtRef.current,
     })
   }, [isHost, username])
+
+  // Re-track presence when the tab becomes visible again after being hidden.
+  // Browser JS-timer throttling can kill the Supabase heartbeat while the tab is
+  // hidden, causing a disconnect. Re-tracking immediately on focus ensures the
+  // channel reconnects and cancels any pending leave timer quickly.
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === 'visible' && channelRef.current) {
+        channelRef.current.track({
+          username: usernameRef.current ?? null,
+          avatar_url: avatarUrlRef.current ?? null,
+          is_host: isHostRef.current,
+          joined_at: joinedAtRef.current,
+        })
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [])
   const pendingLeaveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const timerCallbacksRef = useRef<Set<(state: TimerState) => void>>(new Set())
   const shareLockCallbacksRef = useRef<Set<(locked: boolean) => void>>(new Set())
@@ -164,11 +183,11 @@ export function useSession({
         ? channel.presenceState<{ username?: string | null }>()[key]?.[0]
         : null
       const leftUsername = leaving?.username ?? null
-      // Debounce leave for other participants — 15s grace period avoids false
-      // "X left" messages and participant list flicker caused by tab minimize /
-      // app switch / brief disconnects. Participant stays visible in the list
-      // until the grace window expires. If they rejoin within 15s the timer is
-      // cancelled above and they never disappear.
+      // 5-minute grace period — Supabase heartbeat gets throttled when a tab is
+      // hidden (browser JS timer throttling), causing a disconnect after ~30–60s.
+      // We wait 300s before treating this as a real leave so that users switching
+      // tabs to do their actual work are never shown as "left" to others.
+      // If they rejoin within 300s the pending timer is cancelled (see join handler above).
       if (key !== effectiveIdRef.current) {
         const existing = pendingLeaveTimers.current.get(key)
         if (existing !== undefined) clearTimeout(existing)
@@ -176,7 +195,7 @@ export function useSession({
           pendingLeaveTimers.current.delete(key)
           leaveCallbacksRef.current.forEach(cb => cb(leftUsername))
           setParticipants((prev) => prev.filter((p) => p.user_id !== key))
-        }, 15_000)
+        }, 300_000)
         pendingLeaveTimers.current.set(key, timer)
       } else {
         setParticipants((prev) => prev.filter((p) => p.user_id !== key))

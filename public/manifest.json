@@ -1,7 +1,7 @@
 {
-  "name": "PomodoroJam",
-  "short_name": "PomodoroJam",
-  "description": "A shared Pomodoro timer for friends. Start a session, share the link, focus in sync.",
+  "name": "Bonfire",
+  "short_name": "Bonfire",
+  "description": "A shared focus timer for friends. Start a room, share the link, focus in sync.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0F0F0D",

@@ -2,11 +2,11 @@
 
 export type AmbientType = 'brown' | 'white' | 'pink' | 'rain'
 
-export const AMBIENT_SOUNDS: { type: AmbientType; label: string; emoji: string; description: string }[] = [
-  { type: 'brown', label: 'Brown', emoji: '🌊', description: 'Deep, warm rumble — like a distant waterfall' },
-  { type: 'pink',  label: 'Pink',  emoji: '🌸', description: 'Balanced noise — the most natural-sounding' },
-  { type: 'white', label: 'White',     emoji: '📻', description: 'Classic white noise — blocks all distractions' },
-  { type: 'rain',  label: 'Rain',      emoji: '🌧️', description: 'Rain-like texture — cozy and grounding' },
+export const AMBIENT_SOUNDS: { type: AmbientType; label: string; description: string }[] = [
+  { type: 'brown', label: 'Brown', description: 'Deep, warm rumble. Like a distant waterfall.' },
+  { type: 'pink',  label: 'Pink',  description: 'Balanced noise. The most natural-sounding.' },
+  { type: 'white', label: 'White', description: 'Classic white noise. Blocks all distractions.' },
+  { type: 'rain',  label: 'Rain',  description: 'Rain-like texture. Cozy and grounding.' },
 ]
 
 export class AmbientPlayer {

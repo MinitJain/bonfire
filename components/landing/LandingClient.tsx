@@ -619,7 +619,7 @@ function LandingContent({ user, profileUsername, activeSessionCount }: LandingCl
         <div className="flex items-center gap-4 text-xs">
           <Link href="/privacy" style={{ color: 'var(--text-muted)' }}>Privacy</Link>
           <Link href="/terms" style={{ color: 'var(--text-muted)' }}>Terms</Link>
-          <span>© {new Date().getFullYear()} PomodoroJam</span>
+          <span>© {new Date().getFullYear()} Bonfire</span>
         </div>
         <a
           href="https://github.com/MinitJain/pomodoro-jam"

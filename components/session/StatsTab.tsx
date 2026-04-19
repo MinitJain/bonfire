@@ -149,17 +149,17 @@ export function StatsTab({ userId, username, avatarUrl }: StatsTabProps) {
   }
 
   const todayPills = [
-    { label: 'POMODOROS', value: loading ? '—' : String(today?.pomodoros ?? 0) },
-    { label: 'FOCUS MIN', value: loading ? '—' : String(today?.minutes ?? 0) },
-    { label: 'SESSIONS', value: loading ? '—' : String(today?.sessions ?? 0) },
-    { label: 'DURATION', value: loading ? '—' : formatDuration(today?.minutes ?? 0) },
+    { label: 'POMODOROS', value: loading ? '...' : String(today?.pomodoros ?? 0) },
+    { label: 'FOCUS MIN', value: loading ? '...' : String(today?.minutes ?? 0) },
+    { label: 'SESSIONS', value: loading ? '...' : String(today?.sessions ?? 0) },
+    { label: 'DURATION', value: loading ? '...' : formatDuration(today?.minutes ?? 0) },
   ]
 
   const lifetimePills = [
-    { label: 'TOTAL POMODOROS', value: loading ? '—' : String(lifetime?.total_pomodoros ?? 0) },
-    { label: 'TOTAL FOCUS HOURS', value: loading ? '—' : (lifetime ? (lifetime.total_focus_minutes / 60).toFixed(1) : '0') },
-    { label: 'CURRENT STREAK', value: loading ? '—' : `${lifetime?.current_streak ?? 0} Days` },
-    { label: 'LONGEST STREAK', value: loading ? '—' : `${lifetime?.longest_streak ?? 0} Days` },
+    { label: 'TOTAL POMODOROS', value: loading ? '...' : String(lifetime?.total_pomodoros ?? 0) },
+    { label: 'TOTAL FOCUS HOURS', value: loading ? '...' : (lifetime ? (lifetime.total_focus_minutes / 60).toFixed(1) : '0') },
+    { label: 'CURRENT STREAK', value: loading ? '...' : `${lifetime?.current_streak ?? 0} Days` },
+    { label: 'LONGEST STREAK', value: loading ? '...' : `${lifetime?.longest_streak ?? 0} Days` },
   ]
 
   return (

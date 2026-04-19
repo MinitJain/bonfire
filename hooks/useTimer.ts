@@ -196,19 +196,19 @@ export function useTimer({
     const secs = String(timeLeft % 60).padStart(2, '0')
 
     const modeLabel: Record<TimerMode, string> = {
-      focus: '🍅 Focus',
-      short: '☕ Short Break',
-      long: '🎉 Long Break',
+      focus: 'Focus',
+      short: 'Short Break',
+      long: 'Long Break',
     }
 
     if (timeLeft > 0 && timerState.status !== 'idle') {
-      document.title = `${mins}:${secs} ${modeLabel[timerState.mode]} | PomodoroJam`
+      document.title = `${mins}:${secs} ${modeLabel[timerState.mode]} | Bonfire`
     } else {
-      document.title = 'PomodoroJam 🍅'
+      document.title = 'Bonfire'
     }
 
     return () => {
-      document.title = 'PomodoroJam 🍅'
+      document.title = 'Bonfire'
     }
   }, [timeLeft, timerState.mode, timerState.status])
 
@@ -225,7 +225,7 @@ export function useTimer({
   useEffect(() => {
     return () => {
       resetFavicon()
-      document.title = 'PomodoroJam 🍅'
+      document.title = 'Bonfire'
     }
   }, [])
 

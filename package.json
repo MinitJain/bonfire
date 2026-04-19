@@ -1,5 +1,5 @@
 {
-  "name": "pomodorojam",
+  "name": "bonfire",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,8 +12,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^8.18.0",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.0",
+    "@types/three": "^0.184.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/og": "^0.6.0",
     "clsx": "^2.1.0",
@@ -24,6 +27,7 @@
     "react-dom": "^18",
     "react-easy-crop": "^5.5.7",
     "tailwind-merge": "^2.3.0",
+    "three": "^0.184.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {

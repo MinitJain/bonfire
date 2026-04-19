@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pomodoro-jam.vercel.app'
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://bonfirefocus.vercel.app'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

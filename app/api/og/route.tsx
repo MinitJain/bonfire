@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   const pomodoros = clampInt(searchParams.get('pomodoros'))
   const streak = clampInt(searchParams.get('streak'))
   const hours = clampInt(searchParams.get('hours'))
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://pomodoro-jam.vercel.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bonfirefocus.vercel.app'
   const displayUrl = appUrl.replace(/^https?:\/\//, '')
 
   if (type === 'stats') {
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       (
         <div style={{ background: '#0F0F0D', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', position: 'relative' }}>
           <div style={{ position: 'absolute', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,85,51,0.1) 0%, transparent 65%)', top: '15px', left: '300px' }} />
-          <div style={{ fontSize: '20px', color: '#666', marginBottom: '8px' }}>🍅 PomodoroJam</div>
+          <div style={{ fontSize: '20px', color: '#666', marginBottom: '8px' }}>Bonfire</div>
           <div style={{ fontSize: '40px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>{username}</div>
           <div style={{ fontSize: '16px', color: '#888', marginBottom: '48px' }}>Focus stats</div>
           <div style={{ display: 'flex', gap: '40px' }}>
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
             <ellipse cx="38" cy="44" rx="9" ry="6" fill="rgba(255,255,255,0.25)" />
           </svg>
           <div style={{ fontSize: '22px', color: '#888888', marginBottom: '12px', letterSpacing: '0.02em' }}>
-            PomodoroJam
+            Bonfire
           </div>
           <div style={{ fontSize: '52px', fontWeight: '800', color: '#FFFFFF', textAlign: 'center', maxWidth: '900px', lineHeight: '1.2', marginBottom: '16px', padding: '0 40px' }}>
             {host} invited you to a focus room
@@ -146,8 +146,8 @@ export async function GET(request: NextRequest) {
             marginBottom: '20px',
           }}
         >
-          <span style={{ color: '#FFFFFF' }}>Pomodoro</span>
-          <span style={{ color: '#FF5533' }}>Jam</span>
+          <span style={{ color: '#FFFFFF' }}>Bon</span>
+          <span style={{ color: '#FF5533' }}>fire</span>
         </div>
 
         {/* Session name or default tagline */}
