@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-
+import { useTheme } from 'next-themes'
 import { Globe, Lock } from 'lucide-react'
 
 export interface TimerDurations {
@@ -80,6 +80,7 @@ function ToggleRow({ label, checked, onToggle }: { label: string; checked: boole
 
 export function SettingsPanel({ settings, onApply, disabled, isWatcher, isPublic, onTogglePublic }: SettingsPanelProps) {
   const [local, setLocal] = useState(settings)
+  const { resolvedTheme, setTheme } = useTheme()
 
   const setDuration = (key: keyof TimerDurations) => (v: number) =>
     setLocal(prev => ({ ...prev, durations: { ...prev.durations, [key]: v } }))
@@ -155,8 +156,6 @@ export function SettingsPanel({ settings, onApply, disabled, isWatcher, isPublic
           >
             <div className="flex flex-col items-start gap-0.5">
               <span className="text-sm flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-
-                {isPublic ? <Globe size={14} /> : <Lock size={14} />}
                 {isPublic ? <Globe size={14} /> : <Lock size={14} />}
                 {isPublic ? 'Public room' : 'Private room'}
               </span>
@@ -176,6 +175,35 @@ export function SettingsPanel({ settings, onApply, disabled, isWatcher, isPublic
           </button>
         </>
       )}
+
+      <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+        Appearance
+      </p>
+
+      <div
+        className="flex rounded-xl p-0.5 gap-0.5"
+        role="group"
+        aria-label="Theme"
+        style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
+      >
+        {(['light', 'dark'] as const).map((t) => {
+          const active = resolvedTheme === t
+          return (
+            <button
+              key={t}
+              onClick={() => setTheme(t)}
+              aria-pressed={active}
+              className="flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer capitalize"
+              style={active
+                ? { background: 'var(--bg-elevated)', color: 'var(--text-primary)', boxShadow: 'var(--shadow-sm)' }
+                : { color: 'var(--text-muted)' }
+              }
+            >
+              {t === 'light' ? 'Light' : 'Dark'}
+            </button>
+          )
+        })}
+      </div>
 
       <button
         onClick={() => onApply(local)}

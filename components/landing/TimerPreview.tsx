@@ -148,7 +148,7 @@ export function TimerPreview({ onStartSession }: TimerPreviewProps) {
                 </div>
                 {crown && (
                   <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full flex items-center justify-center text-[7px]" style={{ background: 'var(--accent)' }}>
-                    👑
+                    H
                   </div>
                 )}
               </div>

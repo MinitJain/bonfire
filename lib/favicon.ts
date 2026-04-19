@@ -61,21 +61,12 @@ export function updateFavicon(timeLeft: number, mode: string): void {
   ctx.lineWidth = 1.5
   ctx.stroke()
 
-  // Text
+  // Text — show only minutes for readability (e.g. "25", "4", "0")
   ctx.fillStyle = colors.text
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-
-  if (mins >= 10) {
-    ctx.font = 'bold 14px monospace'
-    ctx.fillText(String(mins), 16, 16)
-  } else if (mins > 0) {
-    ctx.font = 'bold 10px monospace'
-    ctx.fillText(`${mins}:${String(secs).padStart(2, '0')}`, 16, 16)
-  } else {
-    ctx.font = 'bold 11px monospace'
-    ctx.fillText(`:${String(secs).padStart(2, '0')}`, 16, 16)
-  }
+  ctx.font = mins >= 10 ? 'bold 15px Arial, sans-serif' : 'bold 18px Arial, sans-serif'
+  ctx.fillText(String(mins), 16, 16)
 
   const link = getLink()
   link.href = canvas.toDataURL('image/png')
@@ -90,25 +81,28 @@ export function resetFavicon(): void {
 
   ctx.clearRect(0, 0, FAVICON_SIZE, FAVICON_SIZE)
 
-  // Red circle background
+  // Radial gradient: dark center → deep red edge
+  const grad = ctx.createRadialGradient(16, 16, 2, 16, 16, 15)
+  grad.addColorStop(0, '#1a0000')
+  grad.addColorStop(1, '#c0200f')
+
   ctx.beginPath()
   ctx.arc(16, 16, 15, 0, 2 * Math.PI)
-  ctx.fillStyle = '#e8472a'
+  ctx.fillStyle = grad
   ctx.fill()
 
-  // Thin ring
+  // Shiny highlight ring
   ctx.beginPath()
   ctx.arc(16, 16, 14, 0, 2 * Math.PI)
-  ctx.strokeStyle = '#c23820'
-  ctx.lineWidth = 1.5
+  ctx.strokeStyle = 'rgba(255, 100, 50, 0.5)'
+  ctx.lineWidth = 1
   ctx.stroke()
 
-  // Tomato emoji — canvas uses system emoji fonts, always renders correctly
-  ctx.font = '18px serif'
+  // Fire emoji — large, centered
+  ctx.font = '20px serif'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillText('🍅', 16, 17)
+  ctx.fillText('🔥', 16, 16)
 
-  const link = getLink()
-  link.href = canvas.toDataURL('image/png')
+  getLink().href = canvas.toDataURL('image/png')
 }

@@ -14,7 +14,7 @@ export function generateSessionId(): string {
 export function formatSessionUrl(sessionId: string): string {
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
-    (typeof window !== 'undefined' ? window.location.origin : 'https://pomodoro-jam.vercel.app')
+    (typeof window !== 'undefined' ? window.location.origin : 'https://bonfirefocus.vercel.app')
   return `${appUrl}/session/${sessionId}`
 }
 

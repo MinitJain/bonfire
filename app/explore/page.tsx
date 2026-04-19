@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Flame } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
@@ -139,7 +140,7 @@ export default async function ExplorePage() {
               <div className="font-display font-bold text-2xl" style={{ color: 'var(--text-primary)' }}>
                 {totalFocusing}
               </div>
-              <div className="text-[10px] font-semibold uppercase tracking-widest mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              <div className="text-xs font-medium mt-0.5" style={{ color: 'var(--text-muted)' }}>
                 Focusing Now
               </div>
             </div>
@@ -152,7 +153,7 @@ export default async function ExplorePage() {
             className="flex flex-col items-center justify-center text-center py-24 rounded-3xl"
             style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
           >
-            <div className="text-5xl mb-4">🍅</div>
+            <Flame className="w-12 h-12 mb-4" style={{ color: 'var(--accent)' }} />
             <h2 className="font-display font-bold text-xl mb-2" style={{ color: 'var(--text-primary)' }}>
               No live rooms right now
             </h2>
@@ -200,11 +201,16 @@ export default async function ExplorePage() {
                     </span>
                   </div>
 
-                  {/* Middle: room title */}
+                  {/* Middle: room title + host */}
                   <div className="flex-1 mb-4">
                     <h2 className="font-display font-bold text-lg leading-snug" style={{ color: 'var(--text-primary)' }}>
                       {session.title ?? 'Focus Room'}
                     </h2>
+                    {session.host_name && (
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                        hosted by {session.host_name}
+                      </p>
+                    )}
                   </div>
 
                   {/* Bottom: avatar stack + count */}
@@ -248,7 +254,7 @@ export default async function ExplorePage() {
                     </div>
 
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {count === 1 ? 'Focusing now' : `${count} focusing${count >= 5 ? ' 🔥' : ''}`}
+                      {count === 1 ? 'Focusing now' : `${count} focusing`}
                     </span>
                   </div>
                 </Link>

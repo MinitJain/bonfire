@@ -15,10 +15,10 @@ export function Logo({ className, size = 'md' }: LogoProps) {
   return (
     <span
       className={cn('font-display font-bold tracking-tight select-none', sizeClasses[size], className)}
-      aria-label="PomodoroJam"
+      aria-label="Bonfire"
     >
-      <span style={{ color: 'var(--text-primary)' }}>Pomodoro</span>
-      <span style={{ color: 'var(--accent)' }}>Jam</span>
+      <span style={{ color: 'var(--text-primary)' }}>Bon</span>
+      <span style={{ color: 'var(--accent)' }}>fire</span>
     </span>
   )
 }

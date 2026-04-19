@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { DM_Sans, Syne, JetBrains_Mono } from 'next/font/google'
+import { DM_Sans, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 import { Analytics } from '@vercel/analytics/next'
 import { FaviconInit } from '@/components/ui/FaviconInit'
@@ -11,9 +11,9 @@ const dmSans = DM_Sans({
   display: 'swap',
 })
 
-const syne = Syne({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  variable: '--font-syne',
+  variable: '--font-display',
   display: 'swap',
 })
 
@@ -23,52 +23,54 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 })
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pomodoro-jam.vercel.app'
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://bonfirefocus.vercel.app'
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: 'PomodoroJam: Focus Together',
-    template: '%s | PomodoroJam',
+    default: 'Bonfire: Focus Together',
+    template: '%s | Bonfire',
   },
   description:
-    'A shared Pomodoro timer for friends. Start a room, share the link, focus in sync.',
+    'A shared focus timer for friends. Start a room, share the link, focus in sync.',
   keywords: ['pomodoro', 'focus', 'productivity', 'timer', 'shared', 'real-time'],
-  authors: [{ name: 'PomodoroJam' }],
-  creator: 'PomodoroJam',
+  authors: [{ name: 'Bonfire' }],
+  creator: 'Bonfire',
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: appUrl,
-    siteName: 'PomodoroJam',
-    title: 'PomodoroJam: Focus Together',
+    siteName: 'Bonfire',
+    title: 'Bonfire: Focus Together',
     description: 'Real-time shared Pomodoro timer. Focus with friends.',
     images: [
       {
         url: '/api/og',
         width: 1200,
         height: 630,
-        alt: 'PomodoroJam',
+        alt: 'Bonfire',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PomodoroJam: Focus Together',
+    title: 'Bonfire: Focus Together',
     description: 'Real-time shared Pomodoro timer. Focus with friends.',
     images: ['/api/og'],
   },
   manifest: '/manifest.json',
   appleWebApp: {
-    capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'PomodoroJam',
+    title: 'Bonfire',
   },
   icons: {
     apple: '/apple-touch-icon.png',
   },
   alternates: {
     canonical: appUrl,
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
   },
 }
 
@@ -90,7 +92,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${dmSans.variable} ${syne.variable} ${jetbrainsMono.variable}`}
+      className={`${dmSans.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
     >
 <body className="bg-background text-foreground font-sans min-h-screen antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
@@ -100,7 +102,7 @@ export default function RootLayout({
               __html: JSON.stringify({
                 '@context': 'https://schema.org',
                 '@type': 'WebApplication',
-                name: 'PomodoroJam',
+                name: 'Bonfire',
                 url: appUrl,
                 description: 'A shared Pomodoro timer for friends. Start a session, share the link, focus in sync.',
                 applicationCategory: 'ProductivityApplication',

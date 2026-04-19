@@ -26,7 +26,7 @@ export function PolicyPageLayout({ title, lastUpdated, children }: PolicyPageLay
       </main>
 
       <footer className="px-5 sm:px-8 py-5 text-center text-xs text-[var(--text-muted)] border-t border-[var(--border)]">
-        <Link href="/" className="text-[var(--accent)]">← Back to PomodoroJam</Link>
+        <Link href="/" className="text-[var(--accent)]">← Back to Bonfire</Link>
       </footer>
     </div>
   )

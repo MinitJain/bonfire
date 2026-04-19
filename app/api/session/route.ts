@@ -14,6 +14,7 @@ const CreateSessionSchema = z.object({
   jam_mode: z.boolean().optional(),
   session_mode: z.enum(['host', 'jam', 'solo']).optional(),
   is_public: z.boolean().optional(),
+  display_name: z.string().trim().min(1).max(40).nullable().optional(),
 })
 
 export async function POST(request: Request) {
@@ -41,6 +42,8 @@ export async function POST(request: Request) {
       if (profile) {
         hostName = profile.display_name ?? profile.username ?? 'Guest'
       }
+    } else if (parsed.data.display_name) {
+      hostName = parsed.data.display_name
     }
 
     const sessionId = generateSessionId()

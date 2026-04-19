@@ -31,9 +31,9 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
   const name = data.display_name ?? data.username
   return {
     title: name,
-    description: data.bio ?? `${name}'s PomodoroJam profile`,
+    description: data.bio ?? `${name}'s Bonfire profile`,
     openGraph: {
-      title: `${name} | PomodoroJam`,
+      title: `${name} | Bonfire`,
       images: [
         {
           url: `/api/og?name=${encodeURIComponent(name + "'s Profile")}`,

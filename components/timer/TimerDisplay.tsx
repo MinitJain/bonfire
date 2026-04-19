@@ -20,12 +20,14 @@ export function TimerDisplay({ timeLeft, status, mode = 'focus', className }: Ti
 
   return (
     <div
+      suppressHydrationWarning
       className={cn('flex flex-col items-center gap-2', className)}
       aria-label={`Timer: ${formatted}, ${modeLabel[mode]}`}
       role="timer"
       aria-live="off" // intentional: timer updates every second; polite/assertive would spam screen readers
     >
       <span
+        suppressHydrationWarning
         className={cn(
           'font-mono text-6xl sm:text-7xl font-bold tracking-tight',
           'transition-colors duration-300',

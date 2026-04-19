@@ -3,7 +3,7 @@ import { PolicyPageLayout } from '@/components/ui/PolicyPageLayout'
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Terms of Service for PomodoroJam',
+  description: 'Terms of Service for Bonfire',
 }
 
 export default function TermsPage() {
@@ -11,11 +11,11 @@ export default function TermsPage() {
     <PolicyPageLayout title="Terms of Service" lastUpdated="March 2026">
       <section>
         <h2 className="font-semibold text-base mb-2 text-[var(--text-primary)]">Use of service</h2>
-        <p>PomodoroJam is a free productivity tool. You may use it for personal or professional focus sessions. You agree not to abuse the service, create sessions for malicious purposes, or attempt to reverse-engineer the platform.</p>
+        <p>Bonfire is a free productivity tool. You may use it for personal or professional focus sessions. You agree not to abuse the service, create sessions for malicious purposes, or attempt to reverse-engineer the platform.</p>
       </section>
       <section>
         <h2 className="font-semibold text-base mb-2 text-[var(--text-primary)]">No warranty</h2>
-        <p>PomodoroJam is provided &quot;as is&quot; without warranty of any kind. We make no guarantees about uptime or data retention. Session data may be deleted after 7 days of inactivity.</p>
+        <p>Bonfire is provided &quot;as is&quot; without warranty of any kind. We make no guarantees about uptime or data retention. Session data may be deleted after 7 days of inactivity.</p>
       </section>
       <section>
         <h2 className="font-semibold text-base mb-2 text-[var(--text-primary)]">Accounts</h2>
@@ -23,7 +23,7 @@ export default function TermsPage() {
       </section>
       <section>
         <h2 className="font-semibold text-base mb-2 text-[var(--text-primary)]">Changes</h2>
-        <p>We may update these terms at any time. Continued use of PomodoroJam after changes constitutes acceptance.</p>
+        <p>We may update these terms at any time. Continued use of Bonfire after changes constitutes acceptance.</p>
       </section>
     </PolicyPageLayout>
   )

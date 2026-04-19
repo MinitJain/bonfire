@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { LandingClient } from '@/components/landing/LandingClient'
+import { HomeClient } from '@/components/home/HomeClient'
 
 export default async function HomePage() {
   const supabase = createClient()
@@ -24,12 +24,11 @@ export default async function HomePage() {
     .eq('running', true)
     .neq('session_mode', 'solo')
     .gt('last_active_at', ninetySecondsAgo)
-  if (countError) console.error('[home] sessions count query failed:', countError)
   const activeSessionCount = countError ? 0 : (count ?? 0)
 
   return (
     <main className="flex flex-col min-h-screen bg-background">
-      <LandingClient user={user} profileUsername={profileUsername} activeSessionCount={activeSessionCount} />
+      <HomeClient user={user} profileUsername={profileUsername} activeSessionCount={activeSessionCount} />
     </main>
   )
 }

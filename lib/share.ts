@@ -6,12 +6,12 @@ import { formatSessionUrl } from './session'
 export function buildTwitterShareUrl(sessionId: string, sessionName?: string | null): string {
   const sessionUrl = formatSessionUrl(sessionId)
   const text = sessionName
-    ? `Join my "${sessionName}" Pomodoro session on PomodoroJam! Stay focused together.`
-    : 'Join my Pomodoro session on PomodoroJam! Stay focused together.'
+    ? `Join my "${sessionName}" Pomodoro session on Bonfire! Stay focused together.`
+    : 'Join my Pomodoro session on Bonfire! Stay focused together.'
   const params = new URLSearchParams({
     text,
     url: sessionUrl,
-    hashtags: 'PomodoroJam,Focus,Productivity',
+    hashtags: 'Bonfire,Focus,Productivity',
   })
   return `https://twitter.com/intent/tweet?${params.toString()}`
 }
@@ -54,7 +54,7 @@ export async function nativeShare(sessionId: string, sessionName?: string | null
     return false
   }
   const url = formatSessionUrl(sessionId)
-  const title = sessionName ? `PomodoroJam: ${sessionName}` : 'PomodoroJam Session'
+  const title = sessionName ? `Bonfire: ${sessionName}` : 'Bonfire Session'
   try {
     await navigator.share({
       title,
