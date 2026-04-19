@@ -80,6 +80,7 @@ function HomeContent({ user, profileUsername, activeSessionCount }: HomeClientPr
   }, [])
 
   const handleCreate = async () => {
+    if (isCreating) return
     setIsCreating(true)
     try {
       const finalRoomName = roomName.trim() || generateRoomName()
