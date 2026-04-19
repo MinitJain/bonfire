@@ -144,6 +144,32 @@ export function AmbientPlayer({ onActiveChange, compact = false }: AmbientPlayer
                 {label}
               </button>
             ))}
+
+            {/* Volume row — always visible so user can set level before picking */}
+            <div
+              className="flex items-center gap-2 px-3 py-2 mt-0.5"
+              style={{ borderTop: '1px solid var(--border)' }}
+            >
+              <button
+                onClick={handleMute}
+                aria-label={muted ? 'Unmute' : 'Mute'}
+                className="flex-shrink-0 cursor-pointer transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="0.35"
+                step="0.01"
+                value={volume}
+                onChange={handleVolume}
+                className="flex-1 h-1 cursor-pointer"
+                style={{ accentColor: 'var(--accent)' }}
+                aria-label="Volume"
+              />
+            </div>
           </div>
         )}
       </div>
