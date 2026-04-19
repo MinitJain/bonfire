@@ -145,16 +145,6 @@ function HomeContent({ user, profileUsername, activeSessionCount }: HomeClientPr
             Explore
           </Link>
 
-          {user && profileUsername && (
-            <Link
-              href={`/profile/${profileUsername}`}
-              className="text-sm font-medium transition-colors"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              Profile
-            </Link>
-          )}
-
           {user ? (
             <div className="relative" ref={menuRef}>
               <button

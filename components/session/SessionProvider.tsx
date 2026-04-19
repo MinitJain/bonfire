@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { WifiOff, Users, Settings, UserCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { WifiOff, Users, Settings, UserCircle, LogOut } from "lucide-react";
 import type {
   ActivityItem,
   Session,
@@ -131,6 +132,8 @@ function SessionContent({
     useState<SettingsChangeRequest | null>(null);
   const [pendingSettingsRequest, setPendingSettingsRequest] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const pendingRequestRef = useRef<SettingsChangeRequest | null>(null);
   useEffect(() => {
     pendingRequestRef.current = pendingRequest;
@@ -143,6 +146,7 @@ function SessionContent({
   const watcherSettingsPanelDesktopRef = useRef<HTMLDivElement>(null);
   const hasRequestedNotifRef = useRef(false);
   const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
   const { toast } = useToast();
 
   // Fetch today's completed pomodoro count for the counter badge
@@ -522,6 +526,28 @@ function SessionContent({
     }
   }, [showWatcherSettings]);
 
+  // Close user menu on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+    if (showUserMenu) {
+      document.addEventListener("mousedown", handleClick);
+      return () => document.removeEventListener("mousedown", handleClick);
+    }
+  }, [showUserMenu]);
+
+  const handleSignOut = async () => {
+    setShowUserMenu(false);
+    try {
+      await supabase.auth.signOut();
+      router.push("/");
+    } catch {
+      // sign-out failure is non-critical
+    }
+  };
 
   // Request notification permission
   useEffect(() => {
@@ -1059,15 +1085,54 @@ function SessionContent({
           </Link>
 
           {/* Avatar / sign-in */}
-          {profileUsername ? (
-            <Link
-              href={`/profile/${profileUsername}`}
-              aria-label="Your profile"
-              className="flex-shrink-0"
-            >
-              <Avatar src={avatarUrl ?? undefined} name={username ?? profileUsername} size="sm" />
-            </Link>
-          ) : !userId && (
+          {userId ? (
+            <div className="relative flex-shrink-0" ref={userMenuRef}>
+              <button
+                onClick={() => setShowUserMenu(v => !v)}
+                className="flex items-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+                aria-label="User menu"
+              >
+                <Avatar src={avatarUrl ?? undefined} name={username ?? profileUsername} size="sm" />
+              </button>
+              {showUserMenu && (
+                <div
+                  className="absolute right-0 top-10 w-48 rounded-2xl overflow-hidden z-50 animate-scale-in"
+                  style={{
+                    background: "var(--bg-elevated)",
+                    border: "1px solid var(--border)",
+                    boxShadow: "var(--shadow-lg)",
+                  }}
+                >
+                  <div className="py-1">
+                    {[
+                      ...(profileUsername ? [{
+                        icon: UserCircle,
+                        label: "View Profile",
+                        action: () => { setShowUserMenu(false); router.push(`/profile/${profileUsername}`); },
+                      }] : []),
+                      {
+                        icon: LogOut,
+                        label: "Sign out",
+                        action: () => { void handleSignOut(); },
+                      },
+                    ].map(({ icon: Icon, label, action }) => (
+                      <button
+                        key={label}
+                        onClick={action}
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm transition-colors cursor-pointer"
+                        style={{ color: "var(--text-primary)" }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-secondary)"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                      >
+                        <Icon className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
             <Link
               href={`/login?next=/session/${session.id}`}
               aria-label="Sign in"
