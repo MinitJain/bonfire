@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <PolicyPageLayout title="Privacy Policy" lastUpdated="March 2026">
+    <PolicyPageLayout title="Privacy Policy" lastUpdated="April 2026">
       <section>
         <h2 className="font-semibold text-base mb-2 text-[var(--text-primary)]">What we collect</h2>
         <p>When you sign in with GitHub or Google, we store your name, email, and avatar URL to create your profile. We also store the focus sessions you participate in and your pomodoro statistics.</p>
