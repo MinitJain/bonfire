@@ -475,14 +475,37 @@ function SessionContent({
         focusCountRef.current = state.focusCount;
         setFocusCount(state.focusCount);
       }
-      // Log stats for watchers: handleExpire is blocked for remote completions by
-      // applyState's expireCalledRef guard, so we log here instead.
-      // Dedup by startedAt prevents double-counting in jam mode races.
-      if (userId && state.status === "finished" && state.mode === "focus") {
-        const startedAt = state.startedAt;
+      // Log stats for watchers. Two cases:
+      //
+      // Case A — host broadcasts a finished state (autoStartBreaks=false, rare):
+      //   state.status === "finished" && state.mode === "focus"
+      //
+      // Case B — host broadcasts the next running state immediately (autoStartBreaks=true):
+      //   handleExpire increments focusCount then calls skipAndStart(break) and
+      //   broadcasts the running break — the intermediate finished state is never sent.
+      //   We detect this by: mode transitions from focus→break AND focusCount increased.
+      //   modeRef.current is still "focus" here because applyState calls setTimerState
+      //   which is async — React hasn't re-rendered yet.
+      //   Using focusCount delta (state.focusCount > focusCountRef.current) also
+      //   guards against logging stats for a skip (which does NOT increment focusCount).
+      const isFocusFinished =
+        state.status === "finished" && state.mode === "focus";
+      const isFocusToBreakTransition =
+        (state.mode === "short" || state.mode === "long") &&
+        state.status === "running" &&
+        modeRef.current === "focus" &&
+        state.focusCount !== undefined &&
+        state.focusCount > focusCountRef.current;
+
+      if (userId && (isFocusFinished || isFocusToBreakTransition)) {
+        // For Case B use the focus timer's startedAt (still in timerStartedAtRef
+        // because timerState hasn't re-rendered yet), not the break's startedAt.
+        const startedAt = isFocusToBreakTransition
+          ? timerStartedAtRef.current
+          : state.startedAt;
         if (startedAt !== null && lastLoggedTimerRef.current !== startedAt) {
           lastLoggedTimerRef.current = startedAt;
-          const minutes = Math.round((state.totalTime ?? sessionSettingsRef.current.durations.focus * 60) / 60);
+          const minutes = Math.round(sessionSettingsRef.current.durations.focus);
           supabase
             .rpc("increment_profile_stats", {
               p_user_id: userId,
@@ -854,24 +877,17 @@ function SessionContent({
   ]);
 
   const handleSkip = useCallback(() => {
-    let nextMode: TimerMode;
-    const skippingFocus = mode === "focus";
-    if (skippingFocus) {
-      focusCountRef.current += 1;
-      setFocusCount(focusCountRef.current);
-      setTodayCount((prev) => (prev ?? 0) + 1);
-      nextMode =
-        focusCountRef.current % sessionSettings.rounds === 0 ? "long" : "short";
-    } else {
-      nextMode = "focus";
-    }
+    // Skip = partial session, no credit. Do NOT increment focusCount or todayCount.
+    // Only a timer that runs to zero earns a pomodoro (handleExpire handles that).
+    const nextMode: TimerMode = mode === "focus"
+      ? (focusCountRef.current % sessionSettings.rounds === 0 ? "long" : "short")
+      : "focus";
     const modeMessages: Record<TimerMode, string> = {
       short: `Short break started ☕`,
       long: `Long break. Take a proper rest 🎉`,
       focus: `${actorName} started a new focus round 🍅`,
     };
-    const msg = modeMessages[nextMode];
-    broadcastActivity(msg);
+    broadcastActivity(modeMessages[nextMode]);
     const newState = setMode(nextMode, toSecs(sessionSettings.durations));
     setShowBreakOverlay(false);
     if (canControl) {
@@ -881,7 +897,6 @@ function SessionContent({
         time_left: newState.timeLeft,
         total_time: newState.totalTime,
         mode: newState.mode,
-        ...(skippingFocus ? { pomos_done: focusCountRef.current } : {}),
       });
     }
   }, [

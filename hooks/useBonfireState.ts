@@ -78,6 +78,9 @@ export function useBonfireState({
       surgeTimerRef.current = setTimeout(() => setIsSurging(false), 2000)
     }
     prevFocusCountRef.current = focusCount
+    return () => {
+      if (surgeTimerRef.current) clearTimeout(surgeTimerRef.current)
+    }
   }, [focusCount])
 
   // ── Participant join / leave → brief intensity delta ──────────────────────
