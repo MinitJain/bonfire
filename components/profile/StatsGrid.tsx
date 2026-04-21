@@ -1,6 +1,17 @@
 import { Timer, Flame, Trophy, Clock } from 'lucide-react'
 import type { Profile } from '@/types'
+import { toDayKey } from '@/lib/date'
 import { cn } from '@/lib/utils'
+
+// Returns 0 if the streak hasn't been continued recently enough to still be alive.
+// Uses a 2-day UTC window to accommodate all timezones (UTC-12 to UTC+14):
+// a user in UTC+14 stores last_active_date as their local date which can be
+// 1 day ahead of server UTC, so we check >= 2 days ago UTC.
+function effectiveStreak(currentStreak: number, lastActiveDate: string | null): number {
+  if (currentStreak === 0 || !lastActiveDate) return currentStreak
+  const twoDaysAgo = toDayKey(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000))
+  return lastActiveDate >= twoDaysAgo ? currentStreak : 0
+}
 
 interface StatsGridProps {
   profile: Profile
@@ -58,7 +69,8 @@ function StatCard({ icon, label, value, suffix, highlight }: StatCardProps) {
 }
 
 export function StatsGrid({ profile, className }: StatsGridProps) {
-  const focusHours = Math.round(profile.total_focus_minutes / 60)
+  const focusHours = Math.floor(profile.total_focus_minutes / 60)
+  const streak = effectiveStreak(profile.current_streak, profile.last_active_date)
 
   if (profile.total_pomodoros === 0) {
     return (
@@ -95,9 +107,9 @@ export function StatsGrid({ profile, className }: StatsGridProps) {
       <StatCard
         icon={<Flame className="w-4 h-4" />}
         label="Current Streak"
-        value={profile.current_streak}
+        value={streak}
         suffix="days"
-        highlight={profile.current_streak > 0}
+        highlight={streak > 0}
       />
       <StatCard
         icon={<Trophy className="w-4 h-4" />}

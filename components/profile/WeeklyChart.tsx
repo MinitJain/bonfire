@@ -12,7 +12,7 @@ interface WeeklyChartProps {
 export function WeeklyChart({ days }: WeeklyChartProps) {
   const maxMinutes = Math.max(...days.map(d => d.minutes), 30) // floor at 30 so bars aren't full-height for tiny values
   const totalMinutes = days.reduce((s, d) => s + d.minutes, 0)
-  const totalHours = (totalMinutes / 60).toFixed(1)
+  const totalHours = Math.floor(totalMinutes / 60)
 
   return (
     <div
