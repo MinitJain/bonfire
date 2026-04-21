@@ -51,12 +51,22 @@ function utcDay(offsetDays = 0): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offsetDays))
 }
 
-// Build the 371-cell calendar grid (53 weeks × 7 days, Mon → Sun, oldest first)
-// All date arithmetic is in UTC to match toDayKey output and pomodoro_logs timestamps.
+// Build the 371-cell calendar grid (53 weeks × 7 days, Mon → Sun, oldest first).
+// Anchors the grid end on the Sunday on-or-after today so today is always a cell.
+// Without this, going back a fixed 371 days from today leaves today off the grid
+// on all days except Sunday.
 function buildCalendarCells(dayMap: Record<string, number>) {
-  const start = utcDay(-371)
-  // Rewind to nearest Monday on or before start (UTC day-of-week)
-  const dow = start.getUTCDay() // 0=Sun…6=Sat
+  const today = utcDay(0)
+  const todayDow = today.getUTCDay() // 0=Sun…6=Sat
+  // Days until the next Sunday (0 if today is already Sunday)
+  const daysToSunday = todayDow === 0 ? 0 : 7 - todayDow
+  const gridEnd = utcDay(daysToSunday)
+
+  // Go back 53*7 - 1 days from grid end to find approximate start
+  const start = new Date(gridEnd)
+  start.setUTCDate(start.getUTCDate() - (53 * 7 - 1))
+  // Rewind to nearest Monday on or before start
+  const dow = start.getUTCDay()
   start.setUTCDate(start.getUTCDate() - (dow === 0 ? 6 : dow - 1))
 
   const cells: { date: string; minutes: number }[] = []

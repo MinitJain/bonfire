@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 
 interface KeyboardShortcutsModalProps {
@@ -12,7 +12,21 @@ const SHORTCUTS = [
   { keys: ['?'],     description: 'Toggle this help modal' },
 ]
 
+const TITLE_ID = 'keyboard-shortcuts-title'
+
 export function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsModalProps) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const previousFocusRef = useRef<Element | null>(null)
+
+  // Save the element that had focus before the modal opened; restore on close
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement
+    closeButtonRef.current?.focus()
+    return () => {
+      (previousFocusRef.current as HTMLElement | null)?.focus?.()
+    }
+  }, [])
+
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
@@ -28,6 +42,9 @@ export function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsModalProps)
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={TITLE_ID}
         className="relative rounded-2xl p-6 flex flex-col gap-4 w-full max-w-xs mx-4"
         style={{
           background: 'var(--bg-elevated)',
@@ -37,14 +54,19 @@ export function KeyboardShortcutsModal({ onClose }: KeyboardShortcutsModalProps)
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <h2
+            id={TITLE_ID}
+            className="text-sm font-semibold"
+            style={{ color: 'var(--text-primary)' }}
+          >
             Keyboard shortcuts
           </h2>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
             className="rounded-lg p-1 transition-colors"
             style={{ color: 'var(--text-muted)' }}
-            aria-label="Close"
+            aria-label="Close keyboard shortcuts"
           >
             <X className="w-4 h-4" />
           </button>
