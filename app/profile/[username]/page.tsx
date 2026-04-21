@@ -45,40 +45,39 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
   }
 }
 
-// Build the 364-cell calendar grid (52 weeks × 7 days, Mon → Sun, oldest first)
-function buildCalendarCells(dayMap: Record<string, number>) {
-  const today = new Date()
+// UTC midnight for a given UTC year/month/day offset
+function utcDay(offsetDays = 0): Date {
+  const now = new Date()
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offsetDays))
+}
 
-  // Find the Monday 53 weeks ago
-  const start = new Date(today)
-  start.setDate(start.getDate() - 371)
-  // Rewind to the nearest Monday on or before `start`
-  const dow = start.getDay() // 0=Sun…6=Sat
-  start.setDate(start.getDate() - (dow === 0 ? 6 : dow - 1))
+// Build the 371-cell calendar grid (53 weeks × 7 days, Mon → Sun, oldest first)
+// All date arithmetic is in UTC to match toDayKey output and pomodoro_logs timestamps.
+function buildCalendarCells(dayMap: Record<string, number>) {
+  const start = utcDay(-371)
+  // Rewind to nearest Monday on or before start (UTC day-of-week)
+  const dow = start.getUTCDay() // 0=Sun…6=Sat
+  start.setUTCDate(start.getUTCDate() - (dow === 0 ? 6 : dow - 1))
 
   const cells: { date: string; minutes: number }[] = []
   const cur = new Date(start)
   while (cells.length < 53 * 7) {
     const dateStr = toDayKey(cur)
-    cells.push({
-      date: dateStr,
-      minutes: dayMap[dateStr] ?? 0,
-    })
-    cur.setDate(cur.getDate() + 1)
+    cells.push({ date: dateStr, minutes: dayMap[dateStr] ?? 0 })
+    cur.setUTCDate(cur.getUTCDate() + 1)
   }
   return cells
 }
 
 // Build last-7-days bars with labels
+// All date arithmetic is in UTC to match toDayKey output.
 function buildWeekDays(dayMap: Record<string, number>) {
-  const today = new Date()
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today)
-    d.setDate(d.getDate() - (6 - i))
+    const d = utcDay(i - 6)
     const dateStr = toDayKey(d)
     return {
       date: dateStr,
-      label: d.toLocaleDateString('en-US', { weekday: 'short' }),
+      label: d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }),
       minutes: dayMap[dateStr] ?? 0,
       isToday: i === 6,
     }

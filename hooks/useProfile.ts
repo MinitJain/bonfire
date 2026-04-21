@@ -15,6 +15,7 @@ const ProfileSchema = z.object({
   total_focus_minutes: z.number(),
   current_streak: z.number(),
   longest_streak: z.number(),
+  last_active_date: z.string().nullable(),
   created_at: z.string(),
 })
 
