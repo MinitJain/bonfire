@@ -95,6 +95,9 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${dmSans.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
     >
+      {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+      )}
 <body className="bg-background text-foreground font-sans min-h-screen antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <script
@@ -119,9 +122,6 @@ export default function RootLayout({
           <FaviconInit />
           {children}
           <Analytics />
-          {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
-            <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
-          )}
         </ThemeProvider>
       </body>
     </html>

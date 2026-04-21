@@ -19,7 +19,7 @@ export default function PrivacyPage() {
       </section>
       <section>
         <h2 className="font-semibold text-base mb-2 text-[var(--text-primary)]">Third parties</h2>
-        <p>We use Supabase for authentication and data storage, and Vercel for hosting. Both are SOC 2 compliant. Analytics are provided by Vercel Analytics (privacy-friendly, no cookies).</p>
+        <p>We use Supabase for authentication and data storage, and Vercel for hosting. Both are SOC 2 compliant. We use Vercel Analytics (no cookies) and Google Analytics 4 for usage metrics. Google Analytics sets cookies (_ga, _ga_*) and transmits anonymized usage data to Google. You can opt out via <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="text-[var(--accent)]">Google&apos;s opt-out tool</a>.</p>
       </section>
       <section>
         <h2 className="font-semibold text-base mb-2 text-[var(--text-primary)]">Your rights</h2>
