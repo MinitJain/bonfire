@@ -64,6 +64,7 @@ export interface Profile {
   total_focus_minutes: number
   current_streak: number
   longest_streak: number
+  last_active_date: string | null  // YYYY-MM-DD, set to client's local date on each pomodoro
   created_at: string
 }
 

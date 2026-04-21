@@ -32,10 +32,10 @@ export function StreakCalendar({ cells, totalMinutesYear, totalPomodorosYear }: 
   let lastMonth = -1
   cells.forEach((cell, i) => {
     const col = Math.floor(i / 7)
-    const month = new Date(cell.date + 'T00:00:00').getMonth()
+    const month = new Date(cell.date + 'T12:00:00Z').getUTCMonth()
     if (month !== lastMonth) {
       lastMonth = month
-      const label = new Date(cell.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short' })
+      const label = new Date(cell.date + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })
       // Only add if there's room (not last column)
       if (col < WEEKS - 1) monthLabels.push({ label, col })
     }
@@ -132,7 +132,7 @@ export function StreakCalendar({ cells, totalMinutesYear, totalPomodorosYear }: 
       {/* Legend */}
       <div className="flex items-center gap-2">
         <span className="text-[10px] text-[var(--text-muted)]">Less</span>
-        {[0, 25, 60, 120, 180].map(m => (
+        {[0, 1, 25, 60, 120].map(m => (
           <div
             key={m}
             style={{
