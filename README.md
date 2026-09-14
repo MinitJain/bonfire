@@ -27,7 +27,7 @@ Bonfire is that app. Start a room, share the link. Your friend joins and sees th
 
 ### Bonfire Animation
 
-A live Three.js fire scene that reacts to your session state. The flame grows as you complete pomodoros and more participants join, dims to embers on short breaks, and goes near-dormant on long breaks, giving you a visual heartbeat of the room's energy.
+A live CSS-powered fire scene that reacts to your session state. The flame grows as you complete pomodoros, dims to embers on short breaks, and goes near-dormant on long breaks, giving you a visual heartbeat of the room's energy.
 
 ---
 
@@ -158,7 +158,7 @@ No account needed. Start in under 30 seconds.
 | Database   | Supabase (PostgreSQL + Realtime)             |
 | Auth       | Supabase Auth (GitHub + Google OAuth)        |
 | Styling    | Tailwind CSS + CSS variables                 |
-| Animation  | Three.js + React Three Fiber                 |
+| Animation  | CSS animations + CSS variables                |
 | OG Images  | @vercel/og                                   |
 | Audio      | Web Audio API (no external deps)             |
 | Fonts      | Plus Jakarta Sans + DM Sans + JetBrains Mono |
