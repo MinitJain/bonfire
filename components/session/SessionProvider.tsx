@@ -47,9 +47,8 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
-// Dynamic import with ssr:false — BonfireScene uses WebGL / Three.js which
-// calls window/document APIs that don't exist on the server. Next.js will
-// skip rendering it server-side and mount it only in the browser.
+// Dynamic import with ssr:false — BonfireScene injects a <style> tag at
+// mount which requires the DOM. Next.js will skip SSR and mount it in browser.
 const BonfireScene = dynamic(
   () =>
     import("@/components/session/BonfireScene").then((m) => ({
@@ -1302,9 +1301,9 @@ function SessionContent({
           </div>
 
           {/* ── Bonfire ──────────────────────────────────────────────────── */}
-          {/* BonfireScene is dynamically imported with ssr:false — it only
-              mounts in the browser. The fallback div reserves the space so
-              the layout doesn't shift when it loads. */}
+          {/* BonfireScene is dynamically imported with ssr:false — it injects
+              a style tag at mount which requires the DOM. The fallback div
+              reserves the space so the layout doesn't shift when it loads. */}
           <BonfireScene
             targetIntensity={bonfireState.targetIntensity}
             isSurging={bonfireState.isSurging}
