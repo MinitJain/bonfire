@@ -1,7 +1,7 @@
 {
   "name": "Bonfire",
   "short_name": "Bonfire",
-  "description": "A quiet place to focus together.",
+  "description": "Sit together. Do your own work.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#EDF2F7",

@@ -33,13 +33,13 @@ describe('RoomActions', () => {
 
 describe('RoomTitle', () => {
   it('shows the Bonfire name and focus · short · long in minutes', () => {
-    render(<RoomTitle state={{ name: 'Deep Work', focus_duration: 1500, short_duration: 300, long_duration: 900 }} />)
+    render(<RoomTitle state={{ name: 'Deep Work', initiator_name: 'Quiet Fox', focus_duration: 1500, short_duration: 300, long_duration: 900 }} />)
     expect(screen.getByText('Deep Work')).toBeTruthy()
     expect(screen.getByText('25 · 5 · 15')).toBeTruthy()
   })
-  it('shows only the configuration when unnamed', () => {
-    render(<RoomTitle state={{ name: null, focus_duration: 3000, short_duration: 600, long_duration: 1200 }} />)
-    expect(screen.queryByRole('heading')).toBeNull()
+  it('names an unnamed Bonfire after its initiator', () => {
+    render(<RoomTitle state={{ name: null, initiator_name: 'Quiet Fox', focus_duration: 3000, short_duration: 600, long_duration: 1200 }} />)
+    expect(screen.getByRole('heading').textContent).toBe("Quiet Fox's fire")
     expect(screen.getByText('50 · 10 · 20')).toBeTruthy()
   })
 })

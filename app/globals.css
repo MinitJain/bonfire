@@ -558,6 +558,49 @@ body {
   transition: opacity 0.6s ease;
 }
 .bf-time.is-paused { opacity: 0.72; }
+
+/* Phase progress: a hairline under the time, warm while focusing, cool at rest */
+.bf-progress {
+  position: relative;
+  width: clamp(140px, 34vw, 196px);
+  height: 3px;
+  margin-top: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(var(--cool-rgb), 0.1);
+}
+.dark .bf-progress { background: rgba(230, 236, 243, 0.08); }
+.bf-progress-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-origin: left center;
+  background: var(--accent);
+}
+/* Matches useCountdown's 500ms refresh, so the line glides between ticks */
+.bf-progress-fill.is-running { transition: transform 0.5s linear; }
+.bf-progress[data-phase='short'] .bf-progress-fill,
+.bf-progress[data-phase='long'] .bf-progress-fill { background: var(--text-muted); }
+
+.bf-rounds {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.bf-round-marks { display: inline-flex; gap: 5px; }
+.bf-round-mark {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--cool-rgb), 0.28);
+}
+.dark .bf-round-mark { border-color: rgba(230, 236, 243, 0.22); }
+.bf-round-mark.is-done { background: var(--ember); border-color: var(--ember); }
+.bf-round-mark.is-now { border-color: var(--accent); }
 .bf-phase {
   margin-top: 10px;
   font-size: 14px;
@@ -646,7 +689,9 @@ body {
 .bf-text-btn:focus-visible,
 .bf-btn-primary:focus-visible,
 .bf-btn-secondary:focus-visible,
-.bf-icon-btn:focus-visible {
+.bf-icon-btn:focus-visible,
+.bf-chip:focus-visible,
+.bf-stepper button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -892,13 +937,47 @@ body {
 ───────────────────────────────────────────── */
 .bf-home {
   position: relative;
+  isolation: isolate;
   min-height: 100vh;
   min-height: 100dvh;
   overflow: hidden;
   overflow: clip;
-  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 60%);
+  background:
+    /* cool air settling at the top corners */
+    radial-gradient(120% 70% at 50% -10%, transparent 55%, rgba(var(--cool-rgb), 0.06) 100%),
+    linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 60%);
   color: var(--text-primary);
 }
+
+/* Firelight from just below the page: the fire you are about to sit at */
+.bf-home::before {
+  content: '';
+  position: absolute;
+  inset: auto -10% -12% -10%;
+  height: 62%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(48% 60% at 50% 100%, rgba(var(--glow-rgb), var(--home-glow, 0.13)) 0%, rgba(var(--glow-rgb), calc(var(--home-glow, 0.13) * 0.35)) 45%, transparent 78%);
+  animation: bf-firelight 9s ease-in-out infinite;
+}
+@keyframes bf-firelight {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.03); }
+}
+
+/* Paper grain, barely there, so the page reads as a surface not a void */
+.bf-home::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.13 0 0 0 0 0.2 0 0 0 0 0.29 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.dark .bf-home::after { opacity: 0.08; filter: invert(1); }
+.dark .bf-home { --home-glow: 0.16; }
 
 .bf-home-main {
   position: relative;
@@ -930,7 +1009,7 @@ body {
   animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
 }
 
-.bf-home-spacer { flex: 1; min-height: 14vh; }
+.bf-home-spacer { flex: 1; min-height: 6vh; max-height: 11vh; }
 
 .bf-home-lower {
   display: flex;
@@ -939,11 +1018,103 @@ body {
   animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.16s both;
 }
 
-.bf-home-duration {
-  margin-bottom: 20px;
-  font-size: 15px;
+.bf-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 30px;
+  transition: opacity 0.3s ease;
+}
+.bf-setup.is-dimmed { opacity: 0.4; }
+
+.bf-setup-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.bf-setup-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.bf-setup-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+.bf-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 44px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
   color: var(--text-secondary);
-  letter-spacing: 0.02em;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.bf-chip:hover { color: var(--text-primary); background: rgba(var(--cool-rgb), 0.04); }
+.bf-chip[aria-pressed='true'] {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+.bf-chip.is-custom {
+  cursor: text;
+  border-color: rgba(var(--glow-rgb), 0.35);
+  font-size: 13px;
+  padding: 0 14px;
+}
+.bf-chip-input {
+  width: 3ch;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  text-align: right;
+  outline: none;
+}
+
+.bf-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.bf-stepper button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.bf-stepper button:hover:not(:disabled) { color: var(--text-primary); border-color: rgba(var(--cool-rgb), 0.3); }
+.bf-stepper button:disabled { opacity: 0.35; cursor: default; }
+.bf-stepper output {
+  min-width: 2.2ch;
+  text-align: center;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.bf-setup-note {
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .bf-home-actions {
@@ -1044,8 +1215,9 @@ body {
   .bf-obj--pencil     { top: 9%; right: 7%; }
   .bf-obj--mug        { bottom: 5%; left: 7%; }
   .bf-obj--books      { bottom: 5%; right: 6%; }
-  .bf-obj--headphones { top: 50%; right: -4%; }
-  .bf-obj--paper      { top: 52%; left: -5%; }
+  /* Beside the tagline, clear of the focus setup */
+  .bf-obj--headphones { top: 29%; right: -7%; }
+  .bf-obj--paper      { top: 31%; left: -7%; }
 }
 
 /* ─────────────────────────────────────────────

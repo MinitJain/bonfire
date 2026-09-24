@@ -12,6 +12,8 @@ import {
   endBonfire,
   setBonfireDetails,
   getInitiatorToken,
+  fetchBonfire,
+  isNewerState,
 } from '@/lib/bonfire'
 
 interface UseBonfireOptions {
@@ -35,6 +37,8 @@ interface UseBonfireReturn {
   isInitiator: boolean
   /** Apply a database-originated state_update received on the channel. */
   applyRemote: (state: BonfireState) => void
+  /** Re-read the authoritative state (after (re)subscribing, or a rejected command). */
+  resync: () => Promise<void>
   start: () => Promise<void>
   pause: () => Promise<void>
   skip: () => Promise<void>
@@ -55,6 +59,9 @@ interface UseBonfireReturn {
  *
  * The command issuer applies the RPC return value immediately. canControl
  * only decides which controls are shown; the RPCs authorize every command.
+ *
+ * Every incoming state goes through `accept`: broadcasts are not delivered
+ * in order, so a state older than the one held (by version) is dropped.
  */
 export function useBonfire({ initial, userId, hasSeat }: UseBonfireOptions): UseBonfireReturn {
   const [state, setState] = useState<BonfireState>(initial)
@@ -78,17 +85,29 @@ export function useBonfire({ initial, userId, hasSeat }: UseBonfireOptions): Use
 
   const canControl = isInitiator || (state.session_mode === 'jam' && hasSeat)
 
-  const applyRemote = useCallback((next: BonfireState) => {
+  const accept = useCallback((next: BonfireState | null) => {
     if (!next || next.id !== stateRef.current.id) return
+    if (!isNewerState(next, stateRef.current)) return
+    stateRef.current = next
     setState(next)
   }, [])
 
+  const applyRemote = accept
+
+  const resync = useCallback(async () => {
+    const { data } = await fetchBonfire(stateRef.current.id)
+    accept(data)
+  }, [accept])
+
+  // A rejected command usually means this client's view was stale
+  // ("Timer not running", "has not expired yet"): re-read the truth.
   const run = useCallback(
-    async (command: (id: string) => Promise<{ data: BonfireState | null }>) => {
+    async (command: (id: string) => Promise<{ data: BonfireState | null; error: string | null }>) => {
       const result = await command(stateRef.current.id)
-      if (result.data) setState(result.data)
+      if (result.data) accept(result.data)
+      else if (result.error) await resync()
     },
-    [],
+    [accept, resync],
   )
 
   const start = useCallback(() => run(startTimer), [run])
@@ -111,6 +130,7 @@ export function useBonfire({ initial, userId, hasSeat }: UseBonfireOptions): Use
     canControl,
     isInitiator,
     applyRemote,
+    resync,
     start,
     pause,
     skip,

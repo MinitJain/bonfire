@@ -14,7 +14,7 @@ describe('inviteTitle', () => {
     expect(inviteTitle('  Mira   Lee ', 'x'.repeat(60))).toBe(`Mira Lee is inviting you to ${'x'.repeat(40)}`)
   })
   it('uses the agreed description', () => {
-    expect(INVITE_DESCRIPTION).toBe('A quiet place to focus together.')
+    expect(INVITE_DESCRIPTION).toBe('Sit together. Do your own work.')
   })
 })
 

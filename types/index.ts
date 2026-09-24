@@ -154,6 +154,11 @@ export interface BonfireState {
   current_round: number
   completed_pomodoros: number
   last_active_at: string
+  /**
+   * Increases on every change to the row. Absent until the
+   * 20260925140000 migration is applied; ordering is skipped then.
+   */
+  version?: number
 }
 
 /** create_bonfire result: the only place the creator receives the token */

@@ -5,6 +5,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
+import { generateAnonName } from '@/lib/roomName'
 import type { BonfireState, BonfireMode, CreatedBonfire, SeatIndex } from '@/types'
 
 // ─── Token management ────────────────────────────────────────
@@ -84,12 +85,97 @@ export function storeDisplayName(name: string): void {
   }
 }
 
+// A guest who has never chosen a name still has one: generated once per
+// browser ("Sleepy Otter") and kept, so the name on the invitation, the
+// suggestion in "Choose your name" and the next visit all agree.
+const GUEST_NAME_KEY = 'bonfire_guest_name'
+
+export function getGuestName(): string {
+  if (typeof window === 'undefined') return generateAnonName()
+  try {
+    const stored = localStorage.getItem(GUEST_NAME_KEY)?.trim()
+    if (stored) return stored.slice(0, MAX_NAME_LENGTH)
+    const name = generateAnonName()
+    localStorage.setItem(GUEST_NAME_KEY, name)
+    return name
+  } catch {
+    return generateAnonName()
+  }
+}
+
+/** The name to suggest: the last name this browser chose, or its guest name. */
+export function getSuggestedName(): string {
+  return getStoredDisplayName() ?? getGuestName()
+}
+
 // ─── Defaults ────────────────────────────────────────────────
 
 export const DEFAULT_FOCUS_SECONDS = 25 * 60
 export const DEFAULT_SHORT_SECONDS = 5 * 60
 export const DEFAULT_LONG_SECONDS = 15 * 60
 export const DEFAULT_ROUNDS_BEFORE_LONG = 4
+
+/**
+ * Allowed settings, in minutes (rounds: count). create_bonfire and
+ * change_settings enforce the same ranges in seconds.
+ */
+export const SETTING_LIMITS = {
+  focus: { min: 1, max: 120 },
+  short: { min: 1, max: 30 },
+  long: { min: 1, max: 60 },
+  rounds: { min: 1, max: 12 },
+} as const
+
+/** Focus lengths offered on Home, in minutes. */
+export const FOCUS_PRESETS = [25, 30, 45, 60] as const
+
+/** Rests that suit a focus length (minutes): short pomodoros get short rests. */
+export function restsFor(focusMinutes: number): { short: number; long: number } {
+  if (focusMinutes < 40) return { short: 5, long: 15 }
+  if (focusMinutes < 75) return { short: 10, long: 20 }
+  return { short: 15, long: 30 }
+}
+
+// ─── Home setup ──────────────────────────────────────────────
+// The last focus length and rounds chosen on Home, remembered only as a
+// convenience for the next Bonfire this browser lights.
+
+const SETUP_KEY = 'bonfire_setup'
+
+export interface HomeSetup {
+  focus: number
+  rounds: number
+}
+
+export const DEFAULT_SETUP: HomeSetup = {
+  focus: DEFAULT_FOCUS_SECONDS / 60,
+  rounds: DEFAULT_ROUNDS_BEFORE_LONG,
+}
+
+const inRange = (n: unknown, { min, max }: { min: number; max: number }): n is number =>
+  typeof n === 'number' && Number.isInteger(n) && n >= min && n <= max
+
+export function getStoredSetup(): HomeSetup {
+  if (typeof window === 'undefined') return DEFAULT_SETUP
+  try {
+    const raw = JSON.parse(localStorage.getItem(SETUP_KEY) ?? 'null') as Partial<HomeSetup> | null
+    return {
+      focus: inRange(raw?.focus, SETTING_LIMITS.focus) ? raw.focus : DEFAULT_SETUP.focus,
+      rounds: inRange(raw?.rounds, SETTING_LIMITS.rounds) ? raw.rounds : DEFAULT_SETUP.rounds,
+    }
+  } catch {
+    return DEFAULT_SETUP
+  }
+}
+
+export function storeSetup(setup: HomeSetup): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(SETUP_KEY, JSON.stringify(setup))
+  } catch {
+    /* storage unavailable */
+  }
+}
 
 /**
  * Columns clients may read. initiator_token is excluded at the database
@@ -102,6 +188,35 @@ export const BONFIRE_COLUMNS = [
   'session_mode', 'initiator_id', 'initiator_name', 'name',
   'current_round', 'completed_pomodoros', 'last_active_at',
 ].join(', ')
+
+/**
+ * Whether `next` may replace `current`. Relay broadcasts arrive out of
+ * order, so anything older than what this client already holds is dropped.
+ * States without a version (before the version migration) are accepted.
+ */
+export function isNewerState(next: BonfireState, current: BonfireState): boolean {
+  if (next.version == null || current.version == null) return true
+  return next.version > current.version
+}
+
+type BonfireReader = Pick<ReturnType<typeof createClient>, 'from'>
+
+/**
+ * Read one bonfire with its version. Falls back to the columns without
+ * `version` while the 20260925140000 migration is not yet applied.
+ */
+export async function selectBonfire(
+  supabase: BonfireReader,
+  id: string,
+): Promise<{ data: BonfireState | null; error: string | null }> {
+  const read = (columns: string) =>
+    supabase.from('bonfires').select(columns).eq('id', id).maybeSingle()
+
+  let { data, error } = await read(`${BONFIRE_COLUMNS}, version`)
+  if (error?.code === '42703') ({ data, error } = await read(BONFIRE_COLUMNS))
+  if (error) return { data: null, error: error.message }
+  return { data: (data as unknown as BonfireState | null) ?? null, error: null }
+}
 
 // ─── Short code helpers ──────────────────────────────────────
 
@@ -338,15 +453,7 @@ export async function leaveBonfire(
 
 /** Fetch the current bonfire state from the database. */
 export async function fetchBonfire(bonfireId: string): Promise<CommandResult> {
-  const supabase = createClient()
-  const { data, error } = await supabase
-    .from('bonfires')
-    .select(BONFIRE_COLUMNS)
-    .eq('id', bonfireId)
-    .single()
-
-  if (error) {
-    return { data: null, error: error.message }
-  }
-  return { data: data as unknown as BonfireState, error: null }
+  const { data, error } = await selectBonfire(createClient(), bonfireId)
+  if (error || !data) return { data: null, error: error ?? 'Bonfire not found' }
+  return { data, error: null }
 }

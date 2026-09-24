@@ -6,7 +6,7 @@
 
 export const BRAND = {
   name: 'Bonfire',
-  tagline: 'A quiet place to focus together.',
+  tagline: 'Sit together. Do your own work.',
   dusk: '#1B2636',       // mark background / dark surfaces
   duskDeep: '#141C28',   // dark theme background
   pale: '#EDF2F7',       // light theme background
@@ -54,4 +54,22 @@ export function inviteTitle(initiatorName: string | null | undefined, bonfireNam
   const who = clean(initiatorName) ?? 'Someone'
   const what = clean(bonfireName) ?? 'a Bonfire'
   return `${who} is inviting you to ${what}`
+}
+
+/**
+ * Short, stable fingerprint of everything the invite image shows. Put in the
+ * image URL so caches (ours and social platforms') fetch a new image when the
+ * name or settings change, and reuse the old one otherwise.
+ */
+export function inviteImageVersion(b: {
+  name: string | null
+  initiator_name: string | null
+  focus_duration: number
+  short_duration: number
+  long_duration: number
+}): string {
+  const key = [b.name ?? '', b.initiator_name ?? '', b.focus_duration, b.short_duration, b.long_duration].join('|')
+  let h = 5381
+  for (let i = 0; i < key.length; i++) h = ((h << 5) + h + key.charCodeAt(i)) >>> 0
+  return h.toString(36)
 }
