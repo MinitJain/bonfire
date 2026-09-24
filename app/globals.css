@@ -1009,6 +1009,14 @@ body {
   animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
 }
 
+.bf-home-today {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+}
+
 .bf-home-spacer { flex: 1; min-height: 6vh; max-height: 11vh; }
 
 .bf-home-lower {
