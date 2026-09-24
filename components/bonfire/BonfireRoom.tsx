@@ -20,6 +20,8 @@ import {
   storeDisplayName,
 } from '@/lib/bonfire'
 import { formatTime } from '@/lib/timer'
+import { syncServerClock } from '@/lib/serverClock'
+import { bonfireTitle } from '@/lib/roomName'
 import { playCompleteSound, showNotification } from '@/lib/audio'
 import { CampfireCircle } from '@/components/bonfire/CampfireCircle'
 import { TimerDisplay } from '@/components/bonfire/TimerDisplay'
@@ -95,7 +97,11 @@ export function BonfireRoom({ initial, userId, displayName }: BonfireRoomProps) 
     bonfireId: initial.id,
     presenceKey,
     onStateUpdate: bonfire.applyRemote,
+    onSubscribed: bonfire.resync,
   })
+
+  // Measure against the server's clock, which started_at comes from
+  useEffect(() => { void syncServerClock() }, [])
 
   usePresence({
     channel,
@@ -137,10 +143,15 @@ export function BonfireRoom({ initial, userId, displayName }: BonfireRoomProps) 
     curve: 'room',
   })
 
+  // Same title as the server metadata, with the countdown in front while it runs
+  const title = bonfireTitle(state)
   useEffect(() => {
-    document.title = state.running && timeLeft > 0 ? `${formatTime(timeLeft)} | Bonfire` : 'Bonfire'
+    const rest = state.phase === 'focus' ? '' : ' rest'
+    document.title = state.running && timeLeft > 0
+      ? `${formatTime(timeLeft)}${rest} | ${title}`
+      : `${title} | Bonfire`
     return () => { document.title = 'Bonfire' }
-  }, [timeLeft, state.running])
+  }, [timeLeft, state.running, state.phase, title])
 
   // ── Connection status: only surfaced when it is actually a problem ─
   const [slowToConnect, setSlowToConnect] = useState(false)
@@ -167,7 +178,7 @@ export function BonfireRoom({ initial, userId, displayName }: BonfireRoomProps) 
     }
   }, [release, untrack, router])
 
-  if (ended) return <SettledScene phase={state.phase} />
+  if (ended) return <SettledScene phase={state.phase} completedPomodoros={state.completed_pomodoros} />
 
   return (
     <div className="bf-stage">
@@ -202,10 +213,14 @@ export function BonfireRoom({ initial, userId, displayName }: BonfireRoomProps) 
         {!(askName && !name) && (
           <TimerDisplay
             timeLeft={timeLeft}
+            totalTime={totalTime}
             running={state.running}
             started={started}
             phase={state.phase}
             mode={state.session_mode}
+            round={state.current_round}
+            roundsBeforeLong={state.rounds_before_long}
+            completedPomodoros={state.completed_pomodoros}
           />
         )}
 

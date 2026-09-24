@@ -22,14 +22,19 @@ BONFIRE sits near the upper center.
 
 Below it:
 
-"a quiet place to focus together"
+"sit together. do your own work."
 
 Small illustrated objects are distributed around the viewport:
 books, notebooks, pencils, paper, mug, headphones.
 
-Near the lower-middle area:
+Near the lower-middle area, a light focus setup:
 
-25 minutes
+focus for  25 · 30 · 45 · 60 · custom
+rounds  − 4 +
+5 min rests, a 15 min rest every 4 rounds
+
+Rests follow the focus length. Exact rests, mode and the Bonfire name
+are set in the room. The last choice is remembered locally.
 
 Then:
 

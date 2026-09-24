@@ -19,6 +19,12 @@ interface UseBonfireChannelOptions {
   presenceKey: string | null
   /** Called with every database-originated state_update broadcast. */
   onStateUpdate: (state: BonfireState) => void
+  /**
+   * Called each time the channel (re)subscribes. Broadcasts sent while not
+   * subscribed (page load, network drop, sleep) are never replayed, so the
+   * caller re-reads the current state here.
+   */
+  onSubscribed?: () => void
 }
 
 export interface BonfireChannel {
@@ -42,17 +48,20 @@ export function useBonfireChannel({
   bonfireId,
   presenceKey,
   onStateUpdate,
+  onSubscribed,
 }: UseBonfireChannelOptions): BonfireChannel {
   const supabase = useMemo(() => createClient(), [])
   const channelRef = useRef<RealtimeChannel | null>(null)
   const onStateUpdateRef = useRef(onStateUpdate)
+  const onSubscribedRef = useRef(onSubscribed)
   const [participants, setParticipants] = useState<BonfireParticipant[]>([])
   const [isConnected, setIsConnected] = useState(false)
   const [hasConnected, setHasConnected] = useState(false)
 
   useEffect(() => {
     onStateUpdateRef.current = onStateUpdate
-  }, [onStateUpdate])
+    onSubscribedRef.current = onSubscribed
+  }, [onStateUpdate, onSubscribed])
 
   useEffect(() => {
     if (!presenceKey) return
@@ -86,7 +95,10 @@ export function useBonfireChannel({
       .subscribe((status) => {
         const connected = status === 'SUBSCRIBED'
         setIsConnected(connected)
-        if (connected) setHasConnected(true)
+        if (connected) {
+          setHasConnected(true)
+          onSubscribedRef.current?.()
+        }
       })
 
     return () => {

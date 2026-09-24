@@ -3,8 +3,9 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { BonfireState } from '@/types'
-import { BONFIRE_COLUMNS } from '@/lib/bonfire'
-import { INVITE_DESCRIPTION, inviteTitle } from '@/lib/brand'
+import { selectBonfire } from '@/lib/bonfire'
+import { INVITE_DESCRIPTION, inviteImageVersion, inviteTitle } from '@/lib/brand'
+import { bonfireTitle } from '@/lib/roomName'
 import { BonfireRoom } from '@/components/bonfire/BonfireRoom'
 
 interface PageProps {
@@ -15,14 +16,8 @@ interface PageProps {
 // Ended bonfires are readable too, so the room can show that the fire has settled.
 // cache(): metadata and the page share one read per request.
 const getBonfire = cache(async (id: string): Promise<BonfireState | null> => {
-  const supabase = createClient()
-  const { data, error } = await supabase
-    .from('bonfires')
-    .select(BONFIRE_COLUMNS)
-    .eq('id', id)
-    .maybeSingle()
-  if (error || !data) return null
-  return data as unknown as BonfireState
+  const { data } = await selectBonfire(createClient(), id)
+  return data
 })
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -32,12 +27,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   // Only stored values: the initiator's chosen name and the Bonfire name.
   const title = inviteTitle(bonfire.initiator_name, bonfire.name)
-  const image = `/api/og?type=invite&bonfire=${encodeURIComponent(bonfire.id)}`
+  // The image URL changes when what it shows changes, so a rename or new
+  // settings is not hidden behind a cached preview of the old one.
+  const image = `/api/og?type=invite&bonfire=${encodeURIComponent(bonfire.id)}&v=${inviteImageVersion(bonfire)}`
+  const url = `/bonfire/${bonfire.id}`
 
   return {
-    title: { absolute: bonfire.name ? `${bonfire.name} | Bonfire` : 'Bonfire' },
+    // Same title the room keeps in the tab while the timer is stopped
+    title: { absolute: `${bonfireTitle(bonfire)} | Bonfire` },
     description: INVITE_DESCRIPTION,
+    alternates: { canonical: url },
+    // Temporary rooms: previewable when shared, never indexed
+    robots: { index: false, follow: false },
     openGraph: {
+      type: 'website',
+      siteName: 'Bonfire',
+      url,
       title,
       description: INVITE_DESCRIPTION,
       images: [{ url: image, width: 1200, height: 630, alt: title }],

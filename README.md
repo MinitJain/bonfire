@@ -1,6 +1,6 @@
 # Bonfire
 
-Bonfire is a quiet place to focus together: you light a temporary shared fire, invite a few people, and everyone sits around it on one timer.
+Sit together. Do your own work. Bonfire is a shared focus timer: you light a temporary shared fire, invite a few people, and everyone sits around it on one timer.
 
 ## How it works
 

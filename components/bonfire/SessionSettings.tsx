@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import type { BonfireState } from '@/types'
 import type { SettingsInput } from '@/hooks/useBonfire'
-import { MAX_BONFIRE_NAME_LENGTH } from '@/lib/bonfire'
+import { MAX_BONFIRE_NAME_LENGTH, SETTING_LIMITS } from '@/lib/bonfire'
+import { NumberField } from '@/components/bonfire/NumberField'
 
 interface SessionSettingsProps {
   state: BonfireState
@@ -24,9 +25,9 @@ export function SessionSettings({
   onClose,
 }: SessionSettingsProps) {
   const [name, setName] = useState(state.name ?? '')
-  const [focus, setFocus] = useState(state.focus_duration / 60)
-  const [short, setShort] = useState(state.short_duration / 60)
-  const [long, setLong] = useState(state.long_duration / 60)
+  const [focus, setFocus] = useState(Math.round(state.focus_duration / 60))
+  const [short, setShort] = useState(Math.round(state.short_duration / 60))
+  const [long, setLong] = useState(Math.round(state.long_duration / 60))
   const [rounds, setRounds] = useState(state.rounds_before_long)
   const [saving, setSaving] = useState(false)
   const [switching, setSwitching] = useState(false)
@@ -117,10 +118,10 @@ export function SessionSettings({
 
       <div className="bf-pop-section">
         <div className="grid grid-cols-2 gap-3">
-          <Field id="bf-focus" label="Focus (min)" value={focus} onChange={setFocus} min={1} max={120} />
-          <Field id="bf-short" label="Short rest (min)" value={short} onChange={setShort} min={1} max={30} />
-          <Field id="bf-long" label="Long rest (min)" value={long} onChange={setLong} min={1} max={60} />
-          <Field id="bf-rounds" label="Rounds" value={rounds} onChange={setRounds} min={1} max={12} />
+          <Field id="bf-focus" label="Focus (min)" value={focus} onChange={setFocus} {...SETTING_LIMITS.focus} />
+          <Field id="bf-short" label="Short rest (min)" value={short} onChange={setShort} {...SETTING_LIMITS.short} />
+          <Field id="bf-long" label="Long rest (min)" value={long} onChange={setLong} {...SETTING_LIMITS.long} />
+          <Field id="bf-rounds" label="Rounds" value={rounds} onChange={setRounds} {...SETTING_LIMITS.rounds} />
         </div>
         {dirty && (
           <button
@@ -155,20 +156,7 @@ function Field({
   return (
     <div>
       <label className="bf-pop-label" htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        type="number"
-        inputMode="numeric"
-        value={value}
-        min={min}
-        max={max}
-        step={1}
-        onChange={e => {
-          const n = parseFloat(e.target.value)
-          onChange(Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : min)
-        }}
-        className="bf-input"
-      />
+      <NumberField id={id} value={value} onChange={onChange} min={min} max={max} />
     </div>
   )
 }

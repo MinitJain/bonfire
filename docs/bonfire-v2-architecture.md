@@ -456,10 +456,10 @@ This ensures true server-authority: no client fabricates or relays state. The da
 The timer is anchored on `started_at` (unix ms) and `time_left` (seconds at the moment of last state change).
 
 ```
-time_remaining = max(0, time_left - floor((Date.now() - started_at) / 1000))
+time_remaining = max(0, time_left - floor((server_now() - started_at) / 1000))
 ```
 
-When `running=true`, every client computes the same value from the same inputs. Clock differences between machines matter only insofar as `Date.now()` differs, which is typically <100ms on modern hardware.
+When `running=true`, every client computes the same value from the same inputs. `started_at` is the database's clock, so clients measure against it too: `lib/serverClock.ts` estimates the offset to the server clock once per page load from `/api/time` (corrected for half the round trip). Device clocks are often seconds or minutes off; without this, two people would see different remaining times and a fast clock would ask to end the phase early.
 
 ### Client-Side Countdown
 
@@ -497,7 +497,7 @@ When the client's interval computes `time_remaining <= 0`:
 
 This prevents a fast client from triggering a phase change before the timer actually expires (edge case with clock skew).
 
-However, for responsiveness, the client can optimistically show the timer as "expired" visually while waiting for server confirmation. If the server rejects (unlikely, but possible with clock skew), the client reverts.
+If the phase is still at zero two seconds later (the server said "not yet", or the transition was not received), the client asks again. Any rejected command also makes the client re-read the bonfire, so a stale view corrects itself.
 
 ### Break Transitions
 
@@ -519,6 +519,10 @@ current_round += 1
 
 The server computes this in the `complete_phase` RPC function. The client does not decide what the next phase is - it receives it in the state update.
 
+### Ordering
+
+Each row change is relayed by its own asynchronous pg_net request, so broadcasts can arrive out of order (and after the RPC result the issuer already applied). `bonfires.version` increases on every UPDATE; clients drop any state whose version is not newer than the one they hold (`isNewerState`).
+
 ### Reconnect
 
 When a client reconnects (tab refresh, network recovery):
@@ -527,6 +531,7 @@ When a client reconnects (tab refresh, network recovery):
 2. Client initializes its local timer from the fetched state.
 3. If `running=true`, client computes `time_remaining` from `started_at` and `time_left`.
 4. Client subscribes to the broadcast channel for future updates.
+5. Every time the channel (re)subscribes, the client reads the state again: broadcasts sent while it was not subscribed are never replayed.
 
 No special "reconnect" command is needed. The state is always available from the database.
 

@@ -11,7 +11,7 @@ export const TIMER_DURATIONS = {
  * Given a timer state, compute the current timeLeft accounting for elapsed time.
  * This is clock-based to avoid drift across clients.
  */
-export function computeTimeLeft(state: TimerState): number {
+export function computeTimeLeft(state: TimerState, now: number = Date.now()): number {
   if (state.status === 'idle' || state.status === 'finished') {
     return state.timeLeft
   }
@@ -25,7 +25,6 @@ export function computeTimeLeft(state: TimerState): number {
     return state.timeLeft
   }
 
-  const now = Date.now()
   const elapsed = Math.floor((now - state.startedAt) / 1000)
   const computed = state.timeLeft - elapsed
 

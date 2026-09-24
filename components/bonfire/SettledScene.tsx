@@ -7,10 +7,11 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 interface SettledSceneProps {
   phase: BonfirePhase
+  completedPomodoros: number
 }
 
 /** An ended bonfire: embers, no one around, and a way to light another. */
-export function SettledScene({ phase }: SettledSceneProps) {
+export function SettledScene({ phase, completedPomodoros }: SettledSceneProps) {
   return (
     <div className="bf-stage">
       <div className="bf-corner bf-corner-left">
@@ -23,7 +24,11 @@ export function SettledScene({ phase }: SettledSceneProps) {
         <CampfireCircle intensity={0.08} isSurging={false} phase={phase} participants={[]} />
         <div className="bf-message">
           <p className="bf-message-title">The fire has settled</p>
-          <p className="bf-message-body">Thank you for sitting together.</p>
+          <p className="bf-message-body">
+            {completedPomodoros > 0
+              ? `${completedPomodoros} ${completedPomodoros === 1 ? 'pomodoro' : 'pomodoros'} around this fire. Thank you for sitting together.`
+              : 'Thank you for sitting together.'}
+          </p>
           <Link href="/" className="bf-btn-primary">light a new bonfire</Link>
         </div>
       </main>

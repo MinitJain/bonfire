@@ -1,37 +1,53 @@
+// Gentle, fireside words: small creatures you might find near a campfire.
 const ADJECTIVES = [
-  'focused', 'quiet', 'deep', 'swift', 'calm', 'bold', 'bright', 'silent',
-  'sharp', 'steady', 'fierce', 'golden', 'cosmic', 'electric', 'ancient',
-  'frozen', 'hidden', 'mighty', 'neon', 'wild', 'lazy', 'sleepy', 'happy',
-  'lucky', 'clever', 'brave', 'funky', 'epic', 'chill', 'turbo',
+  'sleepy', 'quiet', 'gentle', 'mossy', 'cozy', 'drowsy', 'patient', 'humble',
+  'fuzzy', 'snug', 'woolly', 'dreamy', 'misty', 'mellow', 'tidy', 'curious',
+  'little', 'wandering', 'thoughtful', 'bashful', 'steady', 'warm', 'dusky',
+  'velvet', 'scruffy', 'sloppy', 'rosy', 'soft', 'amber', 'hushed',
 ]
 
 const NOUNS = [
-  'panda', 'tiger', 'falcon', 'wolf', 'phoenix', 'dolphin', 'fox', 'owl',
-  'coder', 'robot', 'wizard', 'ninja', 'pirate', 'astronaut', 'explorer',
-  'viking', 'samurai', 'knight', 'ranger', 'mage', 'raven', 'lynx',
-  'badger', 'otter', 'gecko', 'lemur', 'koala', 'sloth', 'capybara',
+  'otter', 'fox', 'owl', 'wren', 'hedgehog', 'badger', 'snail', 'moth',
+  'heron', 'hare', 'mole', 'finch', 'toad', 'beaver', 'marten', 'raccoon',
+  'robin', 'sparrow', 'deer', 'bear', 'newt', 'vole', 'lark', 'crane',
+  'tortoise', 'dormouse', 'squirrel', 'puffin', 'lynx', 'moose',
 ]
 
-export function generateRoomName(): string {
-  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
-  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
-  const num = Math.floor(Math.random() * 900) + 100 // 100–999
-  return `${adj} ${noun} ${num}`
-}
+type Random = () => number
 
-// Capitalises first letter of each word
+const pick = <T,>(list: readonly T[], random: Random) =>
+  list[Math.floor(random() * list.length) % list.length]
+
 function capitalise(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-export function generateAnonName(): string {
-  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
-  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
-  return `${capitalise(adj)} ${capitalise(noun)}`
+/** "Sleepy Otter". Pass `random` for a reproducible name. */
+export function generateAnonName(random: Random = Math.random): string {
+  return `${capitalise(pick(ADJECTIVES, random))} ${capitalise(pick(NOUNS, random))}`
 }
 
-export function generateUsername(): string {
-  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
-  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
-  return `${capitalise(adj)} ${capitalise(noun)}`
+/** v1 alias. */
+export const generateUsername = generateAnonName
+
+/** v1 room names: "sleepy otter 482". */
+export function generateRoomName(random: Random = Math.random): string {
+  const num = Math.floor(random() * 900) + 100
+  return `${pick(ADJECTIVES, random)} ${pick(NOUNS, random)} ${num}`
+}
+
+/**
+ * What an unnamed Bonfire is called: "Quiet Fox's fire".
+ * Derived from the initiator's name, never stored, so it cannot drift
+ * from the Bonfire's real settings and a chosen Bonfire name replaces it.
+ */
+export function fireName(initiatorName: string | null | undefined): string {
+  const who = (initiatorName ?? '').replace(/\s+/g, ' ').trim().slice(0, 40)
+  return who ? `${who}'s fire` : 'A bonfire'
+}
+
+/** The Bonfire name if it has one, otherwise the derived fire name. */
+export function bonfireTitle(state: { name: string | null; initiator_name: string | null }): string {
+  const name = state.name?.trim()
+  return name ? name : fireName(state.initiator_name)
 }
