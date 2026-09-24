@@ -1,207 +1,196 @@
 import { ImageResponse } from '@vercel/og'
 import type { NextRequest } from 'next/server'
+import { BRAND, FLAME_INNER, FLAME_OUTER, INVITE_DESCRIPTION, inviteTitle } from '@/lib/brand'
 
 export const runtime = 'edge'
 
 const VALID_TYPES = new Set(['', 'stats', 'invite'])
-
+const BONFIRE_ID = /^[a-z0-9]{8}$/
+const SESSION_ID = /^[a-z0-9]{8}$/
+const SIZE = { width: 1200, height: 630 }
+const CACHE = { 'Cache-Control': 'public, max-age=3600, s-maxage=3600' }
 
 function clampInt(value: string | null, max = 999999): number {
   const n = parseInt(value ?? '0', 10)
   return isNaN(n) || n < 0 ? 0 : Math.min(n, max)
 }
 
-export async function GET(request: NextRequest) {
-  try {
-  const { searchParams } = new URL(request.url)
-  const type = searchParams.get('type') ?? ''
+/**
+ * Read public columns with the anon key. Invitation text is built only from
+ * stored values, never from URL parameters, so it cannot be spoofed.
+ */
+async function readRow<T>(table: 'bonfires' | 'sessions', id: string, columns: string): Promise<T | null> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) return null
+  const res = await fetch(`${url}/rest/v1/${table}?id=eq.${id}&select=${columns}`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` },
+  })
+  if (!res.ok) return null
+  const rows = (await res.json()) as T[]
+  return rows[0] ?? null
+}
 
-  if (!VALID_TYPES.has(type)) {
-    return new Response('Invalid type', { status: 400 })
-  }
+function Mark({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64">
+      <defs>
+        <linearGradient id="f" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stopColor={BRAND.fire} />
+          <stop offset="1" stopColor={BRAND.ember} />
+        </linearGradient>
+      </defs>
+      <path d={FLAME_OUTER} fill="url(#f)" />
+      <path d={FLAME_INNER} fill={BRAND.flameCore} />
+    </svg>
+  )
+}
 
-  const name = (searchParams.get('name') ?? '').slice(0, 50)
-  const sessionId = (searchParams.get('session') ?? '').slice(0, 60)
-  const username = (searchParams.get('username') ?? '').slice(0, 30)
-  const pomodoros = clampInt(searchParams.get('pomodoros'))
-  const streak = clampInt(searchParams.get('streak'))
-  const hours = clampInt(searchParams.get('hours'))
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bonfirefocus.vercel.app'
-  const displayUrl = appUrl.replace(/^https?:\/\//, '')
-
-  if (type === 'stats') {
-    return new ImageResponse(
-      (
-        <div style={{ background: '#0F0F0D', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', position: 'relative' }}>
-          <div style={{ position: 'absolute', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,85,51,0.1) 0%, transparent 65%)', top: '15px', left: '300px' }} />
-          <div style={{ fontSize: '20px', color: '#666', marginBottom: '8px' }}>Bonfire</div>
-          <div style={{ fontSize: '40px', fontWeight: '800', color: '#fff', marginBottom: '4px' }}>{username}</div>
-          <div style={{ fontSize: '16px', color: '#888', marginBottom: '48px' }}>Focus stats</div>
-          <div style={{ display: 'flex', gap: '40px' }}>
-            {[
-              { value: String(pomodoros), label: 'Pomodoros' },
-              { value: `${hours}h`, label: 'Focus time' },
-              { value: `${streak}d`, label: 'Streak' },
-            ].map(({ value, label }) => (
-              <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                <span style={{ fontSize: '52px', fontWeight: '800', color: '#FF5533' }}>{value}</span>
-                <span style={{ fontSize: '16px', color: '#666' }}>{label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ),
-      { width: 1200, height: 630, headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=3600' } }
-    )
-  }
-
-  if (type === 'invite') {
-    const host = (searchParams.get('host') ?? 'Someone').slice(0, 30)
-    const focus = clampInt(searchParams.get('focus'), 120) || 25
-
-    return new ImageResponse(
-      (
-        <div style={{ background: '#0F0F0D', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', width: '700px', height: '700px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,85,51,0.12) 0%, transparent 65%)', top: '-35px', left: '250px' }} />
-          {/* Tomato icon */}
-          <svg width="72" height="72" viewBox="0 0 100 100" style={{ marginBottom: '28px' }}>
-            <rect x="47" y="8" width="6" height="16" rx="3" fill="#4CAF50" />
-            <path d="M50 14 Q60 5 70 10" stroke="#4CAF50" strokeWidth="4" fill="none" strokeLinecap="round" />
-            <circle cx="50" cy="58" r="36" fill="#FF5533" />
-            <ellipse cx="38" cy="44" rx="9" ry="6" fill="rgba(255,255,255,0.25)" />
-          </svg>
-          <div style={{ fontSize: '22px', color: '#888888', marginBottom: '12px', letterSpacing: '0.02em' }}>
-            Bonfire
-          </div>
-          <div style={{ fontSize: '52px', fontWeight: '800', color: '#FFFFFF', textAlign: 'center', maxWidth: '900px', lineHeight: '1.2', marginBottom: '16px', padding: '0 40px' }}>
-            {host} invited you to a focus room
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,85,51,0.12)', border: '1px solid rgba(255,85,51,0.3)', borderRadius: '999px', padding: '10px 28px' }}>
-            <span style={{ fontSize: '28px', fontWeight: '700', color: '#FF5533' }}>{focus} min</span>
-            <span style={{ fontSize: '20px', color: '#888888' }}>focus</span>
-          </div>
-          <div style={{ position: 'absolute', bottom: '36px', fontSize: '18px', color: '#444444', fontFamily: 'monospace', letterSpacing: '0.03em' }}>
-            {displayUrl}
-          </div>
-        </div>
-      ),
-      { width: 1200, height: 630, headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=3600' } }
-    )
-  }
-
-  return new ImageResponse(
-    (
+function Card({ children, footer }: { children: React.ReactNode; footer: string }) {
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: `linear-gradient(180deg, ${BRAND.paleTop} 0%, ${BRAND.pale} 70%)`,
+        fontFamily: 'sans-serif',
+        position: 'relative',
+        color: BRAND.slate,
+      }}
+    >
+      {/* warm light pooled under the mark */}
       <div
         style={{
-          background: '#0F0F0D',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: 'sans-serif',
-          position: 'relative',
-          overflow: 'hidden',
+          position: 'absolute',
+          top: '120px',
+          left: '450px',
+          width: '300px',
+          height: '220px',
+          borderRadius: '50%',
+          background: 'radial-gradient(closest-side, rgba(246,150,70,0.28), rgba(246,150,70,0))',
+        }}
+      />
+      {children}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '40px',
+          fontSize: '18px',
+          letterSpacing: '0.34em',
+          color: BRAND.slateSoft,
         }}
       >
-        {/* Subtle background radial glow */}
-        <div
-          style={{
-            position: 'absolute',
-            width: '700px',
-            height: '700px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,85,51,0.12) 0%, transparent 65%)',
-            top: '-35px',
-            left: '250px',
-          }}
-        />
-
-        {/* Tomato SVG icon */}
-        <svg
-          width="80"
-          height="80"
-          viewBox="0 0 100 100"
-          style={{ marginBottom: '32px' }}
-        >
-          {/* Stem */}
-          <rect x="47" y="8" width="6" height="16" rx="3" fill="#4CAF50" />
-          <path d="M50 14 Q60 5 70 10" stroke="#4CAF50" strokeWidth="4" fill="none" strokeLinecap="round" />
-          {/* Body */}
-          <circle cx="50" cy="58" r="36" fill="#FF5533" />
-          {/* Shine */}
-          <ellipse cx="38" cy="44" rx="9" ry="6" fill="rgba(255,255,255,0.25)" />
-        </svg>
-
-        {/* Wordmark */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            gap: '0px',
-            fontSize: '56px',
-            fontWeight: '800',
-            letterSpacing: '-1px',
-            marginBottom: '20px',
-          }}
-        >
-          <span style={{ color: '#FFFFFF' }}>Bon</span>
-          <span style={{ color: '#FF5533' }}>fire</span>
-        </div>
-
-        {/* Session name or default tagline */}
-        <div
-          style={{
-            fontSize: sessionId && name ? '36px' : '28px',
-            fontWeight: sessionId && name ? '700' : '400',
-            color: sessionId && name ? '#FFFFFF' : '#888888',
-            textAlign: 'center',
-            maxWidth: '900px',
-            lineHeight: '1.3',
-            marginBottom: '12px',
-            padding: '0 40px',
-          }}
-        >
-          {sessionId && name
-            ? name
-            : 'The shared focus timer. Start a room, share the link.'}
-        </div>
-
-        {/* Sub-label when showing a session */}
-        {sessionId && (
-          <div
-            style={{
-              fontSize: '20px',
-              color: '#666666',
-              marginBottom: '0px',
-            }}
-          >
-            Join this focus room
-          </div>
-        )}
-
-        {/* URL at bottom */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '36px',
-            fontSize: '18px',
-            color: '#444444',
-            fontFamily: 'monospace',
-            letterSpacing: '0.03em',
-          }}
-        >
-          {displayUrl}
-        </div>
+        {footer}
       </div>
-    ),
-    {
-      width: 1200,
-      height: 630,
-      headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=3600' },
-    }
+    </div>
   )
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const type = searchParams.get('type') ?? ''
+    if (!VALID_TYPES.has(type)) {
+      return new Response('Invalid type', { status: 400 })
+    }
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://bonfirefocus.vercel.app'
+    const displayUrl = appUrl.replace(/^https?:\/\//, '')
+
+    if (type === 'invite') {
+      const bonfireId = searchParams.get('bonfire') ?? ''
+      const sessionId = searchParams.get('session') ?? ''
+      let title = inviteTitle(null, null)
+      let detail: string = INVITE_DESCRIPTION
+
+      if (BONFIRE_ID.test(bonfireId)) {
+        const row = await readRow<{ name: string | null; initiator_name: string | null; focus_duration: number; short_duration: number; long_duration: number }>(
+          'bonfires', bonfireId, 'name,initiator_name,focus_duration,short_duration,long_duration',
+        )
+        if (row) {
+          title = inviteTitle(row.initiator_name, row.name)
+          detail = `${Math.round(row.focus_duration / 60)} · ${Math.round(row.short_duration / 60)} · ${Math.round(row.long_duration / 60)}`
+        }
+      } else if (SESSION_ID.test(sessionId)) {
+        // v1 rooms: same lookup-by-id approach; the preview stays equivalent.
+        const row = await readRow<{ host_name: string | null; settings: { focus?: number } | null }>(
+          'sessions', sessionId, 'host_name,settings',
+        )
+        if (row) {
+          title = inviteTitle(row.host_name, null)
+          detail = `${row.settings?.focus ?? 25} minute focus`
+        }
+      }
+
+      return new ImageResponse(
+        (
+          <Card footer="BONFIRE">
+            <Mark size={120} />
+            <div style={{ marginTop: '36px', fontSize: '54px', fontWeight: 600, maxWidth: '1000px', textAlign: 'center', lineHeight: 1.2 }}>
+              {title}
+            </div>
+            <div style={{ marginTop: '18px', fontSize: '26px', color: BRAND.slateSoft }}>
+              {INVITE_DESCRIPTION}
+            </div>
+            {detail !== INVITE_DESCRIPTION && (
+              <div style={{ marginTop: '14px', fontSize: '22px', color: BRAND.slateSoft, letterSpacing: '0.08em' }}>
+                {detail}
+              </div>
+            )}
+          </Card>
+        ),
+        { ...SIZE, headers: CACHE },
+      )
+    }
+
+    if (type === 'stats') {
+      const username = (searchParams.get('username') ?? '').slice(0, 30)
+      const pomodoros = clampInt(searchParams.get('pomodoros'))
+      const streak = clampInt(searchParams.get('streak'))
+      const hours = clampInt(searchParams.get('hours'))
+      return new ImageResponse(
+        (
+          <Card footer={displayUrl.toUpperCase()}>
+            <Mark size={72} />
+            <div style={{ marginTop: '20px', fontSize: '44px', fontWeight: 600 }}>{username}</div>
+            <div style={{ marginTop: '6px', fontSize: '20px', color: BRAND.slateSoft }}>Focus stats</div>
+            <div style={{ display: 'flex', gap: '56px', marginTop: '40px' }}>
+              {[
+                { value: String(pomodoros), label: 'Pomodoros' },
+                { value: `${hours}h`, label: 'Focus time' },
+                { value: `${streak}d`, label: 'Streak' },
+              ].map(({ value, label }) => (
+                <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <span style={{ fontSize: '56px', fontWeight: 600, color: BRAND.fire }}>{value}</span>
+                  <span style={{ fontSize: '18px', color: BRAND.slateSoft }}>{label}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        ),
+        { ...SIZE, headers: CACHE },
+      )
+    }
+
+    // Default card (site, and profile pages which pass a page name)
+    const name = (searchParams.get('name') ?? '').slice(0, 50)
+    return new ImageResponse(
+      (
+        <Card footer={displayUrl.toUpperCase()}>
+          <Mark size={120} />
+          <div style={{ marginTop: '34px', fontSize: '60px', fontWeight: 600, letterSpacing: '0.3em', paddingLeft: '0.3em' }}>
+            BONFIRE
+          </div>
+          <div style={{ marginTop: '18px', fontSize: '28px', color: BRAND.slateSoft }}>
+            {name || BRAND.tagline.toLowerCase()}
+          </div>
+        </Card>
+      ),
+      { ...SIZE, headers: CACHE },
+    )
   } catch (err) {
     console.error('[og] Image generation failed:', err)
     return new Response('Image generation failed', { status: 500, headers: { 'Cache-Control': 'no-store' } })

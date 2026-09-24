@@ -1,5 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <circle cx="16" cy="16" r="15" fill="#e8472a"/>
-  <circle cx="16" cy="16" r="14" fill="none" stroke="#c23820" stroke-width="1.5"/>
-  <text x="16" y="17" font-family="monospace" font-weight="bold" font-size="14" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">🍅</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Bonfire mark. Keep in sync with lib/brand.ts (markSvg). -->
+  <defs>
+    <linearGradient id="f" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#E07A2E"/>
+      <stop offset="1" stop-color="#F6A24E"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#1B2636"/>
+  <path d="M32 6C36 16 48 24 48 38C48 48 41 56 32 56C23 56 16 48 16 38C16 30 21 25 24 19C25 25 28 28 30 29C29 22 30 13 32 6Z" fill="url(#f)"/>
+  <path d="M32 28C35 34 40 38 40 44C40 50 36 53 32 53C28 53 24 50 24 44C24 39 29 35 32 28Z" fill="#FFE3A6"/>
 </svg>

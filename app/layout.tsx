@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { DM_Sans, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 import { Analytics } from '@vercel/analytics/next'
-import { GoogleAnalytics } from '@next/third-parties/google'
+import Script from 'next/script'
 import { FaviconInit } from '@/components/ui/FaviconInit'
 import './globals.css'
 
@@ -29,11 +29,10 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://bonfirefocus.vercel.a
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: 'Bonfire: Focus Together',
+    default: 'Bonfire',
     template: '%s | Bonfire',
   },
-  description:
-    'A shared focus timer for friends. Start a room, share the link, focus in sync.',
+  description: 'A quiet place to focus together.',
   keywords: ['pomodoro', 'focus', 'productivity', 'timer', 'shared', 'real-time'],
   authors: [{ name: 'Bonfire' }],
   creator: 'Bonfire',
@@ -42,8 +41,8 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: appUrl,
     siteName: 'Bonfire',
-    title: 'Bonfire: Focus Together',
-    description: 'Real-time shared Pomodoro timer. Focus with friends.',
+    title: 'Bonfire',
+    description: 'A quiet place to focus together.',
     images: [
       {
         url: '/api/og',
@@ -55,16 +54,21 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Bonfire: Focus Together',
-    description: 'Real-time shared Pomodoro timer. Focus with friends.',
+    title: 'Bonfire',
+    description: 'A quiet place to focus together.',
     images: ['/api/og'],
   },
   manifest: '/manifest.json',
   appleWebApp: {
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'Bonfire',
   },
   icons: {
+    // Declared explicitly: defining `icons` here replaces Next's automatic app/icon.svg link
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '16x16 32x32 48x48' },
+    ],
     apple: '/apple-touch-icon.png',
   },
   alternates: {
@@ -77,8 +81,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FAFAF7' },
-    { media: '(prefers-color-scheme: dark)', color: '#0F0F0D' },
+    { media: '(prefers-color-scheme: light)', color: '#EDF2F7' },
+    { media: '(prefers-color-scheme: dark)', color: '#141C28' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -96,7 +100,18 @@ export default function RootLayout({
       className={`${dmSans.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
     >
       {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
-        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        <>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
+            strategy="afterInteractive"
+          />
+          <Script id="ga-init" strategy="afterInteractive">{`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}');
+          `}</Script>
+        </>
       )}
 <body className="bg-background text-foreground font-sans min-h-screen antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>

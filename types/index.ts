@@ -122,3 +122,53 @@ export interface SettingsChangeResponse {
     autoStartPomodoros: boolean
   }
 }
+
+// ─── Bonfire v2 Types ─────────────────────────────────────────
+
+export type BonfireStatus = 'active' | 'ended'
+export type BonfirePhase = 'focus' | 'short' | 'long'
+export type BonfireMode = 'focus' | 'jam'
+
+/**
+ * Authoritative bonfire state as clients see it.
+ * initiator_token is deliberately absent: it is never client-visible.
+ */
+export interface BonfireState {
+  id: string
+  join_code: string
+  status: BonfireStatus
+  created_at: string
+  phase: BonfirePhase
+  running: boolean
+  started_at: number | null
+  time_left: number
+  focus_duration: number
+  short_duration: number
+  long_duration: number
+  rounds_before_long: number
+  session_mode: BonfireMode
+  initiator_id: string | null
+  initiator_name: string
+  /** Optional creator-set Bonfire name, max 40 characters */
+  name: string | null
+  current_round: number
+  completed_pomodoros: number
+  last_active_at: string
+}
+
+/** create_bonfire result: the only place the creator receives the token */
+export interface CreatedBonfire extends BonfireState {
+  initiator_token: string
+}
+
+/** Seat index around the fire: 0 top, 1 upper-left, 2 upper-right, 3 lower-left, 4 lower-right, 5 bottom */
+export type SeatIndex = 0 | 1 | 2 | 3 | 4 | 5
+
+/** Presence state for a participant in a bonfire */
+export interface BonfireParticipant {
+  key: string
+  username: string | null
+  joined_at: string
+  is_initiator: boolean
+  seat: SeatIndex | null
+}
