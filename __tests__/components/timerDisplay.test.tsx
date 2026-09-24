@@ -39,7 +39,7 @@ describe('TimerDisplay', () => {
     mode: 'focus' as const,
     round: 1,
     roundsBeforeLong: 4,
-    completedPomodoros: 0,
+    todayCount: null as number | null,
   }
 
   it('shows progress of the current phase', () => {
@@ -50,12 +50,13 @@ describe('TimerDisplay', () => {
     expect(bar.getAttribute('data-phase')).toBe('focus')
   })
 
-  it('shows completed pomodoros only once there are some', () => {
+  it("shows this person's count for today once there is one", () => {
     const { rerender } = render(<TimerDisplay {...base} />)
-    expect(screen.queryByText(/pomodoro/)).toBeNull()
-    rerender(<TimerDisplay {...base} completedPomodoros={1} />)
-    expect(screen.getByText('1 pomodoro')).toBeTruthy()
-    rerender(<TimerDisplay {...base} completedPomodoros={3} />)
-    expect(screen.getByText('3 pomodoros')).toBeTruthy()
+    expect(screen.queryByText(/today/)).toBeNull()
+    rerender(<TimerDisplay {...base} todayCount={0} />)
+    expect(screen.queryByText(/today/)).toBeNull()
+    rerender(<TimerDisplay {...base} todayCount={3} />)
+    expect(screen.getByText('3 today')).toBeTruthy()
+    expect(screen.getByLabelText('3 pomodoros completed today')).toBeTruthy()
   })
 })

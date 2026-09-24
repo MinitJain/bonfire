@@ -1,3 +1,5 @@
+import { TodayStat } from '@/components/profile/TodayStat'
+
 interface DayBar {
   date: string
   label: string    // e.g. "Mon"
@@ -7,9 +9,11 @@ interface DayBar {
 
 interface WeeklyChartProps {
   days: DayBar[]
+  /** Own profile: show today's pomodoros and minutes (local day). */
+  userId?: string
 }
 
-export function WeeklyChart({ days }: WeeklyChartProps) {
+export function WeeklyChart({ days, userId }: WeeklyChartProps) {
   const maxMinutes = Math.max(...days.map(d => d.minutes), 30) // floor at 30 so bars aren't full-height for tiny values
   const totalMinutes = days.reduce((s, d) => s + d.minutes, 0)
   const totalHours = Math.floor(totalMinutes / 60)
@@ -26,6 +30,8 @@ export function WeeklyChart({ days }: WeeklyChartProps) {
           {totalHours}h focused
         </span>
       </div>
+
+      {userId && <TodayStat userId={userId} />}
 
       <div className="flex items-end gap-2 h-[88px]">
         {days.map(day => {

@@ -16,8 +16,8 @@ interface TimerDisplayProps {
   /** 1-indexed focus round, as the server counts it. */
   round: number
   roundsBeforeLong: number
-  /** Focus phases this fire has completed (skips do not count). */
-  completedPomodoros: number
+  /** This person's pomodoros today, across all Bonfires (null until known). */
+  todayCount: number | null
 }
 
 export const PHASE_LABEL: Record<BonfirePhase, string> = {
@@ -62,7 +62,7 @@ export function TimerDisplay({
   mode,
   round,
   roundsBeforeLong,
-  completedPomodoros,
+  todayCount,
 }: TimerDisplayProps) {
   const minutes = Math.floor(timeLeft / 60)
   const seconds = timeLeft % 60
@@ -113,9 +113,13 @@ export function TimerDisplay({
             <span key={i} className={cn('bf-round-mark', `is-${m}`)} />
           ))}
         </span>
-        {completedPomodoros > 0 && (
-          <span className="bf-pomodoros">
-            {completedPomodoros} {completedPomodoros === 1 ? 'pomodoro' : 'pomodoros'}
+        {todayCount !== null && todayCount > 0 && (
+          <span
+            className="bf-pomodoros"
+            title="Your completed pomodoros today, across every Bonfire"
+            aria-label={`${todayCount} ${todayCount === 1 ? 'pomodoro' : 'pomodoros'} completed today`}
+          >
+            {todayCount} today
           </span>
         )}
       </span>

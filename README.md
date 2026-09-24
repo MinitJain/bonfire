@@ -4,10 +4,10 @@ Sit together. Do your own work. Bonfire is a shared focus timer: you light a tem
 
 ## How it works
 
-1. On the home page, choose **start a bonfire** or **join a bonfire** (with a 6-character code).
-2. Choose your name. The creator can also give the Bonfire an optional name, such as "Deep Work".
+1. On the home page, pick a focus length (25, 30, 45, 60 or custom) and how many rounds come before the long rest, then **start a bonfire**. Or **join a bonfire** with a 6-character code or a shared link.
+2. Choose your name. Guests are offered a generated name such as "Sleepy Otter", kept per browser. The creator can also give the Bonfire an optional name, such as "Deep Work".
 3. You take a seat around the fire as a small illustrated character. Up to 6 people can gather.
-4. Everyone shares one timer: focus, short rest, long rest.
+4. Everyone shares one timer: focus, short rest, long rest. A thin line under the time shows how much of the current phase has passed, and small marks show the round within the set.
 5. **Step away** when you are done. The Bonfire keeps going for everyone else, and you can come back with the link.
 6. The creator can **End Bonfire** for everyone. The link then shows that the fire has settled.
 
@@ -15,11 +15,12 @@ Bonfires are temporary. There are no feeds, followers, or public room lists.
 
 ### Details
 
-- **Accounts are optional.** Guests can create and join Bonfires. Signing in (GitHub or Google) adds a persistent identity and a profile page. Focus stats are recorded for completed focus sessions in Bonfires you started while signed in.
+- **Accounts are optional.** Guests can create and join Bonfires. Signing in (GitHub or Google) adds a persistent identity and a profile page with focus stats. A completed focus is credited to every signed-in person holding a seat when it completes, in any Bonfire.
+- **Pomodoros today.** The room, Home and your profile show how many pomodoros *you* completed today, counted across every Bonfire and by your local day. Signed-in counts come from your own logs; for guests this browser keeps the count. The ending screen shows how many pomodoros that fire held.
 - **Six people maximum.** The limit is enforced by the database, not just the UI.
-- **Defaults are 25 · 5 · 15**: a 25 minute focus, 5 minute short rest, and 15 minute long rest, with a long rest every 4 rounds. The room shows the Bonfire name and this configuration quietly at the top, and it updates when settings change.
+- **Settings.** Defaults are 25 · 5 · 15 (focus, short rest, long rest in minutes) with a long rest every 4 rounds. Rests chosen on Home follow the focus length (5/15 up to 30 minutes, 10/20 up to 60). Exact durations, mode and the Bonfire name are changed in the room. The room shows its name (or "Sleepy Otter's fire" when unnamed) and configuration quietly at the top.
 - **Silent by default.** No ambient sound or phase-end chime plays until you turn it on from the sound icon. Ambient sounds (rain, brown, pink, white noise) are generated with the Web Audio API and are local to each person.
-- **Sharing** uses the link or the join code. Link previews read "Alex is inviting you to Deep Work", built only from values stored on the Bonfire.
+- **Sharing** uses the link or the join code. Link previews read "Alex is inviting you to Deep Work", built only from values stored on the Bonfire; the preview image URL changes when the name or settings do. Rooms are marked `noindex`.
 
 ## Modes
 
@@ -43,11 +44,12 @@ Client
   → every client
 ```
 
-- **Timer.** The timer is clock based. The database stores `time_left` and `started_at`, and each client computes the remaining time locally. There is no per-second server timer. When a client sees a phase reach zero it calls `complete_phase`, and the database checks that the time has really run out before moving to the next phase.
+- **Timer.** The timer is clock based. The database stores `time_left` and `started_at`, and each client computes the remaining time against the server's clock (offset measured once per page load from `/api/time`). There is no per-second server timer. When a client sees a phase reach zero it calls `complete_phase`, and the database checks that the time has really run out before moving to the next phase; the client asks again if the phase is still at zero shortly after.
+- **Consistency.** Every change bumps `bonfires.version`, and clients ignore states older than the one they hold, since relay broadcasts can arrive out of order. Clients re-read the Bonfire whenever the channel (re)subscribes and after a rejected command, so updates missed while loading or offline are caught up.
 - **Commands** are `SECURITY DEFINER` PostgreSQL functions: `create_bonfire`, `start_timer`, `pause_timer`, `skip_phase`, `complete_phase`, `change_settings`, `toggle_mode`, `end_bonfire`, `set_bonfire_details`, `resolve_join_code`. Clients never write to the `bonfires` table directly and never broadcast Bonfire state.
 - **Seats.** `join_bonfire` gives each participant a credential and one of six seats, kept alive by a heartbeat (`touch_bonfire_seat`) and released by `leave_bonfire`. Seats are stable, so people keep their place when others arrive or leave.
 - **Presence** (Supabase Realtime Presence on the same channel) decides who is drawn around the fire. It is never used for authorization.
-- **Privacy.** The creator's `initiator_token` is not readable by clients. It is excluded from the column grants, from command results, and from the relay payload.
+- **Privacy.** The creator's `initiator_token` is not readable by clients. It is excluded from the column grants, from command results, and from the relay payload. Pomodoro logs are readable only by their owner and are written only by `complete_phase`.
 
 The full design is in [`docs/bonfire-v2-architecture.md`](docs/bonfire-v2-architecture.md), and the product and UI rules are in [`docs/bonfire-product-spec.md`](docs/bonfire-product-spec.md).
 
@@ -68,14 +70,15 @@ app/
   bonfire/[id]/            Bonfire room (server page + metadata)
   api/bonfire/             Create and read Bonfires
   api/og/                  Link preview images
+  api/time/                Server clock for the countdown
   api/cleanup/             Daily cron route (removes stale v1 sessions)
   login/, auth/callback/   Optional sign-in
   profile/[username]/      Personal focus stats
 components/
   bonfire/                 Room: scene, characters, fire, timer, controls, menus
   home/                    Home and its illustrated objects
-hooks/                     useBonfire, useBonfireChannel, usePresence, useSeat, useCountdown, ...
-lib/                       Command wrappers, seats, characters, brand, timer, audio
+hooks/                     useBonfire, useBonfireChannel, usePresence, useSeat, useCountdown, useToday, ...
+lib/                       Command wrappers, seats, characters, names, brand, timer, server clock, today count, audio
 supabase/
   migrations/              Database schema and RPCs
   functions/bonfire-relay/ Edge Function that publishes state_update
@@ -172,7 +175,7 @@ npm test
 npm run build
 ```
 
-Unit tests live in `__tests__/` and cover the timer, seat layout, character appearance, scene participants, command wrappers, room controls, silent-by-default audio, and invitation copy. CI (`.github/workflows/ci.yml`) runs lint, tests, typecheck, and build on pull requests to `main` and `develop`.
+Unit tests live in `__tests__/` and cover the timer and countdown, state ordering, seat layout, character appearance, scene participants, command wrappers, room controls, number inputs, names, the home setup, the "today" count, silent-by-default audio, and invitation copy. CI (`.github/workflows/ci.yml`) runs lint, tests, typecheck, and build on pull requests to `main` and `develop`.
 
 ## Contributing
 

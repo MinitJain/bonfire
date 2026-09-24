@@ -12,6 +12,7 @@ import { useSeat } from '@/hooks/useSeat'
 import { useSceneParticipants } from '@/hooks/useSceneParticipants'
 import { useCountdown, phaseDuration } from '@/hooks/useCountdown'
 import { useBonfireState } from '@/hooks/useBonfireState'
+import { useToday } from '@/hooks/useToday'
 import {
   getBonfireDisplayName,
   getParticipantToken,
@@ -108,6 +109,12 @@ export function BonfireRoom({ initial, userId, displayName }: BonfireRoomProps) 
     self: seated && name
       ? { username: name, is_initiator: isInitiator, seat: seat.seat }
       : null,
+  })
+
+  // Personal count for today, across every Bonfire (not this fire's count)
+  const today = useToday({
+    userId,
+    room: { bonfireId: initial.id, completedPomodoros: state.completed_pomodoros, seated },
   })
 
   const sceneParticipants = useSceneParticipants(channel.participants)
@@ -220,7 +227,7 @@ export function BonfireRoom({ initial, userId, displayName }: BonfireRoomProps) 
             mode={state.session_mode}
             round={state.current_round}
             roundsBeforeLong={state.rounds_before_long}
-            completedPomodoros={state.completed_pomodoros}
+            todayCount={today?.pomodoros ?? null}
           />
         )}
 

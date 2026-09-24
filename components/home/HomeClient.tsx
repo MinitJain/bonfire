@@ -9,6 +9,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { ToastProvider, useToast } from '@/components/ui/Toast'
 import { HomeObjects } from '@/components/home/HomeObjects'
 import { FocusSetup } from '@/components/home/FocusSetup'
+import { useToday } from '@/hooks/useToday'
 import { createClient } from '@/lib/supabase/client'
 import { BRAND } from '@/lib/brand'
 import {
@@ -54,6 +55,7 @@ function HomeContent({ user, profileUsername, totalPomodoros }: HomeClientProps)
   const menuRef = useRef<HTMLDivElement>(null)
   const codeRef = useRef<HTMLInputElement>(null)
   const [setup, setSetup] = useState<HomeSetup>(DEFAULT_SETUP)
+  const today = useToday({ userId: user?.id ?? null })
 
   // The last setup is read after mount, so the server render stays stable
   useEffect(() => setSetup(getStoredSetup()), [])
@@ -234,6 +236,11 @@ function HomeContent({ user, profileUsername, totalPomodoros }: HomeClientProps)
       <main className="bf-home-main">
         <h1 className="bf-home-wordmark">BONFIRE</h1>
         <p className="bf-home-tagline">{BRAND.tagline.toLowerCase()}</p>
+        {today && today.pomodoros > 0 && (
+          <p className="bf-home-today">
+            {today.pomodoros} {today.pomodoros === 1 ? 'pomodoro' : 'pomodoros'} today
+          </p>
+        )}
 
         <div className="bf-home-spacer" />
 
