@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { generateAnonName } from '@/lib/roomName'
-import { MAX_BONFIRE_NAME_LENGTH, MAX_NAME_LENGTH } from '@/lib/bonfire'
+import { MAX_BONFIRE_NAME_LENGTH, MAX_NAME_LENGTH, getGuestName } from '@/lib/bonfire'
 
 export interface NameChoice {
   /** Display name for this Bonfire. */
@@ -26,8 +25,8 @@ export function NamePrompt({ defaultName, isCreator, defaultBonfireName, onSubmi
   const [bonfireName, setBonfireName] = useState(defaultBonfireName ?? '')
   const [suggestion, setSuggestion] = useState('')
 
-  // Random suggestion is generated on the client only, to keep hydration stable
-  useEffect(() => setSuggestion(generateAnonName()), [])
+  // This browser's guest name ("Sleepy Otter"), read on the client only to keep hydration stable
+  useEffect(() => setSuggestion(getGuestName()), [])
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()

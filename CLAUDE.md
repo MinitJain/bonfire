@@ -126,13 +126,16 @@ Approximate home composition:
 
 BONFIRE
 
-a quiet place to focus together
+sit together. do your own work.
 
 small illustrated objects distributed around the viewport
 
-25 minutes
+focus length (25 · 30 · 45 · 60 · custom) and rounds before the long rest
 
 [ start a bonfire ] [ join a bonfire ]
+
+Home only chooses focus length and rounds; rests follow the focus length.
+Exact rests, mode and the Bonfire name stay in the room.
 
 Use lightweight SVG/CSS illustrations for objects such as notebooks,
 books, pencils, paper, mugs, headphones.

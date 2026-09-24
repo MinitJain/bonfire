@@ -8,20 +8,28 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { Avatar } from '@/components/ui/Avatar'
 import { ToastProvider, useToast } from '@/components/ui/Toast'
 import { HomeObjects } from '@/components/home/HomeObjects'
+import { FocusSetup } from '@/components/home/FocusSetup'
+import { useToday } from '@/hooks/useToday'
 import { createClient } from '@/lib/supabase/client'
-import { generateAnonName } from '@/lib/roomName'
+import { BRAND } from '@/lib/brand'
 import {
   createBonfire,
-  getStoredDisplayName,
+  getStoredSetup,
+  getSuggestedName,
   isValidJoinCode,
   resolveJoinCode,
+  restsFor,
   storeInitiatorToken,
-  DEFAULT_FOCUS_SECONDS,
+  storeSetup,
+  DEFAULT_SETUP,
+  type HomeSetup,
 } from '@/lib/bonfire'
 
 interface HomeClientProps {
   user: User | null
   profileUsername: string | null
+  /** Signed-in only: pomodoros completed across all Bonfires. */
+  totalPomodoros: number | null
 }
 
 const GoogleIcon = () => (
@@ -33,7 +41,7 @@ const GoogleIcon = () => (
   </svg>
 )
 
-function HomeContent({ user, profileUsername }: HomeClientProps) {
+function HomeContent({ user, profileUsername, totalPomodoros }: HomeClientProps) {
   const router = useRouter()
   const { toast } = useToast()
   const supabase = useMemo(() => createClient(), [])
@@ -46,6 +54,16 @@ function HomeContent({ user, profileUsername }: HomeClientProps) {
   const [isSigningIn, setIsSigningIn] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const codeRef = useRef<HTMLInputElement>(null)
+  const [setup, setSetup] = useState<HomeSetup>(DEFAULT_SETUP)
+  const today = useToday({ userId: user?.id ?? null })
+
+  // The last setup is read after mount, so the server render stays stable
+  useEffect(() => setSetup(getStoredSetup()), [])
+
+  const changeSetup = (next: HomeSetup) => {
+    setSetup(next)
+    storeSetup(next)
+  }
 
   useEffect(() => {
     if (!menu) return
@@ -66,8 +84,15 @@ function HomeContent({ user, profileUsername }: HomeClientProps) {
     if (isCreating) return
     setIsCreating(true)
     try {
-      const initiatorName = userName ?? getStoredDisplayName() ?? generateAnonName()
-      const result = await createBonfire({ initiatorName })
+      const initiatorName = userName ?? getSuggestedName()
+      const rests = restsFor(setup.focus)
+      const result = await createBonfire({
+        initiatorName,
+        focusDuration: setup.focus * 60,
+        shortDuration: rests.short * 60,
+        longDuration: rests.long * 60,
+        roundsBeforeLong: setup.rounds,
+      })
       if (result.error || !result.data) throw new Error(result.error ?? 'Failed to create bonfire')
       storeInitiatorToken(result.data.id, result.data.initiator_token)
       router.push(`/bonfire/${result.data.id}`)
@@ -119,8 +144,6 @@ function HomeContent({ user, profileUsername }: HomeClientProps) {
     router.refresh()
   }
 
-  const minutes = Math.round(DEFAULT_FOCUS_SECONDS / 60)
-
   return (
     <div className="bf-home">
       <HomeObjects />
@@ -146,6 +169,11 @@ function HomeContent({ user, profileUsername }: HomeClientProps) {
                 <div className="px-3 py-2">
                   <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{userName ?? 'Signed in'}</p>
                   <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user.email}</p>
+                  {totalPomodoros !== null && totalPomodoros > 0 && (
+                    <p className="bf-pop-hint" style={{ marginTop: 8 }}>
+                      {totalPomodoros} {totalPomodoros === 1 ? 'pomodoro' : 'pomodoros'} finished by the fire
+                    </p>
+                  )}
                 </div>
                 {profileUsername && (
                   <button
@@ -207,12 +235,22 @@ function HomeContent({ user, profileUsername }: HomeClientProps) {
 
       <main className="bf-home-main">
         <h1 className="bf-home-wordmark">BONFIRE</h1>
-        <p className="bf-home-tagline">a quiet place to focus together</p>
+        <p className="bf-home-tagline">{BRAND.tagline.toLowerCase()}</p>
+        {today && today.pomodoros > 0 && (
+          <p className="bf-home-today">
+            {today.pomodoros} {today.pomodoros === 1 ? 'pomodoro' : 'pomodoros'} today
+          </p>
+        )}
 
         <div className="bf-home-spacer" />
 
         <div className="bf-home-lower">
-          <p className="bf-home-duration">{minutes} minutes</p>
+          <FocusSetup
+            setup={setup}
+            onChange={changeSetup}
+            onSubmit={() => void handleCreate()}
+            dimmed={joining}
+          />
 
           <div className="bf-home-actions">
             <button

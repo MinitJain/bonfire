@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes'
 import { Analytics } from '@vercel/analytics/next'
 import Script from 'next/script'
 import { FaviconInit } from '@/components/ui/FaviconInit'
+import { BRAND } from '@/lib/brand'
 import './globals.css'
 
 const dmSans = DM_Sans({
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
     default: 'Bonfire',
     template: '%s | Bonfire',
   },
-  description: 'A quiet place to focus together.',
+  description: BRAND.tagline,
   keywords: ['pomodoro', 'focus', 'productivity', 'timer', 'shared', 'real-time'],
   authors: [{ name: 'Bonfire' }],
   creator: 'Bonfire',
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
     url: appUrl,
     siteName: 'Bonfire',
     title: 'Bonfire',
-    description: 'A quiet place to focus together.',
+    description: BRAND.tagline,
     images: [
       {
         url: '/api/og',
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Bonfire',
-    description: 'A quiet place to focus together.',
+    description: BRAND.tagline,
     images: ['/api/og'],
   },
   manifest: '/manifest.json',

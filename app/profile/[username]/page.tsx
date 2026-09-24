@@ -154,7 +154,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         {/* Analytics dashboard — only for own profile */}
         {isOwnProfile && typedProfile.total_pomodoros > 0 && (
           <>
-            <WeeklyChart days={weekDays} />
+            <WeeklyChart days={weekDays} userId={typedProfile.id} />
             <StreakCalendar
               cells={calendarCells}
               totalMinutesYear={totalMinutesYear}
