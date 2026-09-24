@@ -1,250 +1,182 @@
-<div align="center">
-  <h1>Bonfire</h1>
-  <p>The social focus timer. Start a room, share the link, focus together.</p>
+# Bonfire
 
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
-[![Supabase](https://img.shields.io/badge/Supabase-realtime-green?style=flat-square&logo=supabase)](https://supabase.com)
-[![Vercel](https://img.shields.io/badge/Vercel-deployed-black?style=flat-square&logo=vercel)](https://vercel.com)
-[![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-[![Issues](https://img.shields.io/github/issues/MinitJain/bonfire?style=flat-square)](https://github.com/MinitJain/bonfire/issues)
-
-**[→ Try it live](https://bonfirefocus.vercel.app)** · [Report a bug](https://github.com/MinitJain/bonfire/issues) · [Request a feature](https://github.com/MinitJain/bonfire/issues)
-
-</div>
-
----
-
-## Why Bonfire?
-
-Every focus app is built for one person. Forest grows a tree. Yours, alone. Notion tracks tasks. Yours, alone. There is no app built around the fact that focusing with someone else is fundamentally different from focusing solo.
-
-Bonfire is that app. Start a room, share the link. Your friend joins and sees the exact same second on the exact same timer. When the break hits, it hits for everyone. The accountability is real because the other person is actually there.
-
----
-
-## Features
-
-### Bonfire Animation
-
-A live CSS-powered fire scene that reacts to your session state. The flame grows as you complete pomodoros, dims to embers on short breaks, and goes near-dormant on long breaks, giving you a visual heartbeat of the room's energy.
-
----
-
-### Synchronized Timer
-
-The timer is clock-based using a `startedAt` Unix timestamp rather than a local countdown. Everyone in the room, regardless of when they joined or how bad their connection is, always sees the correct second. No drift, no skew.
-
----
-
-### Three Focus Modes
-
-Every room has three modes, switchable at any time:
-
-- **Host mode**: only the host can start, pause, skip, or change settings. Everyone else follows along in sync.
-- **Jam mode**: anyone in the room can control the timer. Great for study groups where everyone has equal say.
-- **Solo mode**: private room, no sharing, no watchers. Just you and the timer.
-
-The current mode is visible to all participants in real time.
-
----
-
-### Watcher Settings Requests
-
-Watchers can't change settings directly, but they can request a change. The host receives an inline card showing exactly what the watcher wants to change, with a diff of old vs. new values, and can accept or reject with one tap. If accepted, the settings apply immediately for everyone.
-
----
-
-### Focus Noise
-
-Four ambient sounds generated entirely by the Web Audio API. No CDN, no external files, no latency:
-
-- **Brown noise**: deep, warm rumble. Like a distant waterfall.
-- **White noise**: broad-spectrum static. Clinical focus.
-- **Pink noise**: softer mid-range tone. Gentle background presence.
-- **Rain**: gentle rainfall texture. Calm and grounding.
-
-The panel is collapsible. A green pulse dot appears next to "Focus Music" when a sound is active.
-
----
-
-### Live Participants and Activity Feed
-
-See who's focusing alongside you via real-time presence. When someone joins or leaves, a floating activity message appears at the bottom of the screen. The same feed shows timer events: when someone starts, pauses, or skips, so the whole group stays in the loop without any chat.
-
----
-
-### Guest Nicknames
-
-No account needed. Guests are prompted to set a display name when they first join a room. The name is saved per-room in `localStorage` so it persists across page reloads. It shows up in the participant list and activity feed for everyone.
-
----
-
-### Timer Settings
-
-Fully configurable per-room:
-
-- Focus, short break, and long break durations (in minutes)
-- Long break interval (how many focus rounds before a long break)
-- Auto-start breaks: break timer starts automatically when focus ends
-- Auto-start pomodoros: focus timer restarts automatically after a break
-- Light / Dark theme toggle
-
-Settings are persisted to the database and broadcast to all participants when applied.
-
----
-
-### Guide
-
-A built-in guide panel (press `?` or click the `?` button) covers every mode, the noise library, keyboard shortcuts, and how to request settings as a watcher. Available as a slide-out sidebar on desktop and a bottom sheet on mobile.
-
----
-
-### Break Overlay and Notifications
-
-When the timer ends, a full-screen break overlay appears for all participants simultaneously. Browser push notifications fire at the same moment, useful if you've switched tabs. The overlay disappears as soon as the next round starts.
-
----
-
-### Analytics Dashboard
-
-Authenticated users get a personal analytics dashboard at `/profile/[username]`:
-
-- **Total pomodoros** and **focus hours** completed
-- **Current streak**: consecutive days with at least one completed session
-- **Weekly bar chart**: last 7 days of focus activity
-- **GitHub-style heatmap**: 52-week calendar showing daily pomodoro counts
-
-All data is logged to the `pomodoro_logs` table whenever a focus round completes.
-
----
-
-### Explore Page
-
-Browse all live public rooms happening right now without needing a direct link. The explore page shows active rooms updated in the last 90 seconds, showing room name, host, and current mode. Click any card to join instantly.
-
----
-
-### One-Tap Share
-
-The share panel lets you copy the room link or trigger the native OS share sheet on mobile. Guests can only share if the host has "Allow guests to invite" enabled in settings. The host controls whether the room is open or invite-only.
-
----
-
-### Dark / Light Theme and PWA
-
-Theme toggles between dark and light, persisted per device. The app is installable as a PWA on mobile and desktop. The favicon and tab title update live with the current timer countdown (minutes only, always readable).
-
----
+Sit together. Do your own work. Bonfire is a shared focus timer: you light a temporary shared fire, invite a few people, and everyone sits around it on one timer.
 
 ## How it works
 
-1. **Start**: click "Start Room" on the home page
-2. **Share**: hit the Invite button and send the link to anyone
-3. **Pick your mode**: Host (you lead), Jam (everyone drives), or Solo (just you)
-4. **Focus**: hit Play. Everyone sees the same countdown, on the same second
-5. **Break**: timer ends, notifications fire, break overlay appears for everyone
+1. On the home page, pick a focus length (25, 30, 45, 60 or custom) and how many rounds come before the long rest, then **start a bonfire**. Or **join a bonfire** with a 6-character code or a shared link.
+2. Choose your name. Guests are offered a generated name such as "Sleepy Otter", kept per browser. The creator can also give the Bonfire an optional name, such as "Deep Work".
+3. You take a seat around the fire as a small illustrated character. Up to 6 people can gather.
+4. Everyone shares one timer: focus, short rest, long rest. A thin line under the time shows how much of the current phase has passed, and small marks show the round within the set.
+5. **Step away** when you are done. The Bonfire keeps going for everyone else, and you can come back with the link.
+6. The creator can **End Bonfire** for everyone. The link then shows that the fire has settled.
 
-No account needed. Start in under 30 seconds.
+Bonfires are temporary. There are no feeds, followers, or public room lists.
 
----
+### Details
 
-## Stack
+- **Accounts are optional.** Guests can create and join Bonfires. Signing in (GitHub or Google) adds a persistent identity and a profile page with focus stats. A completed focus is credited to every signed-in person holding a seat when it completes, in any Bonfire.
+- **Pomodoros today.** The room, Home and your profile show how many pomodoros *you* completed today, counted across every Bonfire and by your local day. Signed-in counts come from your own logs; for guests this browser keeps the count. The ending screen shows how many pomodoros that fire held.
+- **Six people maximum.** The limit is enforced by the database, not just the UI.
+- **Settings.** Defaults are 25 · 5 · 15 (focus, short rest, long rest in minutes) with a long rest every 4 rounds. Rests chosen on Home follow the focus length (5/15 up to 30 minutes, 10/20 up to 60). Exact durations, mode and the Bonfire name are changed in the room. The room shows its name (or "Sleepy Otter's fire" when unnamed) and configuration quietly at the top.
+- **Silent by default.** No ambient sound or phase-end chime plays until you turn it on from the sound icon. Ambient sounds (rain, brown, pink, white noise) are generated with the Web Audio API and are local to each person.
+- **Sharing** uses the link or the join code. Link previews read "Alex is inviting you to Deep Work", built only from values stored on the Bonfire; the preview image URL changes when the name or settings do. Rooms are marked `noindex`.
 
-| Layer      | Technology                                   |
-| ---------- | -------------------------------------------- |
-| Framework  | Next.js 14 App Router                        |
-| Language   | TypeScript (strict)                          |
-| Database   | Supabase (PostgreSQL + Realtime)             |
-| Auth       | Supabase Auth (GitHub + Google OAuth)        |
-| Styling    | Tailwind CSS + CSS variables                 |
-| Animation  | CSS animations + CSS variables                |
-| OG Images  | @vercel/og                                   |
-| Audio      | Web Audio API (no external deps)             |
-| Fonts      | Plus Jakarta Sans + DM Sans + JetBrains Mono |
+## Modes
 
----
+| Mode | Who can start, pause, skip, and change durations |
+|---|---|
+| **Focus** (default) | Only the person who lit the Bonfire |
+| **Jam** | Everyone holding a seat around the fire |
 
-## Getting Started
+The creator switches modes in settings. Being present is never enough to control the timer: every command is authorized by the database, using the creator's token or a participant's seat credential.
 
-**Prerequisites:** Node.js 18+, a Supabase account (free), npm
+## Architecture
 
-**1. Clone and install**
+Bonfire v2 is server-authoritative. Clients send commands; the database decides what happened; everyone renders what the database declared.
+
+```
+Client
+  → PostgreSQL RPC (validate, authorize, transition, persist)
+  → AFTER INSERT/UPDATE trigger → pg_net HTTP POST
+  → Supabase Edge Function (bonfire-relay)
+  → Supabase Realtime broadcast: state_update on channel bonfire:{id}
+  → every client
+```
+
+- **Timer.** The timer is clock based. The database stores `time_left` and `started_at`, and each client computes the remaining time against the server's clock (offset measured once per page load from `/api/time`). There is no per-second server timer. When a client sees a phase reach zero it calls `complete_phase`, and the database checks that the time has really run out before moving to the next phase; the client asks again if the phase is still at zero shortly after.
+- **Consistency.** Every change bumps `bonfires.version`, and clients ignore states older than the one they hold, since relay broadcasts can arrive out of order. Clients re-read the Bonfire whenever the channel (re)subscribes and after a rejected command, so updates missed while loading or offline are caught up.
+- **Commands** are `SECURITY DEFINER` PostgreSQL functions: `create_bonfire`, `start_timer`, `pause_timer`, `skip_phase`, `complete_phase`, `change_settings`, `toggle_mode`, `end_bonfire`, `set_bonfire_details`, `resolve_join_code`. Clients never write to the `bonfires` table directly and never broadcast Bonfire state.
+- **Seats.** `join_bonfire` gives each participant a credential and one of six seats, kept alive by a heartbeat (`touch_bonfire_seat`) and released by `leave_bonfire`. Seats are stable, so people keep their place when others arrive or leave.
+- **Presence** (Supabase Realtime Presence on the same channel) decides who is drawn around the fire. It is never used for authorization.
+- **Privacy.** The creator's `initiator_token` is not readable by clients. It is excluded from the column grants, from command results, and from the relay payload. Pomodoro logs are readable only by their owner and are written only by `complete_phase`.
+
+The full design is in [`docs/bonfire-v2-architecture.md`](docs/bonfire-v2-architecture.md), and the product and UI rules are in [`docs/bonfire-product-spec.md`](docs/bonfire-product-spec.md).
+
+## Tech stack
+
+- Next.js 14 (App Router), React 18, TypeScript
+- Tailwind CSS plus plain CSS for the scene (fire, characters, and motion are CSS and inline SVG)
+- Supabase: PostgreSQL, Auth, Realtime (broadcast and presence), Edge Functions, `pg_net`
+- `@vercel/og` for link preview images
+- Vitest and Testing Library
+- Deployed on Vercel
+
+## Project structure
+
+```
+app/
+  page.tsx                 Home
+  bonfire/[id]/            Bonfire room (server page + metadata)
+  api/bonfire/             Create and read Bonfires
+  api/og/                  Link preview images
+  api/time/                Server clock for the countdown
+  api/cleanup/             Daily cron route (removes stale v1 sessions)
+  login/, auth/callback/   Optional sign-in
+  profile/[username]/      Personal focus stats
+components/
+  bonfire/                 Room: scene, characters, fire, timer, controls, menus
+  home/                    Home and its illustrated objects
+hooks/                     useBonfire, useBonfireChannel, usePresence, useSeat, useCountdown, useToday, ...
+lib/                       Command wrappers, seats, characters, names, brand, timer, server clock, today count, audio
+supabase/
+  migrations/              Database schema and RPCs
+  functions/bonfire-relay/ Edge Function that publishes state_update
+docs/                      Product spec and v2 architecture
+```
+
+The v1 routes (`/session/[id]`, `/explore`, `/api/session`) are still in the repository as a fallback. They are not part of the Bonfire v2 flow.
+
+## Local development
+
+**Requirements:** Node.js 20 and npm, a Supabase project, and the Supabase CLI (used through `npx supabase`).
+
+1. **Install**
+
+   ```bash
+   git clone https://github.com/MinitJain/bonfire.git
+   cd bonfire
+   npm install
+   ```
+
+2. **Environment**
+
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+   | Variable | Used for |
+   |---|---|
+   | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+   | `NEXT_PUBLIC_APP_URL` | Share links and preview images (`http://localhost:3000` locally) |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Server-only admin client for `/api/cleanup` |
+   | `CRON_SECRET` | Authorizes the `/api/cleanup` cron request |
+   | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Optional Google Analytics 4 ID |
+
+3. **Database**
+
+   ```bash
+   npx supabase link --project-ref <your-project-ref>
+   npx supabase db push
+   ```
+
+   This applies everything in `supabase/migrations/`, including the `pg_net` and `pgcrypto` extensions.
+
+4. **Realtime relay**
+
+   Deploy the Edge Function. It uses the `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` secrets that Supabase provides to Edge Functions by default.
+
+   ```bash
+   npx supabase functions deploy bonfire-relay
+   ```
+
+   The trigger finds the function through the `bonfire_relay_config` table. Migration `022_set_relay_config.sql` fills it with the original project's values, so on your own project point it at your URL and anon key (in the SQL editor):
+
+   ```sql
+   update public.bonfire_relay_config set value = 'https://<your-project-ref>.supabase.co' where key = 'supabase_url';
+   update public.bonfire_relay_config set value = '<your-anon-key>' where key = 'supabase_anon_key';
+   ```
+
+   Without this, commands still work but other clients will not receive live updates.
+
+5. **Sign-in (optional)**
+
+   To enable accounts, turn on GitHub and/or Google under Supabase Authentication, Providers. Guests do not need this.
+
+6. **Run**
+
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000).
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start the development server |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm run lint` | ESLint (`next lint`) |
+| `npm run typecheck` | TypeScript (`tsc --noEmit`) |
+| `npm test` | Run the Vitest suite once |
+| `npm run test:watch` | Vitest in watch mode |
+
+## Testing and verification
+
+Before opening a pull request, run:
 
 ```bash
-git clone https://github.com/MinitJain/bonfire.git
-cd bonfire
-npm install
+npm run typecheck
+npm run lint
+npm test
+npm run build
 ```
 
-**2. Set up environment variables**
-
-```bash
-cp .env.local.example .env.local
-```
-
-Fill in your Supabase credentials:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-CRON_SECRET=your-random-secret
-```
-
-**3. Set up the database**
-
-Run the migrations in your Supabase SQL editor in order:
-
-```text
-supabase/migrations/001_init.sql
-supabase/migrations/002_jam_mode.sql
-supabase/migrations/003_rls_sessions.sql
-supabase/migrations/004_session_expiry.sql
-supabase/migrations/005_log_pomodoros.sql
-supabase/migrations/006_session_mode.sql
-```
-
-Or push via the Supabase CLI:
-
-```bash
-npx supabase db push
-```
-
-**4. Enable OAuth providers**
-
-Supabase → Authentication → Providers → enable GitHub and/or Google, add your Client ID and Secret.
-
-**5. Run locally**
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000)
-
----
-
-## Deploy to Vercel
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/MinitJain/bonfire)
-
-After deploying, complete these three steps or auth will break:
-
-1. Supabase → Authentication → URL Configuration → add your Vercel URL to **Redirect URLs**
-2. Google Cloud Console → OAuth client → add your Vercel domain to **Authorized JavaScript origins**
-3. Set `NEXT_PUBLIC_APP_URL` in Vercel environment variables to your live URL (must include `https://`)
-
----
+Unit tests live in `__tests__/` and cover the timer and countdown, state ordering, seat layout, character appearance, scene participants, command wrappers, room controls, number inputs, names, the home setup, the "today" count, silent-by-default audio, and invitation copy. CI (`.github/workflows/ci.yml`) runs lint, tests, typecheck, and build on pull requests to `main` and `develop`.
 
 ## Contributing
 
-PRs are welcome. For major changes, open an issue first.
-This repo uses [CodeRabbit](https://coderabbit.ai) for AI code review. Every PR gets reviewed automatically.
-
----
-
-## License
-
-MIT
+Read [`CLAUDE.md`](CLAUDE.md) first. It describes the product boundaries, the visual direction, and the rule that UI work must not change the server-authoritative architecture. Please keep writing in the repository free of em dashes.

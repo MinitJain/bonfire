@@ -92,6 +92,9 @@ export function RoomMenu({ state, canControl, isInitiator, onSaveSettings, onTog
           {open === 'sound' && <AudioControls sound={sound} />}
           {open === 'settings' && showSettings && (
             <SessionSettings
+              // Settings saved by someone else (Jam) replace this form, so
+              // Save can never write back values the room has moved past
+              key={[state.name, state.focus_duration, state.short_duration, state.long_duration, state.rounds_before_long].join('|')}
               state={state}
               isInitiator={isInitiator}
               onSave={onSaveSettings}
