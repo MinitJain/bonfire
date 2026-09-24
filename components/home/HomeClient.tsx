@@ -2,20 +2,26 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
-import { ChevronDown, Shuffle, Globe, Lock, Github, LogOut, UserCircle } from 'lucide-react'
-import { Logo } from '@/components/ui/Logo'
+import { ArrowRight, Github, LogOut, UserCircle } from 'lucide-react'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { Avatar } from '@/components/ui/Avatar'
 import { ToastProvider, useToast } from '@/components/ui/Toast'
+import { HomeObjects } from '@/components/home/HomeObjects'
 import { createClient } from '@/lib/supabase/client'
-import { generateRoomName, generateAnonName } from '@/lib/roomName'
+import { generateAnonName } from '@/lib/roomName'
+import {
+  createBonfire,
+  getStoredDisplayName,
+  isValidJoinCode,
+  resolveJoinCode,
+  storeInitiatorToken,
+  DEFAULT_FOCUS_SECONDS,
+} from '@/lib/bonfire'
 
 interface HomeClientProps {
   user: User | null
   profileUsername: string | null
-  activeSessionCount: number
 }
 
 const GoogleIcon = () => (
@@ -27,89 +33,75 @@ const GoogleIcon = () => (
   </svg>
 )
 
-function HomeContent({ user, profileUsername, activeSessionCount }: HomeClientProps) {
+function HomeContent({ user, profileUsername }: HomeClientProps) {
   const router = useRouter()
   const { toast } = useToast()
   const supabase = useMemo(() => createClient(), [])
 
-  const [roomName, setRoomName] = useState('')
-  const [guestName, setGuestName] = useState('')
-  const [isRoomPublic, setIsRoomPublic] = useState(true)
+  const [joining, setJoining] = useState(false)
+  const [joinCode, setJoinCode] = useState('')
   const [isCreating, setIsCreating] = useState(false)
+  const [isResolving, setIsResolving] = useState(false)
+  const [menu, setMenu] = useState<'user' | 'signin' | null>(null)
   const [isSigningIn, setIsSigningIn] = useState(false)
-  const [showUserMenu, setShowUserMenu] = useState(false)
-  const [showSignInMenu, setShowSignInMenu] = useState(false)
-  const [btnHovered, setBtnHovered] = useState(false)
-  const [btnPressed, setBtnPressed] = useState(false)
-  const roomNameInputRef = useRef<HTMLInputElement>(null)
-  const startBtnRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
-  const signInRef = useRef<HTMLDivElement>(null)
-
-  function fireRipple(e: React.MouseEvent<HTMLButtonElement>) {
-    const btn = startBtnRef.current
-    if (!btn) return
-    const rect = btn.getBoundingClientRect()
-    const size = Math.max(rect.width, rect.height)
-    const x = e.clientX - rect.left - size / 2
-    const y = e.clientY - rect.top - size / 2
-    const el = document.createElement('span')
-    el.style.cssText = `position:absolute;width:${size}px;height:${size}px;left:${x}px;top:${y}px;border-radius:50%;background:rgba(255,255,255,0.22);transform:scale(0);opacity:1;animation:btn-ripple 0.55s ease-out forwards;pointer-events:none;`
-    btn.appendChild(el)
-    el.addEventListener('animationend', () => el.remove())
-  }
-
+  const codeRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('welcome') === '1') {
-      toast('Signed in successfully!', 'success', 4000)
-      const url = new URL(window.location.href)
-      url.searchParams.delete('welcome')
-      window.history.replaceState({}, '', url.toString())
+    if (!menu) return
+    function onPointer(e: PointerEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenu(null)
     }
-  }, [toast])
+    document.addEventListener('pointerdown', onPointer)
+    return () => document.removeEventListener('pointerdown', onPointer)
+  }, [menu])
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowUserMenu(false)
-      if (signInRef.current && !signInRef.current.contains(e.target as Node)) setShowSignInMenu(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
+    if (joining) codeRef.current?.focus()
+  }, [joining])
+
+  const userName = typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : null
 
   const handleCreate = async () => {
     if (isCreating) return
     setIsCreating(true)
     try {
-      const finalRoomName = roomName.trim() || generateRoomName()
-      const finalGuestName = !user ? (guestName.trim() || generateAnonName()) : null
-      if (finalRoomName !== roomName) setRoomName(finalRoomName)
-      const res = await fetch('/api/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: finalRoomName, is_public: isRoomPublic, display_name: finalGuestName }),
-      })
-      if (!res.ok) throw new Error('Failed')
-      const { id } = await res.json() as { id: string }
-      if (finalGuestName) localStorage.setItem(`pomodoro_nick_${id}`, finalGuestName)
-      localStorage.setItem(`pomodoro_host_${id}`, '1')
-      const doc = document as Document & { startViewTransition?: (cb: () => void) => void }
-      if (doc.startViewTransition) {
-        doc.startViewTransition(() => router.push(`/session/${id}`))
-      } else {
-        router.push(`/session/${id}`)
-      }
+      const initiatorName = userName ?? getStoredDisplayName() ?? generateAnonName()
+      const result = await createBonfire({ initiatorName })
+      if (result.error || !result.data) throw new Error(result.error ?? 'Failed to create bonfire')
+      storeInitiatorToken(result.data.id, result.data.initiator_token)
+      router.push(`/bonfire/${result.data.id}`)
     } catch {
-      toast('Could not create room. Please try again.', 'error')
+      toast('Could not light a bonfire. Please try again.', 'error')
       setIsCreating(false)
+    }
+  }
+
+  const handleJoin = async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    const code = joinCode.trim().toUpperCase()
+    if (!isValidJoinCode(code)) {
+      toast('That code should be 6 letters and numbers.', 'error')
+      return
+    }
+    if (isResolving) return
+    setIsResolving(true)
+    try {
+      const result = await resolveJoinCode(code)
+      if (result.error || !result.data) throw new Error(result.error ?? 'Bonfire not found')
+      router.push(`/bonfire/${result.data.id}`)
+    } catch (err) {
+      const msg = err instanceof Error && /ended/i.test(err.message)
+        ? 'That bonfire has already settled.'
+        : 'No bonfire with that code.'
+      toast(msg, 'error')
+      setIsResolving(false)
     }
   }
 
   const handleSignIn = async (provider: 'github' | 'google') => {
     setIsSigningIn(true)
-    setShowSignInMenu(false)
+    setMenu(null)
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -127,290 +119,146 @@ function HomeContent({ user, profileUsername, activeSessionCount }: HomeClientPr
     router.refresh()
   }
 
+  const minutes = Math.round(DEFAULT_FOCUS_SECONDS / 60)
+
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-primary)' }}>
-      {/* Header */}
-      <header
-        className="flex items-center justify-between px-5 sm:px-8 py-4"
-        style={{ borderBottom: '1px solid var(--border)' }}
-      >
-        <Logo size="md" />
+    <div className="bf-home">
+      <HomeObjects />
 
-        <div className="flex items-center gap-3">
-          <Link
-            href="/explore"
-            className="text-sm font-medium transition-colors"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            Explore
-          </Link>
-
-          {user ? (
-            <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => setShowUserMenu(v => !v)}
-                className="flex items-center gap-2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
-                aria-label="User menu"
-              >
-                <Avatar
-                  src={user.user_metadata?.avatar_url as string | undefined}
-                  name={(user.user_metadata?.full_name as string | undefined) ?? user.email ?? '?'}
-                  size="sm"
-                />
-              </button>
-
-              {showUserMenu && (
-                <div
-                  className="absolute right-0 top-10 w-52 rounded-2xl overflow-hidden z-50 animate-scale-in"
-                  style={{
-                    background: 'var(--bg-elevated)',
-                    border: '1px solid var(--border)',
-                    boxShadow: 'var(--shadow-lg)',
-                  }}
-                >
-                  <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-                    <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                      {typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : 'User'}
-                    </p>
-                    <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user.email}</p>
-                  </div>
-                  <div className="py-1">
-                    {[
-                      ...(profileUsername ? [{
-                        icon: UserCircle,
-                        label: 'View Profile',
-                        action: () => { setShowUserMenu(false); router.push(`/profile/${profileUsername}`) },
-                      }] : []),
-                      {
-                        icon: LogOut,
-                        label: 'Sign out',
-                        action: () => { setShowUserMenu(false); void handleSignOut() },
-                      },
-                    ].map(({ icon: Icon, label, action }) => (
-                      <button
-                        key={label}
-                        onClick={action}
-                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm transition-colors cursor-pointer"
-                        style={{ color: 'var(--text-primary)' }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-secondary)' }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-                      >
-                        <Icon className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="relative" ref={signInRef}>
-              <button
-                onClick={() => setShowSignInMenu(v => !v)}
-                disabled={isSigningIn}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer disabled:opacity-50"
-                style={{
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                Sign in
-                <ChevronDown className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
-              </button>
-
-              {showSignInMenu && (
-                <div
-                  className="absolute right-0 top-10 w-44 rounded-2xl overflow-hidden z-50 animate-scale-in"
-                  style={{
-                    background: 'var(--bg-elevated)',
-                    border: '1px solid var(--border)',
-                    boxShadow: 'var(--shadow-lg)',
-                  }}
-                >
-                  <div className="py-1">
-                    {[
-                      { icon: <Github className="w-4 h-4" />, label: 'GitHub', provider: 'github' as const },
-                      { icon: <GoogleIcon />, label: 'Google', provider: 'google' as const },
-                    ].map(({ icon, label, provider }) => (
-                      <button
-                        key={provider}
-                        onClick={() => handleSignIn(provider)}
-                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm transition-colors cursor-pointer"
-                        style={{ color: 'var(--text-primary)' }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-secondary)' }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-                      >
-                        {icon}
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <ThemeToggle />
-        </div>
-      </header>
-
-      {/* Main: create room form centred */}
-      <main className="flex-1 flex flex-col items-center justify-center px-5 py-12">
-        <div className="w-full max-w-sm flex flex-col gap-5 animate-scale-in">
-          <div className="text-center">
-            <h1
-              className="font-display font-bold text-2xl sm:text-3xl mb-2"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Start a focus room
-            </h1>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              Solo or with a team. Share the link and focus in sync.
-            </p>
-          </div>
-
-          {/* Room name */}
-          <div>
-            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>
-              Room name
-            </label>
+      <div className="bf-home-corner" ref={menuRef}>
+        {user ? (
           <div className="relative">
-            <input
-              ref={roomNameInputRef}
-              type="text"
-              value={roomName}
-              onChange={e => setRoomName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') void handleCreate() }}
-              maxLength={100}
-              placeholder="Enter your room name"
-              className="w-full pl-4 pr-11 py-3 rounded-xl text-sm outline-none"
-              style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-primary)',
-              }}
-              onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-              onBlur={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
-              autoComplete="off"
-              autoFocus
-            />
             <button
               type="button"
-              onClick={() => { setRoomName(generateRoomName()); roomNameInputRef.current?.select() }}
-              aria-label="Generate random name"
-              title="Roll a random name"
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer"
-              style={{ color: 'var(--text-muted)' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)' }}
+              onClick={() => setMenu(m => (m === 'user' ? null : 'user'))}
+              className="bf-icon-btn"
+              aria-label="Account"
+              aria-expanded={menu === 'user'}
             >
-              <Shuffle className="w-3.5 h-3.5" />
+              <Avatar
+                src={user.user_metadata?.avatar_url as string | undefined}
+                name={userName ?? user.email ?? '?'}
+                size="sm"
+              />
             </button>
-          </div>
-          </div>
-
-          {/* Your name (anonymous users only) */}
-          {!user && (
-            <div>
-              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>
-                Your name
-              </label>
-              <input
-                type="text"
-                value={guestName}
-                onChange={e => setGuestName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') void handleCreate() }}
-                maxLength={40}
-                placeholder="Enter your name"
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                style={{
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-primary)',
-                }}
-                onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                onBlur={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
-                autoComplete="off"
-              />
-            </div>
-          )}
-
-          {/* Public / Private toggle */}
-          <button
-            type="button"
-            role="switch"
-            aria-checked={isRoomPublic}
-            aria-label="Room visibility"
-            onClick={() => setIsRoomPublic(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors cursor-pointer"
-            style={{
-              background: 'var(--bg-secondary)',
-              border: `1px solid ${isRoomPublic ? 'var(--border)' : 'rgba(139,92,246,0.4)'}`,
-            }}
-          >
-            <div className="flex flex-col items-start gap-0.5">
-              <span className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                {isRoomPublic ? <Globe size={14} /> : <Lock size={14} />}
-                {isRoomPublic ? 'Public room' : 'Private room'}
-              </span>
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {isRoomPublic ? 'Visible on Explore' : 'Link-only, locked on Explore'}
-              </span>
-            </div>
-            <div
-              className="relative w-11 h-6 rounded-full transition-colors flex-shrink-0"
-              style={{ background: isRoomPublic ? 'var(--border)' : 'rgba(139,92,246,0.6)' }}
-            >
-              <span
-                className="absolute top-1 w-4 h-4 rounded-full bg-white transition-transform"
-                style={{ left: isRoomPublic ? '4px' : '23px' }}
-              />
-            </div>
-          </button>
-
-          {/* CTA */}
-          <button
-            ref={startBtnRef}
-            onClick={(e) => { fireRipple(e); void handleCreate() }}
-            onMouseEnter={() => setBtnHovered(true)}
-            onMouseLeave={() => { setBtnHovered(false); setBtnPressed(false) }}
-            onMouseDown={() => setBtnPressed(true)}
-            onMouseUp={() => setBtnPressed(false)}
-            disabled={isCreating}
-            className="relative overflow-hidden w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              background: 'var(--accent)',
-              color: '#fff',
-              boxShadow: btnPressed
-                ? '0 2px 8px rgba(255,85,51,0.25)'
-                : btnHovered
-                  ? '0 8px 30px rgba(255,85,51,0.5)'
-                  : 'var(--shadow-md)',
-              transform: btnPressed ? 'scale(0.97)' : btnHovered ? 'scale(1.02) translateY(-1px)' : 'scale(1)',
-              transition: 'transform 0.14s ease, box-shadow 0.14s ease',
-            }}
-          >
-            {isCreating && (
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            {menu === 'user' && (
+              <div className="bf-popover" style={{ padding: 6, width: 220 }}>
+                <div className="px-3 py-2">
+                  <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{userName ?? 'Signed in'}</p>
+                  <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user.email}</p>
+                </div>
+                {profileUsername && (
+                  <button
+                    type="button"
+                    className="bf-text-btn w-full flex items-center gap-2"
+                    style={{ justifyContent: 'flex-start', borderRadius: 10 }}
+                    onClick={() => { setMenu(null); router.push(`/profile/${profileUsername}`) }}
+                  >
+                    <UserCircle className="w-4 h-4" /> Profile
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="bf-text-btn w-full flex items-center gap-2"
+                  style={{ justifyContent: 'flex-start', borderRadius: 10 }}
+                  onClick={() => { setMenu(null); void handleSignOut() }}
+                >
+                  <LogOut className="w-4 h-4" /> Sign out
+                </button>
+              </div>
             )}
-            {isCreating ? 'Creating...' : 'Start Room'}
-          </button>
+          </div>
+        ) : (
+          <div className="relative">
+            <button
+              type="button"
+              className="bf-text-btn"
+              disabled={isSigningIn}
+              onClick={() => setMenu(m => (m === 'signin' ? null : 'signin'))}
+              aria-expanded={menu === 'signin'}
+            >
+              sign in
+            </button>
+            {menu === 'signin' && (
+              <div className="bf-popover" style={{ padding: 6, width: 200 }}>
+                <button
+                  type="button"
+                  className="bf-text-btn w-full flex items-center gap-2"
+                  style={{ justifyContent: 'flex-start', borderRadius: 10 }}
+                  onClick={() => void handleSignIn('github')}
+                >
+                  <Github className="w-4 h-4" /> GitHub
+                </button>
+                <button
+                  type="button"
+                  className="bf-text-btn w-full flex items-center gap-2"
+                  style={{ justifyContent: 'flex-start', borderRadius: 10 }}
+                  onClick={() => void handleSignIn('google')}
+                >
+                  <GoogleIcon /> Google
+                </button>
+                <p className="bf-pop-hint px-3 pb-1">Optional. Keeps your name and focus stats.</p>
+              </div>
+            )}
+          </div>
+        )}
+        <ThemeToggle variant="quiet" />
+      </div>
 
-          {/* Live rooms link */}
-          <Link
-            href="/explore"
-            className="text-center text-sm transition-colors flex items-center justify-center gap-1.5"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <span
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ background: activeSessionCount > 0 ? 'var(--green)' : 'var(--text-muted)' }}
-            />
-            {activeSessionCount > 0
-              ? `${activeSessionCount} room${activeSessionCount !== 1 ? 's' : ''} live now. Join one →`
-              : 'No live rooms yet. Start the first one.'}
-          </Link>
+      <main className="bf-home-main">
+        <h1 className="bf-home-wordmark">BONFIRE</h1>
+        <p className="bf-home-tagline">a quiet place to focus together</p>
+
+        <div className="bf-home-spacer" />
+
+        <div className="bf-home-lower">
+          <p className="bf-home-duration">{minutes} minutes</p>
+
+          <div className="bf-home-actions">
+            <button
+              type="button"
+              className="bf-btn-primary"
+              onClick={() => void handleCreate()}
+              disabled={isCreating}
+            >
+              {isCreating ? 'lighting…' : 'start a bonfire'}
+            </button>
+
+            {joining ? (
+              <form className="bf-code-field" onSubmit={handleJoin}>
+                <input
+                  ref={codeRef}
+                  value={joinCode}
+                  onChange={e => setJoinCode(e.target.value.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 6))}
+                  onKeyDown={e => {
+                    if (e.key === 'Escape') {
+                      setJoining(false)
+                      setJoinCode('')
+                    }
+                  }}
+                  onBlur={() => { if (!joinCode) setJoining(false) }}
+                  placeholder="6-letter code"
+                  aria-label="Join code"
+                  autoComplete="off"
+                  autoCapitalize="characters"
+                  spellCheck={false}
+                  maxLength={6}
+                />
+                <button
+                  type="submit"
+                  className="bf-code-submit"
+                  aria-label="Join"
+                  disabled={joinCode.length < 6 || isResolving}
+                >
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </form>
+            ) : (
+              <button type="button" className="bf-btn-secondary" onClick={() => setJoining(true)}>
+                join a bonfire
+              </button>
+            )}
+          </div>
         </div>
       </main>
     </div>
