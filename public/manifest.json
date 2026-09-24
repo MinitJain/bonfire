@@ -1,11 +1,11 @@
 {
   "name": "Bonfire",
   "short_name": "Bonfire",
-  "description": "A shared focus timer for friends. Start a room, share the link, focus in sync.",
+  "description": "A quiet place to focus together.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0F0F0D",
-  "theme_color": "#FF5533",
+  "background_color": "#EDF2F7",
+  "theme_color": "#EDF2F7",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -19,8 +19,17 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "screenshots": [],
-  "categories": ["productivity", "utilities"]
+  "categories": [
+    "productivity",
+    "utilities"
+  ]
 }

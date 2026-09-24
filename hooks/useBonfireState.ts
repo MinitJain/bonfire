@@ -12,6 +12,12 @@ interface BonfireInput {
   participantCount: number
   timeLeft: number   // seconds remaining in current timer
   totalTime: number  // total seconds for current timer
+  /**
+   * 'session' is the v1 curve (flame grows from a flicker).
+   * 'room' is the Bonfire v2 room: the fire is the anchor and never starts
+   * below ~0.5; rests burn lower and calmer.
+   */
+  curve?: 'session' | 'room'
 }
 
 export interface BonfireOutput {
@@ -42,6 +48,17 @@ function flameLabelFor(
   return ''
 }
 
+/** v2 room curve: 0.5 → 0.85 through a focus phase, calmer rests, embers when settled. */
+function roomBase(status: TimerStatus, mode: TimerMode, progress: number): number {
+  if (status === 'finished') return 0.08
+  if (mode === 'focus') {
+    const p = 0.5 + progress * 0.35
+    return status === 'running' ? p : Math.max(0.46, p * 0.9)
+  }
+  if (mode === 'long') return status === 'running' ? 0.4 : 0.38
+  return status === 'running' ? 0.44 : 0.4
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -59,6 +76,7 @@ export function useBonfireState({
   participantCount,
   timeLeft,
   totalTime,
+  curve = 'session',
 }: BonfireInput): BonfireOutput {
   const [intensityBoost, setIntensityBoost] = useState(0)
   const [isSurging, setIsSurging] = useState(false)
@@ -160,7 +178,13 @@ export function useBonfireState({
     base = 0.02  // idle
   }
 
-  const targetIntensity = Math.max(0, Math.min(1, base + participantBonus + intensityBoost))
+  if (curve === 'room') {
+    base = roomBase(status, mode, progress)
+  }
+
+  const targetIntensity = curve === 'room' && status === 'finished'
+    ? base
+    : Math.max(0, Math.min(1, base + participantBonus + intensityBoost))
 
   return {
     targetIntensity,
