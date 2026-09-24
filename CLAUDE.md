@@ -1,45 +1,196 @@
 # Bonfire
 
-A real-time shared Pomodoro timer app built with Next.js 14.
+Bonfire is a temporary shared focus experience.
 
-## Stack
-- Next.js 14 (App Router) + TypeScript (strict)
-- Tailwind CSS with custom dark theme
-- Supabase (Auth, Postgres, Realtime broadcast channels + Presence)
-- @vercel/og for dynamic OG images
-- Lucide React for icons
-- Web Audio API + Notification API for alerts (no external deps)
+It is NOT a social network, productivity dashboard, or persistent room system.
 
-## Dev Setup
-1. Copy `.env.local.example` to `.env.local` and fill in Supabase credentials
-2. Run Supabase migrations in `supabase/migrations/` in order (001–005), or `npx supabase db push`
-3. `npm install && npm run dev`
+## Product
+
+Bonfire lets people gather around one shared virtual fire and focus together.
+
+Core flow:
+
+Home
+→ Light a Bonfire / Join a Bonfire
+→ shared Bonfire room
+→ participants gather around the fire
+→ shared timer
+→ focus / short rest / long rest
+→ leave
+
+Account is optional.
+
+Guests can create and join Bonfires.
+Authenticated users get persistent identity and personal focus stats.
+
+Maximum participants: 6.
+
+A Bonfire may have an optional Bonfire name (for example "Deep Work"),
+set only by its creator, max 40 characters. It is the only kind of title
+a Bonfire has; do not add descriptions, tags, or other title fields.
+
+## Modes
+
+Focus Mode:
+
+- initiator controls the shared timer
+
+Jam Mode:
+
+- legitimate participants can control the shared timer
+- presence is NOT authorization
 
 ## Architecture
-- **Host** creates a session, controls the timer, broadcasts state via Supabase Realtime
-- **Watchers** subscribe to the broadcast channel and receive timer updates
-- Timer is clock-based (startedAt timestamp) so it's drift-resistant
-- Sessions stored in Postgres; real-time sync via broadcast (ephemeral, not DB writes)
-- Presence tracks participants; join/leave fire activity feed messages
-- `pomodoro_logs` table stores per-session completed pomodoros for analytics
 
-## Key Files
-- `hooks/useTimer.ts` - Core timer logic
-- `hooks/useSession.ts` - Realtime session sync (broadcast + presence)
-- `components/session/SessionProvider.tsx` - Main session UI orchestrator
-- `components/session/ActivityFeed.tsx` - Floating live activity messages
-- `components/profile/WeeklyChart.tsx` - Last-7-days bar chart
-- `components/profile/StreakCalendar.tsx` - GitHub-style 52×7 heatmap
-- `app/session/[id]/page.tsx` - Session page (server + client)
-- `app/profile/[username]/page.tsx` - Public profile + analytics
-- `app/explore/page.tsx` - Browse live sessions
-- `supabase/migrations/` - DB schema (run in order)
+Bonfire v2 is server authoritative.
 
-## Commands
-- `npm run dev` - Start development server
-- `npm run build` - Production build
-- `npm run typecheck` - TypeScript check
-- `npm run lint` - ESLint
+Client
+→ PostgreSQL RPC command
+→ PostgreSQL validates + transitions + persists
+→ database-originated realtime publication
+→ Edge Function
+→ Supabase Realtime
+→ clients
 
-## Writing Rules
-- Never use em dashes (—) in any text: UI copy, READMEs, docs, commit messages, or any other written output. Use a colon, period, or plain hyphen (-) instead.
+Clients NEVER broadcast canonical Bonfire state.
+
+The timer is clock based.
+There is no server-side per-second timer.
+
+Read `docs/bonfire-v2-architecture.md` before making architectural changes.
+
+## Product boundaries
+
+Do NOT reintroduce:
+
+- Explore
+- followers/following
+- social graph
+- notifications system
+- scheduled rooms
+- shared streaks
+- leaderboards
+- gamification
+- analytics dashboard
+- activity feed
+- public/private rooms
+- host/watchers model
+- testimonials
+- social proof
+- marketing feature sections
+
+Spotify is deferred.
+
+## Visual direction
+
+Bonfire should feel like a small, calm shared game scene.
+
+The fire is the visual center.
+
+Participants appear as small stylized characters gathered around the fire,
+with their names above them.
+
+Participants must NOT look like a row of circular profile avatars.
+
+The room should feel:
+
+- calm
+- warm
+- elegant
+- human
+- minimal
+- premium
+- slightly playful
+
+Visual environment:
+
+- soft blue / pale blue atmosphere
+- warm orange fire
+- subtle blue/orange relationship
+
+Avoid:
+
+- generic SaaS dashboards
+- excessive cards
+- glassmorphism
+- neon
+- excessive purple
+- giant glowing blobs
+- emoji-based visuals
+- noisy gradients
+- over-designed UI
+
+Home should feel like entering Bonfire, not a marketing website.
+
+Approximate home composition:
+
+BONFIRE
+
+a quiet place to focus together
+
+small illustrated objects distributed around the viewport
+
+25 minutes
+
+[ start a bonfire ] [ join a bonfire ]
+
+Use lightweight SVG/CSS illustrations for objects such as notebooks,
+books, pencils, paper, mugs, headphones.
+
+Animations should be subtle and purposeful.
+Respect prefers-reduced-motion.
+
+## Audio
+
+Bonfire is silent by default.
+
+- No ambient sound, tick, or phase-end chime plays until the participant
+  explicitly enables it from the sound icon.
+- The phase-end chime is a separate toggle, OFF by default.
+- A previous sound choice may be remembered locally only as a suggestion.
+  It must never autoplay on a later visit.
+- Audio is local to each participant and never synchronized.
+
+## Important workflow
+
+Before changing code:
+
+1. inspect the existing implementation
+2. understand current architecture
+3. identify reusable code
+4. identify contradictions with the product spec
+5. propose the smallest coherent implementation plan
+
+Do not invent features.
+
+Do not rewrite working backend architecture just to make a UI change.
+
+For UI work, prioritize visual composition and interaction quality over
+adding more components.
+
+## Engineering
+
+Stack:
+
+- Next.js
+- TypeScript
+- React
+- Supabase
+- PostgreSQL
+- Supabase Realtime
+
+Important reusable infrastructure:
+
+- lib/timer.ts
+- lib/audio.ts
+- lib/ambient.ts
+- lib/favicon.ts
+- useTimer.ts
+- Supabase client/server utilities
+
+Commands:
+
+npm run typecheck
+npm run lint
+npm test
+npm run build

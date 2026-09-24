@@ -8,10 +8,12 @@ import { cn } from '@/lib/utils'
 
 interface ThemeToggleProps {
   className?: string
+  /** 'quiet': borderless icon button used in the Bonfire scene */
+  variant?: 'default' | 'quiet'
 }
 
-export function ThemeToggle({ className }: ThemeToggleProps) {
-  const { theme, setTheme } = useTheme()
+export function ThemeToggle({ className, variant = 'default' }: ThemeToggleProps) {
+  const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
   // Prevent hydration mismatch
@@ -26,7 +28,20 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
     )
   }
 
-  const isDark = theme === 'dark'
+  const isDark = resolvedTheme === 'dark'
+
+  if (variant === 'quiet') {
+    return (
+      <button
+        type="button"
+        onClick={() => setTheme(isDark ? 'light' : 'dark')}
+        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        className={cn('bf-icon-btn', className)}
+      >
+        {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      </button>
+    )
+  }
 
   return (
     <button

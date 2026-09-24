@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: SessionPageProps): Promise<Me
       description: ogDesc,
       images: [
         {
-          url: `${appUrl}/api/og?type=invite&host=${encodeURIComponent(hostName)}&focus=${focusMins}`,
+          url: `${appUrl}/api/og?type=invite&session=${encodeURIComponent(params.id)}`,
           width: 1200,
           height: 630,
           alt: ogTitle,
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: SessionPageProps): Promise<Me
       card: 'summary_large_image',
       title: ogTitle,
       description: ogDesc,
-      images: [`${appUrl}/api/og?type=invite&host=${encodeURIComponent(hostName)}&focus=${focusMins}`],
+      images: [`${appUrl}/api/og?type=invite&session=${encodeURIComponent(params.id)}`],
     },
   }
 }
