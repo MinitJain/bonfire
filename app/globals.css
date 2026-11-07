@@ -575,53 +575,71 @@ body {
 }
 .bf-time.is-paused { opacity: 0.72; }
 
-/* Phase progress: a hairline under the time, warm while focusing, cool at rest */
+/* Phase progress: a chunky track under the time, warm while focusing, cool at rest */
 .bf-progress {
   position: relative;
-  width: clamp(140px, 34vw, 196px);
-  height: 3px;
-  margin-top: 14px;
+  width: clamp(180px, 46vw, 248px);
+  height: 14px;
+  margin-top: 16px;
+  border: 2px solid var(--edge);
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(var(--cool-rgb), 0.1);
+  background: var(--bg-secondary);
 }
-.dark .bf-progress { background: rgba(230, 236, 243, 0.08); }
 .bf-progress-fill {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
   transform-origin: left center;
   background: var(--accent);
+  box-shadow: inset 0 -3px 0 var(--accent-deep);
 }
 /* Matches useCountdown's 500ms refresh, so the line glides between ticks */
 .bf-progress-fill.is-running { transition: transform 0.5s linear; }
 .bf-progress[data-phase='short'] .bf-progress-fill,
-.bf-progress[data-phase='long'] .bf-progress-fill { background: var(--text-muted); }
+.bf-progress[data-phase='long'] .bf-progress-fill { background: var(--edge); box-shadow: none; }
 
 .bf-rounds {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  margin-top: 8px;
-  font-size: 12px;
+  margin-top: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
-.bf-round-marks { display: inline-flex; gap: 5px; }
+.bf-round-marks { display: inline-flex; gap: 8px; }
 .bf-round-mark {
-  width: 6px;
-  height: 6px;
+  width: 14px;
+  height: 14px;
   border-radius: 999px;
-  border: 1px solid rgba(var(--cool-rgb), 0.28);
+  border: 2px solid var(--edge);
+  background: var(--bg-secondary);
 }
-.dark .bf-round-mark { border-color: rgba(230, 236, 243, 0.22); }
-.bf-round-mark.is-done { background: var(--ember); border-color: var(--ember); }
-.bf-round-mark.is-now { border-color: var(--accent); }
+/* A round finishing pops its mark: the small celebration, no score attached */
+.bf-round-mark.is-done {
+  background: var(--ember);
+  border-color: var(--accent-deep);
+  animation: bf-mark-pop 0.55s var(--ease-spring) both;
+}
+.bf-round-mark.is-now {
+  border-color: var(--accent-deep);
+  background: radial-gradient(circle, var(--accent) 0 3px, var(--accent-soft) 3.5px);
+}
+@keyframes bf-mark-pop {
+  0%   { transform: scale(0.6); }
+  60%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
 .bf-phase {
   margin-top: 10px;
-  font-size: 14px;
-  letter-spacing: 0.04em;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text-secondary);
+  animation: bf-phase-in 0.5s var(--ease-spring) both;
+}
+@keyframes bf-phase-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
 }
 .bf-mode-note {
   margin-top: 4px;
