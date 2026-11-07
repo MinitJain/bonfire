@@ -39,6 +39,7 @@
   --edge: #66788E;            /* control outlines, ≥3:1 on every scene surface */
   --edge-depth: rgba(34, 50, 74, 0.2);
   --accent-deep: #A8521A;     /* the orange key's underside, ≥3:1 on the sky */
+  --focus-ring: var(--accent-deep); /* ≥3:1 on the sky; plain orange is 2.6:1 there */
   --depth: 4px;
   --radius-pop: 20px;
   --radius-field: 14px;
@@ -124,6 +125,7 @@
   --edge: #6F84A2;
   --edge-depth: rgba(4, 8, 14, 0.6);
   --accent-deep: #B0581B;
+  --focus-ring: var(--accent);
 
   --sky-top: #0F1722;
   --sky-mid: #162030;
@@ -736,7 +738,7 @@ body {
 .bf-input:focus-visible,
 .bf-code-submit:focus-visible,
 .bf-stepper button:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -1119,7 +1121,7 @@ body {
 /* The signature: a chosen setting stays pressed in, like a key held down */
 .bf-chip[aria-pressed='true'] {
   color: var(--accent-strong);
-  border-color: var(--accent-deep);
+  border-color: var(--accent-strong);
   background: linear-gradient(var(--accent-soft), var(--accent-soft)), var(--bg-elevated);
   font-weight: 700;
   transform: translateY(3px);
@@ -1190,7 +1192,7 @@ body {
   align-items: center;
   gap: 4px;
   padding: 3px 3px 3px 18px;
-  border: 2px solid var(--accent-deep);
+  border: 2px solid var(--accent-strong);
   border-radius: 999px;
   background: var(--bg-elevated);
   animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -1327,7 +1329,7 @@ body {
 }
 .bf-login-link:focus-visible,
 .bf-wordmark-sm:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 4px;
 }
