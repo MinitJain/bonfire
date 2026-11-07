@@ -168,16 +168,16 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           <div className="flex flex-col items-center justify-center text-center py-8 rounded-2xl gap-3 bg-[var(--bg-elevated)] border border-[var(--border)]">
             <span className="text-3xl">🍅</span>
             <p className="text-sm font-medium text-[var(--text-primary)]">
-              No focus rooms yet
+              No bonfires yet
             </p>
             <p className="text-xs text-[var(--text-muted)]">
-              Complete a room to start tracking your streaks and focus time.
+              Finish a focus to start tracking your streaks and focus time.
             </p>
             <Link
               href="/"
-              className="mt-1 px-4 py-2 rounded-xl text-sm font-medium bg-[var(--accent)] text-white"
+              className="mt-1 px-4 py-2 rounded-xl text-sm font-medium bg-[var(--accent)] text-[var(--on-accent)]"
             >
-              Start a room →
+              Light a bonfire →
             </Link>
           </div>
         )}
