@@ -1,5 +1,10 @@
 /* Hallmark · redesign: restyle · theme: brand (Bonfire's pale blue air, fire orange, DM Sans) · genre: playful · signature: chosen settings sit pressed in like keys */
 /* critique: chunky edges and an offset depth on every pressable thing; the fire stays the centre. v1 rules below still hold literal rgba() colours, left as found. */
+/* waive 12 · the overshoot spring is the brief's "press squish"; it only moves transforms a few px, and reduced motion flattens it */
+/* waive 24b · the project spaces on a 2px rhythm (6, 10, 14); a restyle keeps it */
+/* waive 39a · disabled keys fade and lose their depth and pointer; a grey fill would read as a different button mid-"lighting…" */
+/* waive 67 .bf-code-field input · the join code is a value, tracked so six letters read apart, not a label */
+/* answered 48 · lines in the .dark block are the declared dark theme; the rest predate this restyle */
 
 @tailwind base;
 @tailwind components;
@@ -724,7 +729,13 @@ body {
 .bf-btn-primary:active:not(:disabled) { box-shadow: 0 0 0 var(--accent-deep), 0 4px 10px rgba(var(--glow-rgb), 0.2); }
 .bf-btn-secondary:active:not(:disabled) { box-shadow: 0 0 0 var(--edge-depth); }
 .bf-btn-primary:disabled,
-.bf-btn-secondary:disabled { opacity: 0.6; cursor: default; }
+.bf-btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+  /* Disabled keys lose their depth: flat, faded, no pointer */
+  transform: translateY(var(--depth));
+  box-shadow: none;
+}
 
 .bf-step-away { margin-top: 14px; position: relative; z-index: 6; }
 
@@ -869,8 +880,7 @@ body {
   white-space: nowrap;
 }
 .bf-room-config {
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
 }
@@ -1086,8 +1096,7 @@ body {
   gap: 8px;
 }
 .bf-setup-label {
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 13px;
   color: var(--text-muted);
 }
 .bf-setup-chips {
@@ -1309,6 +1318,7 @@ body {
   line-height: 1.15;
   color: var(--text-primary);
   overflow-wrap: break-word;
+  text-wrap: balance;
 }
 .bf-login-sub { margin-top: 6px; font-size: 15px; color: var(--text-secondary); }
 .bf-login-or { margin-top: 6px; font-size: 13px; text-align: center; color: var(--text-muted); }
