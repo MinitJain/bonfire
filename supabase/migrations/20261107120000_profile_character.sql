@@ -9,6 +9,10 @@
 alter table public.profiles
   add column if not exists character jsonb;
 
+-- Re-runnable: replaces the check if an earlier manual run already added it
+alter table public.profiles
+  drop constraint if exists profiles_character_valid;
+
 alter table public.profiles
   add constraint profiles_character_valid check (
     character is null or (
