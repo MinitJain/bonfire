@@ -130,7 +130,7 @@ export function AvatarCropModal({ imageSrc, onConfirm, onCancel }: AvatarCropMod
             onClick={handleConfirm}
             disabled={isProcessing}
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-50"
-            style={{ background: 'var(--accent)', color: '#fff' }}
+            style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
           >
             {isProcessing ? 'Saving...' : 'Apply'}
           </button>

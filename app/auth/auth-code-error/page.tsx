@@ -14,7 +14,7 @@ export default function AuthErrorPage() {
         <Link
           href="/"
           className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all"
-          style={{ background: 'var(--accent)', color: '#fff' }}
+          style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
         >
           Back to home
         </Link>
