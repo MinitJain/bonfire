@@ -963,12 +963,13 @@ body {
     --char-scale: 0.84;
     --seat-scale: 0.84;
     --fire-scale: 0.78;
-    width: min(96vw, 440px);
+    /* Narrower ring so people sit by the fire, not at the screen edges (P2-4) */
+    width: min(82vw, 340px);
     aspect-ratio: 10 / 9;
   }
   .bf-stage-main { padding-top: 104px; padding-bottom: 32px; }
   .bf-corner-left { left: 16px; }
-  .bf-name { font-size: 11px; max-width: 96px; }
+  .bf-name { font-size: 12px; max-width: 104px; }
 }
 
 /* ─────────────────────────────────────────────
