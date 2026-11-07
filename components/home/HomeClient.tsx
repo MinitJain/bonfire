@@ -1,5 +1,7 @@
 'use client'
 
+import { AnimatePresence, motion } from 'motion/react'
+import { PRESS, pop, rise, stagger } from '@/lib/motion'
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
@@ -164,8 +166,9 @@ function HomeContent({ user, profileUsername, totalPomodoros }: HomeClientProps)
                 size="sm"
               />
             </button>
+            <AnimatePresence>
             {menu === 'user' && (
-              <div className="bf-popover" style={{ padding: 6, width: 220 }}>
+              <motion.div className="bf-popover" style={{ padding: 6, width: 220 }} variants={pop} initial="hidden" animate="show" exit="exit">
                 <div className="px-3 py-2">
                   <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{userName ?? 'Signed in'}</p>
                   <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user.email}</p>
@@ -193,8 +196,9 @@ function HomeContent({ user, profileUsername, totalPomodoros }: HomeClientProps)
                 >
                   <LogOut className="w-4 h-4" /> Sign out
                 </button>
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
         ) : (
           <div className="relative">
@@ -207,8 +211,9 @@ function HomeContent({ user, profileUsername, totalPomodoros }: HomeClientProps)
             >
               sign in
             </button>
+            <AnimatePresence>
             {menu === 'signin' && (
-              <div className="bf-popover" style={{ padding: 6, width: 200 }}>
+              <motion.div className="bf-popover" style={{ padding: 6, width: 200 }} variants={pop} initial="hidden" animate="show" exit="exit">
                 <button
                   type="button"
                   className="bf-text-btn w-full flex items-center gap-2"
@@ -226,16 +231,21 @@ function HomeContent({ user, profileUsername, totalPomodoros }: HomeClientProps)
                   <GoogleIcon /> Google
                 </button>
                 <p className="bf-pop-hint px-3 pb-1">Optional. Keeps your name and focus stats.</p>
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
         )}
         <ThemeToggle variant="quiet" />
       </div>
 
-      <main className="bf-home-main">
-        <h1 className="bf-home-wordmark">BONFIRE</h1>
-        <p className="bf-home-tagline">{BRAND.tagline.toLowerCase()}</p>
+      <motion.main className="bf-home-main" variants={stagger(0.1, 0.08)} initial="hidden" animate="show">
+        <motion.h1 className="bf-home-wordmark" variants={stagger(0, 0.045)} aria-label="Bonfire">
+          {'BONFIRE'.split('').map((ch, i) => (
+            <motion.span key={i} variants={rise} aria-hidden="true" style={{ display: 'inline-block' }}>{ch}</motion.span>
+          ))}
+        </motion.h1>
+        <motion.p className="bf-home-tagline" variants={rise}>{BRAND.tagline.toLowerCase()}</motion.p>
         {today && today.pomodoros > 0 && (
           <p className="bf-home-today">
             {today.pomodoros} {today.pomodoros === 1 ? 'pomodoro' : 'pomodoros'} today
@@ -244,7 +254,7 @@ function HomeContent({ user, profileUsername, totalPomodoros }: HomeClientProps)
 
         <div className="bf-home-spacer" />
 
-        <div className="bf-home-lower">
+        <motion.div className="bf-home-lower" variants={rise}>
           <FocusSetup
             setup={setup}
             onChange={changeSetup}
@@ -253,17 +263,26 @@ function HomeContent({ user, profileUsername, totalPomodoros }: HomeClientProps)
           />
 
           <div className="bf-home-actions">
-            <button
+            <motion.button
               type="button"
               className="bf-btn-primary"
               onClick={() => void handleCreate()}
               disabled={isCreating}
+              {...PRESS}
             >
               {isCreating ? 'lighting…' : 'start a bonfire'}
-            </button>
+            </motion.button>
 
+            <AnimatePresence mode="popLayout" initial={false}>
             {joining ? (
-              <form className="bf-code-field" onSubmit={handleJoin}>
+              <motion.form
+                key="code"
+                className="bf-code-field"
+                onSubmit={handleJoin}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+              >
                 <input
                   ref={codeRef}
                   value={joinCode}
@@ -290,15 +309,25 @@ function HomeContent({ user, profileUsername, totalPomodoros }: HomeClientProps)
                 >
                   <ArrowRight className="w-4 h-4" />
                 </button>
-              </form>
+              </motion.form>
             ) : (
-              <button type="button" className="bf-btn-secondary" onClick={() => setJoining(true)}>
+              <motion.button
+                key="join"
+                type="button"
+                className="bf-btn-secondary"
+                onClick={() => setJoining(true)}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                {...PRESS}
+              >
                 join a bonfire
-              </button>
+              </motion.button>
             )}
+            </AnimatePresence>
           </div>
-        </div>
-      </main>
+        </motion.div>
+      </motion.main>
     </div>
   )
 }
