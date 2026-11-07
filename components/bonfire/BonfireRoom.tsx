@@ -208,13 +208,6 @@ export function BonfireRoom({ initial, userId, displayName, savedCharacter }: Bo
         onToggleMode={bonfire.toggleMode}
         onRename={bonfireName => bonfire.details({ name: bonfireName })}
         sound={sound}
-        character={{
-          presenceKey,
-          choice: character.choice ?? defaultChoice(presenceKey ?? ''),
-          onChange: character.save,
-          signedIn: userId !== null,
-          saveFailed: character.saveFailed,
-        }}
       />
 
       <main className="bf-stage-main">
@@ -249,6 +242,13 @@ export function BonfireRoom({ initial, userId, displayName, savedCharacter }: Bo
             isCreator={isInitiator}
             defaultBonfireName={state.name}
             onSubmit={chooseName}
+            character={presenceKey ? {
+              presenceKey,
+              choice: character.choice ?? defaultChoice(presenceKey),
+              onChange: character.save,
+              signedIn: userId !== null,
+              saveFailed: character.saveFailed,
+            } : undefined}
           />
         ) : seat.status === 'full' ? (
           <div className="bf-message">

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Headphones, Link2, Shirt, SlidersHorizontal } from 'lucide-react'
+import { Headphones, Link2, SlidersHorizontal } from 'lucide-react'
 import type { BonfireState } from '@/types'
 import type { SettingsInput } from '@/hooks/useBonfire'
 import { cn } from '@/lib/utils'
@@ -9,10 +9,8 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { ShareDrawer } from '@/components/bonfire/ShareDrawer'
 import { AudioControls, type RoomSound } from '@/components/bonfire/AudioControls'
 import { SessionSettings } from '@/components/bonfire/SessionSettings'
-import { CharacterEditor } from '@/components/bonfire/CharacterEditor'
-import type { CharacterChoice } from '@/lib/characters'
 
-type Panel = 'share' | 'sound' | 'settings' | 'character'
+type Panel = 'share' | 'sound' | 'settings'
 
 interface RoomMenuProps {
   state: BonfireState
@@ -22,17 +20,10 @@ interface RoomMenuProps {
   onToggleMode: () => Promise<void>
   onRename: (name: string) => Promise<void>
   sound: RoomSound
-  character: {
-    presenceKey: string | null
-    choice: CharacterChoice
-    onChange: (next: CharacterChoice) => void
-    signedIn: boolean
-    saveFailed: boolean
-  }
 }
 
 /** Share, sound, settings and theme: one restrained cluster in the top-right corner. */
-export function RoomMenu({ state, canControl, isInitiator, onSaveSettings, onToggleMode, onRename, sound, character }: RoomMenuProps) {
+export function RoomMenu({ state, canControl, isInitiator, onSaveSettings, onToggleMode, onRename, sound }: RoomMenuProps) {
   const [open, setOpen] = useState<Panel | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -75,15 +66,6 @@ export function RoomMenu({ state, canControl, isInitiator, onSaveSettings, onTog
       >
         <Headphones className="w-4 h-4" />
       </button>
-      <button
-        type="button"
-        className="bf-icon-btn"
-        aria-label="Your character"
-        aria-expanded={open === 'character'}
-        onClick={() => toggle('character')}
-      >
-        <Shirt className="w-4 h-4" />
-      </button>
       {showSettings && (
         <button
           type="button"
@@ -98,7 +80,7 @@ export function RoomMenu({ state, canControl, isInitiator, onSaveSettings, onTog
       <ThemeToggle variant="quiet" />
 
       {open && (
-        <div className={cn('bf-popover', open === 'character' && 'is-tall')} role="dialog" aria-label={open === 'character' ? 'your character' : open}>
+        <div className="bf-popover" role="dialog" aria-label={open}>
           {open === 'share' && (
             <ShareDrawer
               bonfireId={state.id}
@@ -108,9 +90,6 @@ export function RoomMenu({ state, canControl, isInitiator, onSaveSettings, onTog
             />
           )}
           {open === 'sound' && <AudioControls sound={sound} />}
-          {open === 'character' && character.presenceKey && (
-            <CharacterEditor {...character} presenceKey={character.presenceKey} />
-          )}
           {open === 'settings' && showSettings && (
             <SessionSettings
               // Settings saved by someone else (Jam) replace this form, so

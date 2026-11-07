@@ -1256,17 +1256,30 @@ body {
 }
 
 /* ── Character customizer ── */
-.bf-popover.is-tall {
-  width: min(320px, calc(100vw - 24px));
-  max-height: calc(100dvh - 88px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
+.bf-char-editor {
+  display: grid;
+  grid-template-columns: 132px 1fr 1fr;
+  gap: 14px 20px;
+  width: min(600px, calc(100vw - 32px));
+  margin-top: 8px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+}
+.bf-char-title, .bf-char-editor .bf-pop-hint { grid-column: 1 / -1; margin: 0; }
+.bf-char-editor .bf-pop-section { margin: 0; }
+@media (max-width: 640px) {
+  .bf-char-editor { grid-template-columns: 1fr; }
+  .bf-char-preview { grid-row: auto; }
 }
 .bf-char-preview {
+  grid-row: span 4;
+  align-self: start;
   display: flex;
   justify-content: center;
   padding: 8px 0 4px;
-  margin-bottom: 8px;
   border-radius: 12px;
   background: var(--bg-secondary);
 }

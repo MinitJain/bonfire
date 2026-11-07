@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { MAX_BONFIRE_NAME_LENGTH, MAX_NAME_LENGTH, getGuestName } from '@/lib/bonfire'
+import { CharacterEditor, type CharacterEditorProps } from '@/components/bonfire/CharacterEditor'
 
 export interface NameChoice {
   /** Display name for this Bonfire. */
@@ -17,10 +18,12 @@ interface NamePromptProps {
   isCreator: boolean
   defaultBonfireName?: string | null
   onSubmit: (choice: NameChoice) => void
+  /** How you look around the fire, picked before taking a seat. Omitted until the presence key is known. */
+  character?: CharacterEditorProps
 }
 
-/** "Choose your name": shown once per Bonfire before taking a seat. */
-export function NamePrompt({ defaultName, isCreator, defaultBonfireName, onSubmit }: NamePromptProps) {
+/** "Choose your name" and your character: shown once per Bonfire before taking a seat. */
+export function NamePrompt({ defaultName, isCreator, defaultBonfireName, onSubmit, character }: NamePromptProps) {
   const [name, setName] = useState(defaultName ?? '')
   const [bonfireName, setBonfireName] = useState(defaultBonfireName ?? '')
   const [suggestion, setSuggestion] = useState('')
@@ -67,6 +70,7 @@ export function NamePrompt({ defaultName, isCreator, defaultBonfireName, onSubmi
           />
         </>
       )}
+      {character && <CharacterEditor {...character} />}
       <button type="submit" className="bf-btn-primary">
         continue
       </button>
