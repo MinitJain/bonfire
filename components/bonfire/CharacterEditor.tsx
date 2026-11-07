@@ -14,7 +14,7 @@ const HAIR_NAMES = ['Black', 'Dark brown', 'Brown', 'Blond', 'Charcoal', 'Auburn
 const OUTFIT_COLOR_NAMES = ['Blue', 'Sage', 'Clay', 'Lavender', 'Mustard', 'Teal', 'Rust', 'Slate']
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 
-interface CharacterEditorProps {
+export interface CharacterEditorProps {
   presenceKey: string
   choice: CharacterChoice
   onChange: (next: CharacterChoice) => void
@@ -22,7 +22,7 @@ interface CharacterEditorProps {
   saveFailed: boolean
 }
 
-/** Pick how you look around the fire. Every change applies (and saves) at once. */
+/** Pick how you look around the fire, before taking a seat. Every change saves at once. */
 export function CharacterEditor({ presenceKey, choice, onChange, signedIn, saveFailed }: CharacterEditorProps) {
   const look = useMemo(() => lookFor(presenceKey, choice), [presenceKey, choice])
   const set = <K extends keyof CharacterChoice>(key: K, value: CharacterChoice[K]) =>
@@ -30,7 +30,7 @@ export function CharacterEditor({ presenceKey, choice, onChange, signedIn, saveF
 
   return (
     <div className="bf-char-editor">
-      <p className="bf-pop-title">Your character</p>
+      <p className="bf-seat-prompt-title bf-char-title">Your character</p>
       <div className="bf-char-preview" aria-hidden="true">
         <Character look={look} pose="front" />
       </div>
