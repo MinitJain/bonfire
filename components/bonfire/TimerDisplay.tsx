@@ -100,7 +100,8 @@ export function TimerDisplay({
         />
       </div>
 
-      <span className="bf-phase">
+      {/* Keyed on phase so a new phase arrives with a small rise */}
+      <span key={phase} className="bf-phase">
         {PHASE_LABEL[phase]}
         {!running && started && timeLeft > 0 && <span> · paused</span>}
       </span>

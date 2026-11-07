@@ -4,7 +4,6 @@ import { Suspense, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Mail } from 'lucide-react'
-import { Logo } from '@/components/ui/Logo'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { createClient } from '@/lib/supabase/client'
 
@@ -66,158 +65,126 @@ function LoginContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-primary)' }}>
-      <header
-        className="flex items-center justify-between px-5 sm:px-8 py-4"
-        style={{ borderBottom: '1px solid var(--border)' }}
-      >
-        <Link href="/"><Logo size="md" /></Link>
-        <ThemeToggle />
-      </header>
+    <div className="bf-home">
+      <div className="bf-corner bf-corner-left">
+        <Link href="/" className="bf-wordmark-sm">Bonfire</Link>
+      </div>
+      <div className="bf-home-corner">
+        <ThemeToggle variant="quiet" />
+      </div>
 
-      <main className="flex-1 flex items-center justify-center px-5 py-12">
-        <div
-          className="w-full max-w-sm rounded-2xl p-8 animate-scale-in"
-          style={{
-            background: 'var(--bg-elevated)',
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-lg)',
-          }}
-        >
-          {emailSent ? (
-            /* ── Confirmation state ── */
-            <div className="flex flex-col items-center text-center gap-3">
-              <Mail className="w-10 h-10" style={{ color: 'var(--accent)' }} />
-              <h1 className="font-display font-bold text-xl" style={{ color: 'var(--text-primary)' }}>
-                Check your inbox
+      <main className="bf-login">
+        {emailSent ? (
+          /* ── Confirmation state ── */
+          <div className="bf-login-col animate-scale-in" style={{ alignItems: 'center', textAlign: 'center' }}>
+            <Mail className="w-10 h-10" style={{ color: 'var(--accent-strong)' }} aria-hidden="true" />
+            <h1 className="bf-login-title">Check your inbox</h1>
+            <p className="bf-login-sub">
+              We sent a sign-in link to <strong style={{ color: 'var(--text-primary)' }}>{email}</strong>. Click it to continue.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setEmailSent(false); setEmail('') }}
+              className="bf-text-btn"
+            >
+              Use a different email
+            </button>
+          </div>
+        ) : (
+          /* ── Sign-in form ── */
+          <div className="bf-login-col animate-scale-in">
+            <div>
+              <h1 className="bf-login-title">
+                {mode === 'signup' ? 'Create your account' : 'Welcome back'}
               </h1>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                We sent a sign-in link to <strong style={{ color: 'var(--text-secondary)' }}>{email}</strong>. Click it to continue.
+              <p className="bf-login-sub">
+                {mode === 'signup' ? 'Keep your focus stats across devices.' : 'Sign in to continue your focus sessions.'}
               </p>
-              <button
-                onClick={() => { setEmailSent(false); setEmail('') }}
-                className="mt-2 text-xs underline cursor-pointer"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Use a different email
-              </button>
             </div>
-          ) : (
-            /* ── Sign-in form ── */
-            <>
-              <div className="mb-6">
-                <h1 className="font-display font-bold text-2xl mb-1" style={{ color: 'var(--text-primary)' }}>
-                  {mode === 'signup' ? 'Create your account' : 'Welcome back'}
-                </h1>
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                  {mode === 'signup' ? 'Track focus streaks, pomodoros, and more.' : 'Sign in to continue your focus sessions.'}
-                </p>
-              </div>
 
-              {/* OAuth buttons */}
-              <div className="flex flex-col gap-3 mb-5">
-                {([
-                  { provider: 'google' as const, label: 'Continue with Google', icon: <GoogleIcon /> },
-                  { provider: 'github' as const, label: 'Continue with GitHub', icon: <GitHubIcon /> },
-                ]).map(({ provider, label, icon }) => (
-                  <button
-                    key={provider}
-                    onClick={() => void handleOAuth(provider)}
-                    disabled={!!oauthLoading}
-                    className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text-primary)',
-                    }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)' }}
-                  >
-                    {oauthLoading === provider ? (
-                      <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                    ) : icon}
-                    {label}
-                  </button>
-                ))}
-              </div>
+            {/* OAuth buttons */}
+            {([
+              { provider: 'google' as const, label: 'Continue with Google', icon: <GoogleIcon /> },
+              { provider: 'github' as const, label: 'Continue with GitHub', icon: <GitHubIcon /> },
+            ]).map(({ provider, label, icon }) => (
+              <button
+                key={provider}
+                type="button"
+                onClick={() => void handleOAuth(provider)}
+                disabled={!!oauthLoading}
+                className="bf-btn-secondary w-full"
+              >
+                {oauthLoading === provider ? (
+                  <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                ) : icon}
+                {label}
+              </button>
+            ))}
 
-              {/* Divider */}
-              <div className="flex items-center gap-3 mb-5">
-                <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
-                <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                  or continue with email
-                </span>
-                <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
-              </div>
+            <p className="bf-login-or">or continue with email</p>
 
-              {/* Email form */}
-              <form onSubmit={e => void handleEmail(e)} className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                    Email address
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="name@example.com"
-                    required
-                    className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                    style={{
-                      background: 'var(--bg-secondary)',
-                      border: `1px solid ${emailError ? 'var(--red, #e53e3e)' : 'var(--border)'}`,
-                      color: 'var(--text-primary)',
-                    }}
-                    onFocus={e => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                    onBlur={e => { e.currentTarget.style.borderColor = emailError ? 'var(--red, #e53e3e)' : 'var(--border)' }}
-                    autoComplete="email"
-                  />
-                  {emailError && (
-                    <p className="text-xs" style={{ color: 'var(--red, #e53e3e)' }}>{emailError}</p>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={emailLoading || !email.trim()}
-                  className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: 'var(--accent)', color: 'var(--on-accent)', boxShadow: 'var(--shadow-md)' }}
-                >
-                  {emailLoading && (
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  )}
-                  Continue
-                </button>
-              </form>
-
-              <p className="text-center text-xs mt-5" style={{ color: 'var(--text-muted)' }}>
-                {mode === 'signup' ? (
-                  <>
-                    Already have an account?{' '}
-                    <button
-                      onClick={() => { setMode('signin'); setEmail(''); setEmailError('') }}
-                      className="underline cursor-pointer"
-                      style={{ color: 'var(--accent)' }}
-                    >
-                      Sign in
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    Don&apos;t have an account?{' '}
-                    <button
-                      onClick={() => { setMode('signup'); setEmail(''); setEmailError('') }}
-                      className="underline cursor-pointer"
-                      style={{ color: 'var(--accent)' }}
-                    >
-                      Sign up
-                    </button>
-                  </>
+            {/* Email form */}
+            <form onSubmit={e => void handleEmail(e)} className="bf-login-col">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="bf-login-email" className="bf-pop-label" style={{ marginBottom: 0 }}>
+                  Email address
+                </label>
+                <input
+                  id="bf-login-email"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  required
+                  className={emailError ? 'bf-input bf-login-input is-error' : 'bf-input bf-login-input'}
+                  aria-invalid={emailError ? true : undefined}
+                  aria-describedby={emailError ? 'bf-login-error' : undefined}
+                  autoComplete="email"
+                />
+                {emailError && (
+                  <p id="bf-login-error" className="text-xs" style={{ color: 'var(--danger)' }}>{emailError}</p>
                 )}
-              </p>
-            </>
-          )}
-        </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={emailLoading || !email.trim()}
+                className="bf-btn-primary w-full"
+              >
+                {emailLoading && (
+                  <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                )}
+                Continue
+              </button>
+            </form>
+
+            <p className="bf-login-switch">
+              {mode === 'signup' ? (
+                <>
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setMode('signin'); setEmail(''); setEmailError('') }}
+                    className="bf-login-link"
+                  >
+                    Sign in
+                  </button>
+                </>
+              ) : (
+                <>
+                  Don&apos;t have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setMode('signup'); setEmail(''); setEmailError('') }}
+                    className="bf-login-link"
+                  >
+                    Sign up
+                  </button>
+                </>
+              )}
+            </p>
+          </div>
+        )}
       </main>
     </div>
   )
