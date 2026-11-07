@@ -415,9 +415,21 @@ body {
   --fire-intensity: 0.5;
   --rim-a: calc(0.5 + var(--fire-intensity) * 0.5);
   position: relative;
-  width: clamp(280px, min(92vw, 640px, calc((100dvh - 430px) * 1.6)), 640px);
+  /*
+   * The ring fills the height the rest of the room leaves (about 444px of title,
+   * timer, controls, actions and padding) after its own headroom, so the room
+   * never scrolls. Solved from 444 + headroom + 0.625w <= 100dvh.
+   */
+  --ring-w: clamp(280px, min(92vw, 640px, calc((100dvh - 545px) * 1.95)), 640px);
+  width: var(--ring-w);
   aspect-ratio: 16 / 10;
   flex-shrink: 0;
+  /*
+   * Headroom: the top seat (18% down the ring) draws its figure and name about
+   * 74px * scale tall, so on smaller rings it rises above the ring. Keep 12px
+   * clear of the room title.
+   */
+  margin-top: max(12px, calc(var(--char-scale) * 74px + 12px - var(--ring-w) * 0.1125));
 }
 
 /* Land below the horizon, fading back into the pale air near the bottom */
@@ -890,10 +902,11 @@ body {
   position: relative;
   z-index: 6;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
-  gap: 2px;
-  margin-top: 14px;
+  gap: 2px 12px;
+  margin-top: 10px;
 }
 .bf-text-btn.is-danger { font-size: 13px; color: var(--danger); }
 .bf-text-btn.is-danger:hover:not(:disabled) {
@@ -976,11 +989,14 @@ body {
     --char-scale: 0.84;
     --seat-scale: 0.84;
     --fire-scale: 0.78;
-    /* Narrower ring so people sit by the fire, not at the screen edges (P2-4) */
-    width: min(82vw, 340px);
+    /* Narrower ring so people sit by the fire, not at the screen edges (P2-4),
+       and short enough that the room fits: 484 + 0.738w <= 100dvh */
+    --ring-w: min(82vw, 340px, max(220px, calc((100dvh - 484px) * 1.355)));
+    width: var(--ring-w);
     aspect-ratio: 10 / 9;
+    margin-top: max(12px, calc(74px - var(--ring-w) * 0.162));
   }
-  .bf-stage-main { padding-top: 104px; padding-bottom: 32px; }
+  .bf-stage-main { padding-top: 80px; padding-bottom: 8px; }
   .bf-corner-left { left: 16px; }
   .bf-name { font-size: 12px; max-width: 104px; }
 }
