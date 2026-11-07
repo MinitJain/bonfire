@@ -75,6 +75,8 @@ export function TimerDisplay({
       <span
         className={cn('bf-time', !running && 'is-paused')}
         role="timer"
+        // The server renders a second earlier than the client hydrates; the countdown corrects itself on the next tick.
+        suppressHydrationWarning
         aria-label={`${minutes} minutes ${seconds} seconds remaining`}
       >
         {formatTime(timeLeft)}
@@ -98,7 +100,8 @@ export function TimerDisplay({
         />
       </div>
 
-      <span className="bf-phase">
+      {/* Keyed on phase so a new phase arrives with a small rise */}
+      <span key={phase} className="bf-phase">
         {PHASE_LABEL[phase]}
         {!running && started && timeLeft > 0 && <span> · paused</span>}
       </span>

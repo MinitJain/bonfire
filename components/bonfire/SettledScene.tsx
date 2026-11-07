@@ -23,7 +23,7 @@ export function SettledScene({ phase, completedPomodoros }: SettledSceneProps) {
       <main className="bf-stage-main">
         <CampfireCircle intensity={0.08} isSurging={false} phase={phase} participants={[]} />
         <div className="bf-message">
-          <p className="bf-message-title">The fire has settled</p>
+          <h1 className="bf-message-title">The fire has settled</h1>
           <p className="bf-message-body">
             {completedPomodoros > 0
               ? `${completedPomodoros} ${completedPomodoros === 1 ? 'pomodoro' : 'pomodoros'} around this fire. Thank you for sitting together.`
