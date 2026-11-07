@@ -1,7 +1,7 @@
 'use client'
 
 import { useId } from 'react'
-import { shade, type CharacterLook, type HairStyle, type Accessory } from '@/lib/characters'
+import { shade, type CharacterLook, type HairStyle, type Accessory, type Build, type Outfit } from '@/lib/characters'
 import type { SeatPose } from '@/lib/seats'
 
 /**
@@ -33,6 +33,27 @@ interface PartsProps {
   p: Paint
   hair: HairStyle
   accessory: Accessory
+  build: Build
+  outfit: Outfit
+}
+
+// Torso silhouettes per view: neutral, then narrower shoulders with a waist, then broader shoulders.
+const TORSO: Record<'side' | 'front' | 'back', Record<Build, string>> = {
+  side: {
+    neutral: 'M11 57.5C9 47 10.2 36 17 31C22 27.8 28.2 30 30.2 36C32.2 42 32 50 30.4 57.5Z',
+    feminine: 'M12 57.5C10.6 50 12.6 43 14.4 38C15.6 33.5 18.5 30.4 21.8 30.2C26.4 30 29.4 32.6 30 37C30.6 42 29 47 30.2 52C30.6 54 30.6 56 30.4 57.5Z',
+    masculine: 'M10 57.5C8 46.5 9 35.5 16.5 30.5C22 27.4 29 29.5 31.2 35.6C33.4 42 33.2 50 31.4 57.5Z',
+  },
+  front: {
+    neutral: 'M17 56.5C15.5 45 18 35 30 33C42 35 44.5 45 43 56.5Z',
+    feminine: 'M18.5 56.5C16.5 49 19 44 20.5 40C21.5 36 25 33.6 30 33.4C35 33.6 38.5 36 39.5 40C41 44 43.5 49 41.5 56.5Z',
+    masculine: 'M15.5 56.5C14 45 15.5 34.6 30 32.6C44.5 34.6 46 45 44.5 56.5Z',
+  },
+  back: {
+    neutral: 'M16 58C14.5 46 17.5 35 30 33C42.5 35 45.5 46 44 58Z',
+    feminine: 'M17 58C15.5 50 19 44 20.5 40C21.5 36 25 33.4 30 33.2C35 33.4 38.5 36 39.5 40C41 44 44.5 50 43 58Z',
+    masculine: 'M14.5 58C13 46 15.5 34.6 30 32.6C44.5 34.6 47 46 45.5 58Z',
+  },
 }
 
 const INK = '#2A3140'
@@ -64,6 +85,9 @@ function SideHair({ p, hair }: { p: Paint; hair: HairStyle }) {
       </>
     )
   }
+  if (hair === 'buzz') {
+    return <path d="M13.8 21C13.6 15 18 12.6 23 12.8C27.6 13 30.6 15.6 30.8 18C27.5 16.6 23.5 16.6 20.8 18.6C18.4 20.4 16 22.6 13.8 21Z" fill={p.hair} />
+  }
   if (hair === 'beanie') {
     return (
       <>
@@ -77,14 +101,16 @@ function SideHair({ p, hair }: { p: Paint; hair: HairStyle }) {
   return short
 }
 
-function SideParts({ p, hair, accessory }: PartsProps) {
+function SideParts({ p, hair, accessory, build, outfit }: PartsProps) {
   return (
     <>
       {/* leg, knee up towards the fire */}
       <path d="M19 55.5L33.5 49L36.5 61" stroke={p.legs} strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       <ellipse cx="38.6" cy="62.4" rx="4.2" ry="2.3" fill={p.shoe} />
       {/* torso */}
-      <path d="M11 57.5C9 47 10.2 36 17 31C22 27.8 28.2 30 30.2 36C32.2 42 32 50 30.4 57.5Z" fill={p.body} />
+      <path d={TORSO.side[build]} fill={p.body} />
+      {outfit === 'hoodie' && <ellipse cx="15.6" cy="31" rx="4.6" ry="5.2" fill={p.bodyShade} />}
+      {outfit === 'jacket' && <path d="M27.6 34.5L29.6 57" stroke={p.bodyShade} strokeWidth="1.6" strokeLinecap="round" />}
       {/* arm resting on the knee */}
       <path d="M22.5 36C26.5 42 29.5 46 33.6 48.6" stroke={p.bodyShade} strokeWidth="5.4" strokeLinecap="round" fill="none" />
       <circle cx="35" cy="49.2" r="2.6" fill={p.skin} />
@@ -99,6 +125,12 @@ function SideParts({ p, hair, accessory }: PartsProps) {
       <circle cx="30.2" cy="23.4" r="1.4" fill={p.skin} />
       <path d="M26.2 21.6q1.2 .9 2.4 0" stroke={p.ink} strokeWidth="0.9" strokeLinecap="round" fill="none" />
       <SideHair p={p} hair={hair} />
+      {accessory === 'glasses' && (
+        <>
+          <circle cx="27.4" cy="22.4" r="2.4" stroke={p.ink} strokeWidth="0.9" fill="none" />
+          <path d="M25 22L20.5 21.2" stroke={p.ink} strokeWidth="0.9" strokeLinecap="round" />
+        </>
+      )}
       {accessory === 'headphones' && hair !== 'beanie' && (
         <>
           <path d="M14.2 20.5C14.2 10.8 29.8 10.8 29.8 18.5" stroke={p.phones} strokeWidth="2" strokeLinecap="round" fill="none" />
@@ -132,6 +164,9 @@ function FrontHair({ p, hair }: { p: Paint; hair: HairStyle }) {
       </>
     )
   }
+  if (hair === 'buzz') {
+    return <path d="M21.2 20C21.5 13.5 25.5 12 30 12C34.5 12 38.5 13.5 38.8 20C36 17.5 33 16.8 30 16.8C27 16.8 24 17.5 21.2 20Z" fill={p.hair} />
+  }
   if (hair === 'beanie') {
     return (
       <>
@@ -144,13 +179,25 @@ function FrontHair({ p, hair }: { p: Paint; hair: HairStyle }) {
   return fringe
 }
 
-function FrontParts({ p, hair, accessory }: PartsProps) {
+function FrontParts({ p, hair, accessory, build, outfit }: PartsProps) {
   return (
     <>
       {/* crossed legs */}
       <path d="M9 60C11 52.4 20 50.4 30 53.2C40 50.4 49 52.4 51 60C45 63.6 15 63.6 9 60Z" fill={p.legs} />
       {/* torso */}
-      <path d="M17 56.5C15.5 45 18 35 30 33C42 35 44.5 45 43 56.5Z" fill={p.body} />
+      <path d={TORSO.front[build]} fill={p.body} />
+      {outfit === 'hoodie' && (
+        <>
+          <path d="M21 33.5C24 37.5 36 37.5 39 33.5C36 31 24 31 21 33.5Z" fill={p.bodyShade} />
+          <path d="M28 37V42M32 37V42" stroke={p.bodyShade} strokeWidth="1" strokeLinecap="round" />
+        </>
+      )}
+      {outfit === 'jacket' && (
+        <>
+          <path d="M30 34V56.5" stroke={p.bodyShade} strokeWidth="1.6" />
+          <path d="M24.5 33.8L30 40.5L35.5 33.8" stroke={p.bodyShade} strokeWidth="1.6" strokeLinejoin="round" fill="none" />
+        </>
+      )}
       {/* arms to the lap */}
       <path d="M20.5 40C18.6 47 20.2 52 25 54" stroke={p.bodyShade} strokeWidth="5" strokeLinecap="round" fill="none" />
       <path d="M39.5 40C41.4 47 39.8 52 35 54" stroke={p.bodyShade} strokeWidth="5" strokeLinecap="round" fill="none" />
@@ -163,6 +210,14 @@ function FrontParts({ p, hair, accessory }: PartsProps) {
       <circle cx="30" cy="22" r="9" fill={p.skin} />
       <path d="M25.4 23.2q1.5 1.1 3 0M31.6 23.2q1.5 1.1 3 0" stroke={p.ink} strokeWidth="0.9" strokeLinecap="round" fill="none" />
       <FrontHair p={p} hair={hair} />
+      {accessory === 'glasses' && (
+        <path
+          d="M24.6 23.2a2.3 2.3 0 1 0 4.6 0a2.3 2.3 0 1 0 -4.6 0M30.8 23.2a2.3 2.3 0 1 0 4.6 0a2.3 2.3 0 1 0 -4.6 0M29.2 23H30.8"
+          stroke={p.ink}
+          strokeWidth="0.9"
+          fill="none"
+        />
+      )}
       {accessory === 'headphones' && hair !== 'beanie' && (
         <>
           <path d="M20.6 22C20.6 9.6 39.4 9.6 39.4 22" stroke={p.phones} strokeWidth="2" strokeLinecap="round" fill="none" />
@@ -180,6 +235,9 @@ function BackHair({ p, hair }: { p: Paint; hair: HairStyle }) {
   const cap = (
     <path d="M21 23C20 14 25 11.4 30 11.4C35 11.4 40 14 39 23C38 28 35 30.4 30 30.4C25 30.4 22 28 21 23Z" fill={p.hair} />
   )
+  if (hair === 'buzz') {
+    return <path d="M21.4 21.5C21 14.5 25.5 12.4 30 12.4C34.5 12.4 39 14.5 38.6 21.5C38 26 35 27.6 30 27.6C25 27.6 22 26 21.4 21.5Z" fill={p.hair} />
+  }
   if (hair === 'long') {
     return <path d="M20.6 22C20 13 25 11 30 11C35 11 40 13 39.4 22L40.4 38.5C35 40.4 25 40.4 19.6 38.5Z" fill={p.hair} />
   }
@@ -204,14 +262,16 @@ function BackHair({ p, hair }: { p: Paint; hair: HairStyle }) {
   return cap
 }
 
-function BackParts({ p, hair, accessory }: PartsProps) {
+function BackParts({ p, hair, accessory, build, outfit }: PartsProps) {
   return (
     <>
       {/* elbows peeking out, arms around knees in front */}
       <ellipse cx="15.6" cy="50" rx="2.8" ry="5" fill={p.bodyShade} />
       <ellipse cx="44.4" cy="50" rx="2.8" ry="5" fill={p.bodyShade} />
       {/* back */}
-      <path d="M16 58C14.5 46 17.5 35 30 33C42.5 35 45.5 46 44 58Z" fill={p.body} />
+      <path d={TORSO.back[build]} fill={p.body} />
+      {outfit === 'hoodie' && <path d="M22 32.5C22 42 38 42 38 32.5C35 34.5 25 34.5 22 32.5Z" fill={p.bodyShade} />}
+      {outfit === 'jacket' && <path d="M19 40.5C26 42 34 42 41 40.5" stroke={p.bodyShade} strokeWidth="1.6" strokeLinecap="round" fill="none" />}
       {accessory === 'scarf' && (
         <path d="M21.5 32C26 34.6 34 34.6 38.5 32L38.5 35.6C34 37.6 26 37.6 21.5 35.6Z" fill={p.accent} />
       )}
@@ -286,7 +346,7 @@ export function Character({ look, pose }: CharacterProps) {
           ))}
         </linearGradient>
         <mask id={`sil-${id}`} maskUnits="userSpaceOnUse" x="0" y="0" width="60" height="68">
-          <Parts p={WHITE} hair={look.hairStyle} accessory={look.accessory} />
+          <Parts p={WHITE} hair={look.hairStyle} accessory={look.accessory} build={look.build} outfit={look.outfit} />
         </mask>
       </defs>
 
@@ -303,7 +363,7 @@ export function Character({ look, pose }: CharacterProps) {
         )}
 
         <g className="bf-breathe">
-          <Parts p={paint} hair={look.hairStyle} accessory={look.accessory} />
+          <Parts p={paint} hair={look.hairStyle} accessory={look.accessory} build={look.build} outfit={look.outfit} />
           <rect
             className="bf-rim"
             x="0"

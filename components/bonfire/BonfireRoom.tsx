@@ -8,6 +8,8 @@ import { useBonfire } from '@/hooks/useBonfire'
 import { useBonfireChannel } from '@/hooks/useBonfireChannel'
 import { usePresence } from '@/hooks/usePresence'
 import { usePresenceKey } from '@/hooks/usePresenceKey'
+import { useCharacter } from '@/hooks/useCharacter'
+import { defaultChoice, type CharacterChoice } from '@/lib/characters'
 import { useSeat } from '@/hooks/useSeat'
 import { useSceneParticipants } from '@/hooks/useSceneParticipants'
 import { useCountdown, phaseDuration } from '@/hooks/useCountdown'
@@ -40,11 +42,14 @@ interface BonfireRoomProps {
   userId: string | null
   /** Profile name for signed-in users: only a prefill for "Choose your name". */
   displayName: string | null
+  /** Signed-in person's saved character, read with the page */
+  savedCharacter: CharacterChoice | null
 }
 
-export function BonfireRoom({ initial, userId, displayName }: BonfireRoomProps) {
+export function BonfireRoom({ initial, userId, displayName, savedCharacter }: BonfireRoomProps) {
   const router = useRouter()
   const presenceKey = usePresenceKey(userId)
+  const character = useCharacter(userId, savedCharacter)
 
   // ── Name: chosen once per Bonfire ─────────────────────────────────
   // Returning to a Bonfire this browser already holds a credential for
@@ -107,7 +112,7 @@ export function BonfireRoom({ initial, userId, displayName }: BonfireRoomProps) 
   usePresence({
     channel,
     self: seated && name
-      ? { username: name, is_initiator: isInitiator, seat: seat.seat }
+      ? { username: name, is_initiator: isInitiator, seat: seat.seat, character: character.choice }
       : null,
   })
 
@@ -237,6 +242,13 @@ export function BonfireRoom({ initial, userId, displayName }: BonfireRoomProps) 
             isCreator={isInitiator}
             defaultBonfireName={state.name}
             onSubmit={chooseName}
+            character={presenceKey ? {
+              presenceKey,
+              choice: character.choice ?? defaultChoice(presenceKey),
+              onChange: character.save,
+              signedIn: userId !== null,
+              saveFailed: character.saveFailed,
+            } : undefined}
           />
         ) : seat.status === 'full' ? (
           <div className="bf-message">

@@ -4,7 +4,7 @@ import { useSceneParticipants, LEAVE_ANIMATION_MS } from '@/hooks/useScenePartic
 import type { BonfireParticipant, SeatIndex } from '@/types'
 
 function p(key: string, seat: SeatIndex): BonfireParticipant {
-  return { key, username: key, joined_at: `2026-01-01T00:00:0${seat}.000Z`, is_initiator: false, seat }
+  return { key, username: key, joined_at: `2026-01-01T00:00:0${seat}.000Z`, is_initiator: false, seat, character: null }
 }
 
 describe('useSceneParticipants', () => {

@@ -8,6 +8,7 @@ function p(key: string, joinedSecond: number, seat: SeatIndex | null): BonfirePa
     username: key,
     joined_at: new Date(Date.UTC(2026, 0, 1, 0, 0, joinedSecond)).toISOString(),
     is_initiator: false,
+    character: null,
     seat,
   }
 }

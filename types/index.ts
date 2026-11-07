@@ -1,3 +1,4 @@
+import type { CharacterChoice } from '@/lib/characters'
 export type TimerMode = 'focus' | 'short' | 'long'
 export type TimerStatus = 'idle' | 'running' | 'paused' | 'finished'
 export type SessionStatus = 'waiting' | 'active' | 'ended'
@@ -176,4 +177,6 @@ export interface BonfireParticipant {
   joined_at: string
   is_initiator: boolean
   seat: SeatIndex | null
+  /** Validated character choice; null when they never customized */
+  character: CharacterChoice | null
 }
