@@ -1,5 +1,6 @@
 'use client'
 
+import { AnimatePresence } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -236,21 +237,26 @@ export function BonfireRoom({ initial, userId, displayName, savedCharacter }: Bo
           />
         )}
 
-        {askName && !name ? (
-          <NamePrompt
-            defaultName={prefill}
-            isCreator={isInitiator}
-            defaultBonfireName={state.name}
-            onSubmit={chooseName}
-            character={presenceKey ? {
-              presenceKey,
-              choice: character.choice ?? defaultChoice(presenceKey),
-              onChange: character.save,
-              signedIn: userId !== null,
-              saveFailed: character.saveFailed,
-            } : undefined}
-          />
-        ) : seat.status === 'full' ? (
+        <AnimatePresence>
+          {askName && !name && (
+            <NamePrompt
+              key="lobby"
+              defaultName={prefill}
+              isCreator={isInitiator}
+              defaultBonfireName={state.name}
+              onSubmit={chooseName}
+              character={presenceKey ? {
+                presenceKey,
+                choice: character.choice ?? defaultChoice(presenceKey),
+                onChange: character.save,
+                signedIn: userId !== null,
+                saveFailed: character.saveFailed,
+              } : undefined}
+            />
+          )}
+        </AnimatePresence>
+
+        {askName && !name ? null : seat.status === 'full' ? (
           <div className="bf-message">
             <p className="bf-message-title">This bonfire is full</p>
             <p className="bf-message-body">Six people are already gathered around this fire.</p>

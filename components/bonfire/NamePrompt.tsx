@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { motion } from 'motion/react'
 import { MAX_BONFIRE_NAME_LENGTH, MAX_NAME_LENGTH, getGuestName } from '@/lib/bonfire'
-import { CharacterEditor, type CharacterEditorProps } from '@/components/bonfire/CharacterEditor'
+import { CharacterControls, CharacterStage, type CharacterEditorProps } from '@/components/bonfire/CharacterEditor'
+import { PRESS, SPRING_SOFT, rise, stagger } from '@/lib/motion'
 
 export interface NameChoice {
   /** Display name for this Bonfire. */
@@ -18,11 +20,14 @@ interface NamePromptProps {
   isCreator: boolean
   defaultBonfireName?: string | null
   onSubmit: (choice: NameChoice) => void
-  /** How you look around the fire, picked before taking a seat. Omitted until the presence key is known. */
+  /** How you look around the fire. Omitted until the presence key is known. */
   character?: CharacterEditorProps
 }
 
-/** "Choose your name" and your character: shown once per Bonfire before taking a seat. */
+/**
+ * Before the fire: choose your name and how you look, then take a seat.
+ * Shown once per Bonfire.
+ */
 export function NamePrompt({ defaultName, isCreator, defaultBonfireName, onSubmit, character }: NamePromptProps) {
   const [name, setName] = useState(defaultName ?? '')
   const [bonfireName, setBonfireName] = useState(defaultBonfireName ?? '')
@@ -42,38 +47,72 @@ export function NamePrompt({ defaultName, isCreator, defaultBonfireName, onSubmi
   }
 
   return (
-    <form className="bf-seat-prompt" onSubmit={submit}>
-      <label htmlFor="bf-name" className="bf-seat-prompt-title">Choose your name</label>
-      <input
-        id="bf-name"
-        className="bf-name-input"
-        value={name}
-        onChange={e => setName(e.target.value)}
-        placeholder={suggestion}
-        maxLength={MAX_NAME_LENGTH}
-        autoComplete="nickname"
-        autoFocus
-      />
-      {isCreator && (
-        <>
-          <label htmlFor="bf-bonfire-name-step" className="bf-seat-prompt-sub">
-            Name this bonfire <span>(optional)</span>
-          </label>
-          <input
-            id="bf-bonfire-name-step"
-            className="bf-name-input is-secondary"
-            value={bonfireName}
-            onChange={e => setBonfireName(e.target.value)}
-            placeholder="Deep Work"
-            maxLength={MAX_BONFIRE_NAME_LENGTH}
-            autoComplete="off"
-          />
-        </>
-      )}
-      {character && <CharacterEditor {...character} />}
-      <button type="submit" className="bf-btn-primary">
-        continue
-      </button>
-    </form>
+    <motion.div
+      className="bf-lobby-scrim"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.25 } }}
+    >
+      <motion.form
+        className="bf-lobby"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bf-lobby-title"
+        onSubmit={submit}
+        initial={{ opacity: 0, y: 24, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 12, scale: 0.98 }}
+        transition={SPRING_SOFT}
+      >
+        {character && <CharacterStage presenceKey={character.presenceKey} choice={character.choice} />}
+
+        <motion.div className="bf-lobby-side" variants={stagger(0.12)} initial="hidden" animate="show">
+          <motion.h2 variants={rise} id="bf-lobby-title" className="bf-lobby-title">Take a seat by the fire</motion.h2>
+
+          <motion.div variants={rise} className="bf-lobby-field">
+            <label htmlFor="bf-name" className="bf-pop-label">Your name</label>
+            <input
+              id="bf-name"
+              className="bf-input"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder={suggestion}
+              maxLength={MAX_NAME_LENGTH}
+              autoComplete="nickname"
+              autoFocus
+            />
+          </motion.div>
+
+          {isCreator && (
+            <motion.div variants={rise} className="bf-lobby-field">
+              <label htmlFor="bf-bonfire-name-step" className="bf-pop-label">
+                Name this bonfire <span className="bf-optional">(optional)</span>
+              </label>
+              <input
+                id="bf-bonfire-name-step"
+                className="bf-input"
+                value={bonfireName}
+                onChange={e => setBonfireName(e.target.value)}
+                placeholder="Deep Work"
+                maxLength={MAX_BONFIRE_NAME_LENGTH}
+                autoComplete="off"
+              />
+            </motion.div>
+          )}
+
+          {character && (
+            <motion.div variants={rise}>
+              <CharacterControls {...character} />
+            </motion.div>
+          )}
+
+          <motion.div variants={rise} className="bf-lobby-cta">
+            <motion.button type="submit" className="bf-btn-primary" {...PRESS}>
+              sit by the fire
+            </motion.button>
+          </motion.div>
+        </motion.div>
+      </motion.form>
+    </motion.div>
   )
 }

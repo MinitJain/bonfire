@@ -372,7 +372,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 96px 16px 40px;
+  padding: 72px 16px 20px;
 }
 
 .bf-corner {
@@ -1204,10 +1204,9 @@ body {
   border: 2px solid var(--accent-strong);
   border-radius: 999px;
   background: var(--bg-elevated);
-  animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .bf-code-field input {
-  width: 8.2ch;
+  width: 11ch;
   border: 0;
   background: transparent;
   color: var(--text-primary);
@@ -1371,50 +1370,154 @@ body {
   }
 }
 
-/* ── Character customizer ── */
-.bf-char-editor {
+/* ── Before the fire: name + character (Motion drives the movement) ── */
+.bf-lobby-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
   display: grid;
-  grid-template-columns: 132px 1fr 1fr;
-  gap: 14px 20px;
-  width: min(600px, calc(100vw - 32px));
-  margin-top: 8px;
+  place-items: center;
   padding: 16px;
-  border-radius: 16px;
+  overflow-y: auto;
+  background: rgba(var(--cool-rgb), 0.28);
+}
+.dark .bf-lobby-scrim { background: rgba(4, 8, 14, 0.55); }
+.bf-lobby {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 380px);
+  gap: 28px;
+  width: min(720px, 100%);
+  padding: 24px;
+  border: 2px solid var(--edge);
+  border-radius: 28px;
   background: var(--bg-elevated);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 var(--depth) 0 var(--edge-depth), var(--shadow-lg);
   text-align: left;
 }
-.bf-char-title, .bf-char-editor .bf-pop-hint { grid-column: 1 / -1; margin: 0; }
-.bf-char-editor .bf-pop-section { margin: 0; }
-@media (max-width: 640px) {
-  .bf-char-editor { grid-template-columns: 1fr; }
-  .bf-char-preview { grid-row: auto; }
+.bf-lobby-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.bf-lobby-title { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-primary); }
+.bf-lobby-field { display: flex; flex-direction: column; }
+.bf-optional { color: var(--text-muted); }
+.bf-lobby-cta { display: flex; justify-content: flex-end; padding-top: 4px; }
+@media (max-width: 680px) {
+  .bf-lobby { grid-template-columns: 1fr; gap: 16px; padding: 18px; border-radius: 22px; }
+  .bf-lobby-cta .bf-btn-primary { width: 100%; }
 }
-.bf-char-preview {
-  grid-row: span 4;
-  align-self: start;
-  display: flex;
-  justify-content: center;
-  padding: 8px 0 4px;
-  border-radius: 12px;
+
+/* The figure stands on a warm, firelit plinth */
+.bf-char-stage {
+  position: relative;
+  display: grid;
+  place-items: end center;
+  min-height: 300px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--sky-top), var(--ground));
+}
+.bf-char-glow {
+  position: absolute;
+  inset: auto -20% -35% -20%;
+  height: 70%;
+  background: radial-gradient(closest-side, rgba(var(--glow-rgb), 0.45), transparent);
+  animation: bf-char-flicker 3.2s ease-in-out infinite alternate;
+}
+@keyframes bf-char-flicker { from { opacity: 0.75; } to { opacity: 1; } }
+.bf-char-figure { position: relative; padding-bottom: 28px; }
+.bf-char-figure .bf-character { width: 168px; height: 192px; }
+@media (max-width: 680px) {
+  .bf-char-stage { min-height: 170px; }
+  .bf-char-figure { padding-bottom: 12px; }
+  .bf-char-figure .bf-character { width: 112px; height: 128px; }
+}
+
+/* Tabs: a thumb slides between them */
+.bf-char-controls { display: flex; flex-direction: column; gap: 14px; }
+.bf-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 4px;
+  border: 2px solid var(--edge);
+  border-radius: 999px;
   background: var(--bg-secondary);
 }
-.bf-char-preview .bf-character { width: 105px; height: 120px; }
-.bf-char-options { display: flex; flex-wrap: wrap; gap: 6px; }
-.bf-char-options .bf-chip { min-height: 32px; }
-.bf-swatch {
-  width: 32px;
-  height: 32px;
+.bf-tab {
+  position: relative;
+  min-height: 36px;
   border: 0;
   border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(var(--cool-rgb), 0.2);
-  transition: transform 0.15s ease;
 }
-.bf-swatch:hover { transform: scale(1.08); }
-.bf-swatch[aria-pressed='true'] { outline: 2px solid var(--text-primary); outline-offset: 2px; }
-.bf-swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bf-tab[aria-selected='true'] { color: var(--text-primary); }
+.bf-tab-thumb {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  box-shadow: 0 2px 0 var(--edge-depth), inset 0 0 0 2px var(--edge);
+}
+.bf-tab-label, .bf-opt-label { position: relative; }
+.bf-tab-panel { display: flex; flex-direction: column; gap: 14px; min-height: 150px; }
+.bf-opt-group { display: flex; flex-direction: column; }
+.bf-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Options: a pill slides to the one you pick */
+.bf-opt {
+  position: relative;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.bf-opt:hover { color: var(--text-primary); }
+.bf-opt[aria-pressed='true'] { color: var(--accent-strong); }
+.bf-opt-pill {
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--accent-deep);
+  border-radius: 999px;
+  background: var(--accent-soft);
+}
+
+/* Swatches: a ring slides to the chosen colour */
+.bf-swatch {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  cursor: pointer;
+}
+.bf-swatch-fill {
+  position: absolute;
+  inset: 4px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(var(--cool-rgb), 0.25);
+}
+.bf-swatch-ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--text-primary);
+  border-radius: 999px;
+}
+.bf-tab:focus-visible, .bf-opt:focus-visible, .bf-swatch:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
 @media (prefers-reduced-motion: reduce) {
-  .bf-swatch { transition: none; }
-  .bf-swatch:hover { transform: none; }
+  .bf-char-glow { animation: none; }
 }
+
+/* Countdown digits roll as they change */
+.bf-digit { display: inline-block; overflow: hidden; vertical-align: top; }
+.bf-digit-inner { display: inline-block; }
