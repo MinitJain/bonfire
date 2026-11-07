@@ -733,6 +733,7 @@ body {
 .bf-chip:focus-visible,
 .bf-chip:focus-within,
 .bf-segment button:focus-visible,
+.bf-input:focus-visible,
 .bf-code-submit:focus-visible,
 .bf-stepper button:focus-visible {
   outline: 2px solid var(--accent);
@@ -1278,6 +1279,57 @@ body {
   /* Beside the tagline, clear of the focus setup */
   .bf-obj--headphones { top: 29%; right: -7%; }
   .bf-obj--paper      { top: 31%; left: -7%; }
+}
+
+/* ─────────────────────────────────────────────
+   LOGIN — the same air as home, no card
+───────────────────────────────────────────── */
+.bf-login {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 96px 16px 48px;
+}
+.bf-login-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(100%, 360px);
+}
+.bf-login-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.15;
+  color: var(--text-primary);
+  overflow-wrap: break-word;
+}
+.bf-login-sub { margin-top: 6px; font-size: 15px; color: var(--text-secondary); }
+.bf-login-or { margin-top: 6px; font-size: 13px; text-align: center; color: var(--text-muted); }
+.bf-login-input { min-height: 48px; padding: 10px 16px; font-size: 15px; background: var(--bg-elevated); }
+.bf-login-input::placeholder { color: var(--text-muted); }
+.bf-input.is-error { border-color: var(--danger); }
+.bf-login-switch { font-size: 13px; text-align: center; color: var(--text-secondary); }
+.bf-login-link {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  font-weight: 700;
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.bf-login-link:focus-visible,
+.bf-wordmark-sm:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* ─────────────────────────────────────────────
