@@ -1,5 +1,6 @@
 'use client'
 
+import { parseChoice } from '@/lib/characters'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
@@ -11,6 +12,8 @@ export interface PresencePayload {
   joined_at: string
   is_initiator: boolean
   seat: number | null
+  /** Untrusted until parsed: other clients can publish anything here */
+  character?: unknown
 }
 
 interface UseBonfireChannelOptions {
@@ -88,6 +91,7 @@ export function useBonfireChannel({
             joined_at: p.joined_at ?? new Date(0).toISOString(),
             is_initiator: p.is_initiator === true,
             seat: isSeatIndex(p.seat) ? p.seat : null,
+            character: parseChoice(p.character),
           })
         }
         setParticipants(list)
