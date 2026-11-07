@@ -124,7 +124,7 @@ export default function RootLayout({
                 '@type': 'WebApplication',
                 name: 'Bonfire',
                 url: appUrl,
-                description: 'A shared Pomodoro timer for friends. Start a session, share the link, focus in sync.',
+                description: 'A shared focus timer. Light a bonfire, invite a few people, and focus together around one fire.',
                 applicationCategory: 'ProductivityApplication',
                 operatingSystem: 'Any',
                 offers: {
