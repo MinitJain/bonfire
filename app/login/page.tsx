@@ -181,7 +181,7 @@ function LoginContent() {
                   type="submit"
                   disabled={emailLoading || !email.trim()}
                   className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: 'var(--accent)', color: '#fff', boxShadow: 'var(--shadow-md)' }}
+                  style={{ background: 'var(--accent)', color: 'var(--on-accent)', boxShadow: 'var(--shadow-md)' }}
                 >
                   {emailLoading && (
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

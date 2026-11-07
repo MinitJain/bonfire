@@ -13,7 +13,7 @@ export default function SessionNotFound() {
       </p>
       <Link
         href="/"
-        className="inline-flex items-center justify-center px-4 py-2 text-sm rounded-xl min-h-[40px] bg-[color:var(--accent)] hover:bg-[color:var(--accent-hover)] text-white font-semibold shadow-md transition-all duration-150 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
+        className="inline-flex items-center justify-center px-4 py-2 text-sm rounded-xl min-h-[40px] bg-[color:var(--accent)] hover:bg-[color:var(--accent-hover)] text-[color:var(--on-accent)] font-semibold shadow-md transition-all duration-150 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]/50"
       >
         Start a New Room
       </Link>

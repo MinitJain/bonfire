@@ -1,20 +1,19 @@
 import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
 
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-4">
-      <p
+      <h1
         className="text-lg font-medium"
         style={{ color: 'var(--text-primary)' }}
       >
         Bonfire not found
-      </p>
+      </h1>
       <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
         This bonfire may have ended or the link is incorrect.
       </p>
-      <Link href="/">
-        <Button variant="primary">Light a new Bonfire</Button>
+      <Link href="/" className="bf-btn-primary">
+        Light a new Bonfire
       </Link>
     </div>
   )
