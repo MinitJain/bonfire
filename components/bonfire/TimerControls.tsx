@@ -11,7 +11,7 @@ interface TimerControlsProps {
 }
 
 /**
- * Calm, text-weight controls. Shown only to people who may tend the fire;
+ * Start/Pause is the one key; Skip stays text weight. Shown only to people who may tend the fire;
  * the RPCs authorize every command regardless.
  */
 export function TimerControls({ running, started, canControl, onStart, onPause, onSkip }: TimerControlsProps) {
@@ -20,7 +20,7 @@ export function TimerControls({ running, started, canControl, onStart, onPause, 
   return (
     <div className="bf-controls">
       {running ? (
-        <button type="button" className="bf-text-btn" onClick={onPause}>
+        <button type="button" className="bf-btn-secondary" onClick={onPause}>
           Pause
         </button>
       ) : (
@@ -28,7 +28,6 @@ export function TimerControls({ running, started, canControl, onStart, onPause, 
           {started ? 'Resume' : 'Start'}
         </button>
       )}
-      <span className="bf-sep" aria-hidden="true">·</span>
       <button type="button" className="bf-text-btn" onClick={onSkip}>
         Skip
       </button>
