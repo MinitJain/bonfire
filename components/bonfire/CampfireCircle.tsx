@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import type { BonfirePhase } from '@/types'
 import { SEATS, outwardVector } from '@/lib/seats'
-import { characterLook } from '@/lib/characters'
+import { lookFor } from '@/lib/characters'
 import { cn } from '@/lib/utils'
 import type { SceneParticipant } from '@/hooks/useSceneParticipants'
 import { FireScene } from '@/components/bonfire/FireScene'
@@ -72,8 +72,9 @@ export function CampfireCircle({
 function SeatedCharacter({ entry, isSelf }: { entry: SceneParticipant; isSelf: boolean }) {
   const seat = SEATS[entry.seat]
   const { dx, dy } = outwardVector(seat)
-  const { key, username, is_initiator } = entry.participant
-  const look = useMemo(() => characterLook(key), [key])
+  const { key, username, is_initiator, character } = entry.participant
+  const characterJson = JSON.stringify(character)
+  const look = useMemo(() => lookFor(key, JSON.parse(characterJson)), [key, characterJson])
   const name = username ?? 'Someone'
 
   return (

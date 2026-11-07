@@ -1254,3 +1254,38 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── Character customizer ── */
+.bf-popover.is-tall {
+  width: min(320px, calc(100vw - 24px));
+  max-height: calc(100dvh - 88px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.bf-char-preview {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 4px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+}
+.bf-char-preview .bf-character { width: 105px; height: 120px; }
+.bf-char-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.bf-char-options .bf-chip { min-height: 32px; }
+.bf-swatch {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(var(--cool-rgb), 0.2);
+  transition: transform 0.15s ease;
+}
+.bf-swatch:hover { transform: scale(1.08); }
+.bf-swatch[aria-pressed='true'] { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+.bf-swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .bf-swatch { transition: none; }
+  .bf-swatch:hover { transform: none; }
+}

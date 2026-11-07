@@ -1,3 +1,4 @@
+import { parseChoice, type CharacterChoice } from '@/lib/characters'
 import { cache } from 'react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -71,13 +72,15 @@ export default async function BonfirePage({ params }: PageProps) {
   } = await supabase.auth.getUser()
 
   let displayName: string | null = null
+  let savedCharacter: CharacterChoice | null = null
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('username, display_name')
+      .select('username, display_name, character')
       .eq('id', user.id)
       .maybeSingle()
 
+    savedCharacter = parseChoice(profile?.character)
     displayName =
       profile?.display_name ??
       profile?.username ??
@@ -90,6 +93,7 @@ export default async function BonfirePage({ params }: PageProps) {
       initial={bonfire}
       userId={user?.id ?? null}
       displayName={displayName}
+      savedCharacter={savedCharacter}
     />
   )
 }
