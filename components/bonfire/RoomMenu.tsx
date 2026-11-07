@@ -1,5 +1,7 @@
 'use client'
 
+import { AnimatePresence, motion } from 'motion/react'
+import { pop } from '@/lib/motion'
 import { useEffect, useRef, useState } from 'react'
 import { Headphones, Link2, SlidersHorizontal } from 'lucide-react'
 import type { BonfireState } from '@/types'
@@ -79,8 +81,9 @@ export function RoomMenu({ state, canControl, isInitiator, onSaveSettings, onTog
       )}
       <ThemeToggle variant="quiet" />
 
+      <AnimatePresence>
       {open && (
-        <div className="bf-popover" role="dialog" aria-label={open}>
+        <motion.div key={open} className="bf-popover" role="dialog" aria-label={open} variants={pop} initial="hidden" animate="show" exit="exit">
           {open === 'share' && (
             <ShareDrawer
               bonfireId={state.id}
@@ -103,8 +106,9 @@ export function RoomMenu({ state, canControl, isInitiator, onSaveSettings, onTog
               onClose={() => setOpen(null)}
             />
           )}
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import { MotionProvider } from '@/components/ui/MotionProvider'
 import type { Metadata, Viewport } from 'next'
 import { DM_Sans, Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
@@ -136,7 +137,7 @@ export default function RootLayout({
             }}
           />
           <FaviconInit />
-          {children}
+          <MotionProvider>{children}</MotionProvider>
           <Analytics />
         </ThemeProvider>
       </body>

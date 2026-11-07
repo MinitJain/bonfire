@@ -1,5 +1,8 @@
 'use client'
 
+import { AnimatePresence, motion } from 'motion/react'
+import { PRESS } from '@/lib/motion'
+
 interface TimerControlsProps {
   running: boolean
   /** Paused part-way through a phase (as opposed to not yet started). */
@@ -19,15 +22,19 @@ export function TimerControls({ running, started, canControl, onStart, onPause, 
 
   return (
     <div className="bf-controls">
-      {running ? (
-        <button type="button" className="bf-btn-secondary" onClick={onPause}>
-          Pause
-        </button>
-      ) : (
-        <button type="button" className="bf-btn-primary" onClick={onStart}>
-          {started ? 'Resume' : 'Start'}
-        </button>
-      )}
+      <AnimatePresence mode="popLayout" initial={false}>
+        {running ? (
+          <motion.button key="pause" type="button" className="bf-btn-secondary" onClick={onPause}
+            initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} {...PRESS}>
+            Pause
+          </motion.button>
+        ) : (
+          <motion.button key="start" type="button" className="bf-btn-primary" onClick={onStart}
+            initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} {...PRESS}>
+            {started ? 'Resume' : 'Start'}
+          </motion.button>
+        )}
+      </AnimatePresence>
       <button type="button" className="bf-text-btn" onClick={onSkip}>
         Skip
       </button>
