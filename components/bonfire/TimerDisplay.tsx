@@ -1,5 +1,8 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { SPRING } from '@/lib/motion'
 import type { BonfireMode, BonfirePhase } from '@/types'
 import { formatTime } from '@/lib/timer'
 import { cn } from '@/lib/utils'
@@ -79,7 +82,7 @@ export function TimerDisplay({
         suppressHydrationWarning
         aria-label={`${minutes} minutes ${seconds} seconds remaining`}
       >
-        {formatTime(timeLeft)}
+        <RollingTime text={formatTime(timeLeft)} />
       </span>
 
       <div
@@ -129,5 +132,35 @@ export function TimerDisplay({
 
       {mode === 'jam' && <span className="bf-mode-note">everyone can tend the fire</span>}
     </div>
+  )
+}
+
+/**
+ * Each digit rolls in as it changes. Plain text until mounted, so the
+ * server's render (a second behind) never has to match digit spans.
+ */
+function RollingTime({ text }: { text: string }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  if (!mounted) return <>{text}</>
+  return (
+    <>
+      {text.split('').map((ch, i) => (
+        <span key={i} className="bf-digit" aria-hidden="true">
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              key={ch}
+              className="bf-digit-inner"
+              initial={{ y: '-60%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '60%', opacity: 0 }}
+              transition={SPRING}
+            >
+              {ch}
+            </motion.span>
+          </AnimatePresence>
+        </span>
+      ))}
+    </>
   )
 }
